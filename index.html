@@ -141,7 +141,7 @@
     <!-- WIDOK GŁÓWNY: KALENDARZ + LISTA ZADAŃ -->
     <div id="dashboard-view" class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
 
-      <!-- LEWA KOLUMNA: KALENDARZ + GODZINOWE / WYJAZDOWE N/A -->
+      <!-- LEWA KOLUMNA: KALENDARZ + GODZINOWE / CYKLICZNE / WYJAZDOWE N/A -->
       <section class="lg:col-span-7 bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-3.5 sm:p-6 shadow-sm flex flex-col">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4">
           <div class="flex items-center gap-1.5 sm:gap-2">
@@ -165,24 +165,29 @@
         <!-- SIATKA KALENDARZA -->
         <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-1.5 flex-1"></div>
 
-        <!-- PANEL WYBRANEGO DNIA + DODAWANIE N/A / WYJAZDU -->
+        <!-- PANEL WYBRANEGO DNIA + DODAWANIE / ZARZĄDZANIE N/A -->
         <div class="mt-4 sm:mt-5 pt-4 border-t border-warm-100 dark:border-warm-800 bg-warm-50 dark:bg-warm-800/50 p-3.5 sm:p-4 rounded-2xl space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div class="text-[11px] font-bold uppercase text-stone-400">Wybrany dzień</div>
               <div id="selected-day-label" class="font-bold text-warm-900 dark:text-white text-sm">Kliknij dzień w kalendarzu</div>
             </div>
-            <button onclick="toggleNaForm()" class="px-3 py-1.5 rounded-xl bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 hover:border-brand-400 text-xs font-bold text-warm-900 dark:text-white transition shadow-2xs">
-              + Dodaj N/A lub wyjazd
-            </button>
+            <div class="flex flex-wrap gap-1.5">
+              <button onclick="openNaManagerModal()" class="px-3 py-1.5 rounded-xl bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 hover:border-brand-400 text-xs font-semibold text-stone-700 dark:text-stone-200 transition">
+                🔄 Wszystkie N/A (<span id="na-total-count">0</span>)
+              </button>
+              <button onclick="toggleNaForm()" class="px-3 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-xs font-bold text-white transition shadow-2xs">
+                + Dodaj N/A / wyjazd
+              </button>
+            </div>
           </div>
 
           <!-- AKTYWNE BLOKADY W WYBRANYM DNIU -->
           <div id="selected-day-na-list" class="space-y-1.5"></div>
 
-          <!-- FORMULARZ DODAWANIA N/A -->
+          <!-- FORMULARZ DODAWANIA N/A (JEDNORAZOWEGO, WYJAZDOWEGO LUB CYKLICZNEGO) -->
           <form id="na-form" class="hidden bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-700 rounded-2xl p-3.5 space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div>
                 <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Kogo dotyczy?</label>
                 <select id="na-who" class="w-full mt-1 px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
@@ -194,37 +199,45 @@
               <div>
                 <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Tryb niedostępności</label>
                 <select id="na-mode" class="w-full mt-1 px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
-                  <option value="away">🏠 Poza domem (wyjazd — tylko zdalne/wyjazdowe)</option>
-                  <option value="busy">⛔ Brak czasu (N/A — zero zadań w tym czasie)</option>
+                  <option value="busy">⛔ Brak czasu (N/A — zero zadań)</option>
+                  <option value="away">🏠 Poza domem (wyjazd — tylko zdalne)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Powtarzalność</label>
+                <select id="na-repeat" onchange="handleNaRepeatChange()" class="w-full mt-1 px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-bold text-brand-600 dark:text-brand-400">
+                  <option value="once">Jednorazowe / Zakres dat</option>
+                  <option value="weekly">↻ Co tydzień (ten dzień tyg.)</option>
+                  <option value="biweekly">↻ Co 2 tygodnie (np. terapia)</option>
                 </select>
               </div>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div>
-                <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Od dnia</label>
+                <label id="na-start-date-label" class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Od dnia</label>
                 <input id="na-start-date" type="date" required class="w-full mt-1 px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
               </div>
               <div>
                 <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Od godz.</label>
-                <input id="na-start-time" type="time" value="16:00" required class="w-full mt-1 px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
+                <input id="na-start-time" type="time" value="17:00" required class="w-full mt-1 px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
               </div>
-              <div>
+              <div id="na-end-date-wrap">
                 <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Do dnia</label>
                 <input id="na-end-date" type="date" required class="w-full mt-1 px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
               </div>
               <div>
                 <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Do godz.</label>
-                <input id="na-end-time" type="time" value="20:00" required class="w-full mt-1 px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
+                <input id="na-end-time" type="time" value="18:30" required class="w-full mt-1 px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
               </div>
             </div>
 
             <div class="flex flex-col sm:flex-row gap-2">
-              <input id="na-note" type="text" placeholder="Powód (np. Wyjazd w góry / Dentysta / Nadgodziny)"
+              <input id="na-note" type="text" placeholder="Nazwa / powód (np. Terapia / Wyjazd w góry / Trening)"
                 class="flex-1 px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
               <div class="flex justify-end gap-2">
                 <button type="button" onclick="toggleNaForm()" class="px-3 py-1.5 text-xs font-semibold text-stone-500">Anuluj</button>
-                <button type="submit" class="px-4 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold">Zapisz blokadę</button>
+                <button type="submit" class="px-4 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold">Zapisz N/A</button>
               </div>
             </div>
           </form>
@@ -313,7 +326,7 @@
       </section>
     </div>
 
-    <!-- EKRAN KONFIGURACJI BAZY ZADAŃ (PEŁNY WIDOK ZARZĄDZANIA SZABLONEM) -->
+    <!-- EKRAN KONFIGURACJI BAZY ZADAŃ -->
     <div id="config-view" class="hidden space-y-5">
       <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-4 sm:p-6 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-warm-100 dark:border-warm-800">
@@ -325,7 +338,7 @@
               <h2 class="text-xl font-extrabold text-warm-900 dark:text-white">🛠️ Konfiguracja stałej bazy zadań</h2>
             </div>
             <p class="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1.5">
-              Tutaj ustalacie stałe obowiązki w skali miesiąca. Kto wykonuje jest <strong>opcjonalne</strong> — możecie zostawić „Do ustalenia” i przypisać później albo oddać do rozpisania AI.
+              Ustalcie stałe obowiązki w skali miesiąca. Kto wykonuje jest <strong>opcjonalne</strong> — możecie zostawić „Do ustalenia”.
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -376,7 +389,6 @@
           </div>
         </form>
 
-        <!-- FILTR KATEGORII W KONFIGURATORZE -->
         <div class="flex flex-wrap items-center justify-between gap-2 mt-5 mb-3">
           <div class="flex flex-wrap gap-1.5">
             <button onclick="setConfigFilter('all')" data-cfilter="all" class="cfilter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white">Wszystkie</button>
@@ -388,8 +400,25 @@
           <div id="config-summary-count" class="text-xs font-semibold text-stone-500 dark:text-stone-400"></div>
         </div>
 
-        <!-- LISTA EDYTOWALNYCH WZORCÓW -->
         <div id="config-templates-list" class="space-y-2.5"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ZARZĄDZANIE WSZYSTKIMI BLOKADAMI N/A (EDYCJA / USUWANIE CYKLICZNYCH I JEDNORAZOWYCH) -->
+  <div id="na-manager-modal" class="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl max-h-[88vh] flex flex-col">
+      <div class="flex justify-between items-center pb-4 border-b border-warm-100 dark:border-warm-800">
+        <div>
+          <h3 class="text-xl font-extrabold text-warm-900 dark:text-white">🔄 Zarządzanie blokadami N/A i wyjazdami</h3>
+          <p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">Tutaj edytujecie stałe powtarzające się N/A (np. terapia co 2 tygodnie) oraz wyjazdy.</p>
+        </div>
+        <button onclick="closeModal('na-manager-modal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-white text-xl font-bold">✕</button>
+      </div>
+      <div id="na-manager-list" class="py-4 overflow-y-auto space-y-2.5 custom-scroll flex-1"></div>
+      <div class="pt-3 border-t border-warm-100 dark:border-warm-800 flex justify-between items-center">
+        <span class="text-xs text-stone-400">Zmiany zapisują się automatycznie w chmurze.</span>
+        <button onclick="closeModal('na-manager-modal')" class="bg-warm-900 dark:bg-brand-500 text-white font-bold px-5 py-2 rounded-xl text-xs">Gotowe</button>
       </div>
     </div>
   </div>
@@ -402,7 +431,7 @@
         <button onclick="closeModal('ai-modal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-white text-xl font-bold">✕</button>
       </div>
       <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
-        AI przeanalizuje otwarte i nieprzypisane zadania, uwzględni <strong>8h pracy stacjonarnej Przema</strong>, Wasze <strong>wolne środy</strong>, godzinowe bloki <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong>.
+        AI przeanalizuje otwarte i nieprzypisane zadania, uwzględni <strong>8h pracy stacjonarnej Przema</strong>, Wasze <strong>wolne środy</strong>, stałe cykliczne <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong>.
       </p>
       <div id="ai-output" class="bg-warm-50 dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-2xl p-4 text-sm text-stone-700 dark:text-stone-200 whitespace-pre-line min-h-[120px] max-h-[300px] overflow-y-auto custom-scroll">
         Kliknij przycisk poniżej, aby wygenerować propozycję rozkładu zadań.
@@ -441,7 +470,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
       getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
-      onSnapshot, query, where, getDocs
+      onSnapshot, query, where
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -464,9 +493,7 @@
       'Nieprzypisane': '❓'
     };
 
-    // DOMYŚLNA BAZA 25 ZADAŃ (BEZ NARZUCONEGO PODZIAŁU NA OSOBĘ)
     const DEFAULT_MONTHLY_TASKS = [
-      // Berneńczyk
       { title: "Tabletka na kleszcze i pasożyty", desc: "Podanie dawki + wpis w książeczce", category: "Berneńczyk", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
       { title: "Wyczesywanie podszerstka", desc: "Szczotka pudlówka + zgrzebło (za uszami, kryza, portki)", category: "Berneńczyk", freq: 4, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
       { title: "Mycie i wyparzanie misek oraz maty", desc: "Miska na wodę i karmę + przetarcie podłogi", category: "Berneńczyk", freq: 4, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
@@ -474,13 +501,11 @@
       { title: "Kontrola zapasu karmy i smaczków + zamówienie", desc: "Zamówić worek z wyprzedzeniem", category: "Berneńczyk", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
       { title: "Kontrola uszu, opuszek łap i długości pazurów", desc: "Przetarcie uszu, kontrola łap", category: "Berneńczyk", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
       { title: "Pranie materiałowych zabawek i szarpaków", desc: "Odświeżenie zabawek", category: "Berneńczyk", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      // Samochód
       { title: "Odkurzanie sierści z bagażnika i tylnej kanapy", desc: "Gumowa szczotka / rolka + odkurzacz", category: "Auto", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
       { title: "Myjnia + mycie szyb od środka", desc: "Zmycie brudu i odtłuszczenie przedniej szyby", category: "Auto", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
       { title: "Kontrola ciśnienia w oponach, oleju i płynu do spryskiwaczy", desc: "Sprawdzenie na zimnych oponach", category: "Auto", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
       { title: "Wytrzepanie / przetarcie maty ochronnej dla psa", desc: "Oczyszczenie maty w bagażniku", category: "Auto", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
       { title: "Sprawdzenie ważności OC, przeglądu i wyposażenia", desc: "Szybka kontrola w mObywatel", category: "Auto", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
-      // Dom i porządki
       { title: "Gruntowne odkurzanie i mycie podłóg", desc: "Zebranie sierści spod kanapy i z kątów", category: "Dom", freq: 4, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
       { title: "Opróżnienie i wyczyszczenie filtrów/szczotek odkurzacza", desc: "Wyczesanie szczotki głównej", category: "Dom", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
       { title: "Zmiana pościeli i pranie ręczników", desc: "Świeża pościel i komplet ręczników", category: "Dom", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
@@ -491,7 +516,6 @@
       { title: "Mycie koszy na śmieci i wycieraczki wejściowej", desc: "Odświeżenie koszy i wejścia", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
       { title: "Pranie narzut, poszewek z kanapy / tekstyliów", desc: "Odświeżenie tekstyliów, na których leży pies", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
       { title: "Przetarcie kurzy na wysokościach, listew i drzwi", desc: "Szafki, parapety, listwy przypodłogowe", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      // Rachunki i organizacja
       { title: "Opłacenie rachunków stałych", desc: "Czynsz, prąd, gaz, internet, abonamenty", category: "Rachunki", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
       { title: "Przegląd budżetu i subskrypcji", desc: "Kontrola stałych wydatków", category: "Rachunki", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
       { title: "Wpisanie wyjazdów, blokad N/A i planu kolejnego miesiąca", desc: "Przygotowanie kalendarza na nowy miesiąc", category: "Rachunki", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true }
@@ -537,6 +561,11 @@
       const m = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       return `${y}-${m}-${day}`;
+    }
+
+    function parseLocalDate(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
     }
 
     function getMonthKey(year, month) {
@@ -585,7 +614,6 @@
 
       const monthKey = getMonthKey(currentYear, currentMonth);
 
-      // 1. Zadania w miesiącu
       const qTasks = query(
         collection(db, "tasks"),
         where("secret", "==", homeSecret),
@@ -603,15 +631,15 @@
         appContainer.classList.add('hidden');
       });
 
-      // 2. Blokady N/A i wyjazdy
       const qNa = query(collection(db, "naBlocks"), where("secret", "==", homeSecret));
       unsubNa = onSnapshot(qNa, (snapshot) => {
         naBlocks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        document.getElementById('na-total-count').textContent = naBlocks.length;
         renderCalendar();
         updateSelectedDayPanel();
+        renderNaManagerList();
       });
 
-      // 3. Konfigurowalna baza wzorców zadań
       const qTpl = query(collection(db, "taskTemplates"), where("secret", "==", homeSecret));
       unsubTemplates = onSnapshot(qTpl, async (snapshot) => {
         if (snapshot.empty && !seededTemplatesOnce) {
@@ -630,6 +658,159 @@
           .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
         renderConfigTemplates();
       });
+    }
+
+    // LOGIKA SPRAWDZANIA BLOKAD N/A (JEDNORAZOWYCH, ZAKRESOWYCH ORAZ CYKLICZNYCH CO TYDZIEŃ / CO 2 TYGODNIE)
+    function getBlocksForDate(dateStr) {
+      const target = parseLocalDate(dateStr);
+      const msPerDay = 24 * 60 * 60 * 1000;
+
+      return naBlocks.filter(b => {
+        const repeat = b.repeat || 'once';
+        if (repeat === 'once') {
+          return b.startDate <= dateStr && (b.endDate || b.startDate) >= dateStr;
+        }
+        const anchor = parseLocalDate(b.startDate);
+        if (target < anchor) return false;
+        const diffDays = Math.round((target - anchor) / msPerDay);
+        if (repeat === 'weekly') return diffDays % 7 === 0;
+        if (repeat === 'biweekly') return diffDays % 14 === 0;
+        return false;
+      });
+    }
+
+    // OBSŁUGA FORMULARZA N/A
+    window.handleNaRepeatChange = () => {
+      const repeat = document.getElementById('na-repeat').value;
+      const endDateWrap = document.getElementById('na-end-date-wrap');
+      const startLabel = document.getElementById('na-start-date-label');
+      if (repeat === 'once') {
+        endDateWrap.classList.remove('hidden');
+        startLabel.textContent = 'Od dnia';
+      } else {
+        endDateWrap.classList.add('hidden');
+        startLabel.textContent = 'Pierwszy dzień';
+      }
+    };
+
+    window.toggleNaForm = () => {
+      document.getElementById('na-form').classList.toggle('hidden');
+      handleNaRepeatChange();
+    };
+
+    document.getElementById('na-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const who = document.getElementById('na-who').value;
+      const mode = document.getElementById('na-mode').value;
+      const repeat = document.getElementById('na-repeat').value;
+      const startDate = document.getElementById('na-start-date').value;
+      const startTime = document.getElementById('na-start-time').value;
+      const endDate = repeat === 'once' ? document.getElementById('na-end-date').value : startDate;
+      const endTime = document.getElementById('na-end-time').value;
+      const note = document.getElementById('na-note').value.trim();
+
+      if (repeat === 'once' && endDate < startDate) {
+        alert("Data końcowa nie może być wcześniejsza niż początkowa.");
+        return;
+      }
+
+      await addDoc(collection(db, "naBlocks"), {
+        secret: homeSecret, who, mode, repeat, startDate, startTime, endDate, endTime, note
+      });
+
+      document.getElementById('na-note').value = '';
+      toggleNaForm();
+    });
+
+    window.deleteNaBlock = async (id) => {
+      await deleteDoc(doc(db, "naBlocks", id));
+    };
+
+    window.updateNaBlockField = async (id, field, value) => {
+      const updates = { [field]: value };
+      if (field === 'repeat' && value !== 'once') {
+        const item = naBlocks.find(x => x.id === id);
+        if (item) updates.endDate = item.startDate;
+      }
+      await updateDoc(doc(db, "naBlocks", id), updates);
+    };
+
+    // MODAL ZARZĄDZANIA WSZYSTKIMI N/A (EDYCJA CYKLICZNYCH I JEDNORAZOWYCH)
+    window.openNaManagerModal = () => {
+      renderNaManagerList();
+      document.getElementById('na-manager-modal').classList.remove('hidden');
+      document.getElementById('na-manager-modal').classList.add('flex');
+    };
+
+    function renderNaManagerList() {
+      const container = document.getElementById('na-manager-list');
+      if (!container) return;
+
+      if (naBlocks.length === 0) {
+        container.innerHTML = `<div class="text-center text-stone-400 text-sm py-8">Brak dodanych blokad N/A ani wyjazdów.</div>`;
+        return;
+      }
+
+      const sorted = [...naBlocks].sort((a, b) => (a.repeat === 'once' ? 1 : 0) - (b.repeat === 'once' ? 1 : 0) || a.startDate.localeCompare(b.startDate));
+
+      container.innerHTML = sorted.map(b => {
+        const repeat = b.repeat || 'once';
+        return `
+          <div class="p-3.5 rounded-2xl border border-warm-200 dark:border-warm-700 bg-warm-50/70 dark:bg-warm-800/60 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <select onchange="updateNaBlockField('${b.id}', 'who', this.value)" class="px-2.5 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-bold">
+                  <option value="Przemo" ${b.who === 'Przemo' ? 'selected' : ''}>🧔 Przemo</option>
+                  <option value="Róża" ${b.who === 'Róża' ? 'selected' : ''}>👩 Róża</option>
+                  <option value="Oboje" ${b.who === 'Oboje' ? 'selected' : ''}>👫 Oboje</option>
+                </select>
+                <select onchange="updateNaBlockField('${b.id}', 'mode', this.value)" class="px-2.5 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
+                  <option value="busy" ${b.mode === 'busy' ? 'selected' : ''}>⛔ Brak czasu (N/A)</option>
+                  <option value="away" ${b.mode === 'away' ? 'selected' : ''}>🏠 Poza domem</option>
+                </select>
+                <select onchange="updateNaBlockField('${b.id}', 'repeat', this.value)" class="px-2.5 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-bold text-brand-600 dark:text-brand-400">
+                  <option value="once" ${repeat === 'once' ? 'selected' : ''}>Jednorazowe</option>
+                  <option value="weekly" ${repeat === 'weekly' ? 'selected' : ''}>↻ Co tydzień</option>
+                  <option value="biweekly" ${repeat === 'biweekly' ? 'selected' : ''}>↻ Co 2 tygodnie</option>
+                </select>
+              </div>
+              <button onclick="deleteNaBlock('${b.id}')" title="Usuń blokadę" class="text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 px-2 py-1 rounded-lg font-bold">🗑️ Usuń</button>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 items-center">
+              <div>
+                <span class="text-[10px] text-stone-400 uppercase font-bold block">${repeat === 'once' ? 'Od dnia' : 'Start cyklu'}</span>
+                <input type="date" value="${b.startDate}" onchange="updateNaBlockField('${b.id}', 'startDate', this.value)"
+                  class="w-full px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
+              </div>
+              <div>
+                <span class="text-[10px] text-stone-400 uppercase font-bold block">Od godz.</span>
+                <input type="time" value="${b.startTime}" onchange="updateNaBlockField('${b.id}', 'startTime', this.value)"
+                  class="w-full px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
+              </div>
+              ${repeat === 'once' ? `
+              <div>
+                <span class="text-[10px] text-stone-400 uppercase font-bold block">Do dnia</span>
+                <input type="date" value="${b.endDate || b.startDate}" onchange="updateNaBlockField('${b.id}', 'endDate', this.value)"
+                  class="w-full px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
+              </div>` : `
+              <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold pt-3">
+                Co ${repeat === 'weekly' ? '7' : '14'} dni
+              </div>`}
+              <div>
+                <span class="text-[10px] text-stone-400 uppercase font-bold block">Do godz.</span>
+                <input type="time" value="${b.endTime}" onchange="updateNaBlockField('${b.id}', 'endTime', this.value)"
+                  class="w-full px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
+              </div>
+              <div class="col-span-2 sm:col-span-1">
+                <span class="text-[10px] text-stone-400 uppercase font-bold block">Opis</span>
+                <input type="text" value="${(b.note || '').replace(/"/g, '&quot;')}" placeholder="np. Terapia" onchange="updateNaBlockField('${b.id}', 'note', this.value)"
+                  class="w-full px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     // PRZEŁĄCZANIE EKRANU KONFIGURACJI BAZY ZADAŃ
@@ -770,7 +951,6 @@
       }
     };
 
-    // GENEROWANIE ZADAŃ NA WYBRANY MIESIĄC Z KONFIGURACJI
     window.generateMonthFromConfig = async () => {
       const active = taskTemplates.filter(t => t.enabled !== false);
       if (active.length === 0) {
@@ -779,7 +959,6 @@
       }
 
       const monthKey = getMonthKey(currentYear, currentMonth);
-      // Zbierz wszystkie środy w tym miesiącu (idealne na zadania 4x i 2x)
       const wednesdays = [];
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       for (let d = 1; d <= daysInMonth; d++) {
@@ -793,7 +972,6 @@
         const assignee = tpl.assignee || 'Nieprzypisane';
 
         if (freq === 4) {
-          // Na każdą wolną środę w miesiącu
           const targetDates = wednesdays.length > 0 ? wednesdays : [`${monthKey}-01`, `${monthKey}-08`, `${monthKey}-15`, `${monthKey}-22`];
           for (let idx = 0; idx < targetDates.length; idx++) {
             await addDoc(collection(db, "tasks"), {
@@ -810,7 +988,6 @@
             });
           }
         } else if (freq === 2) {
-          // Co 2 tygodnie (1. i 3. środa lub 1. i 15. dzień)
           const d1 = wednesdays[0] || `${monthKey}-01`;
           const d2 = wednesdays[2] || wednesdays[1] || `${monthKey}-15`;
           for (let idx = 0; idx < 2; idx++) {
@@ -828,7 +1005,6 @@
             });
           }
         } else {
-          // 1x w miesiącu
           const targetDate = tpl.remoteOk ? `${monthKey}-05` : firstWed;
           await addDoc(collection(db, "tasks"), {
             secret: homeSecret,
@@ -847,11 +1023,6 @@
 
       closeConfigScreen();
     };
-
-    // BLOKADY N/A DLA DANEGO DNIA
-    function getBlocksForDate(dateStr) {
-      return naBlocks.filter(b => b.startDate <= dateStr && b.endDate >= dateStr);
-    }
 
     // STATYSTYKI
     function renderStats() {
@@ -912,6 +1083,7 @@
 
         const naBadgesHtml = blocks.slice(0, 2).map(b => {
           const isAway = b.mode === 'away';
+          const isRecurring = b.repeat && b.repeat !== 'once';
           const whoIcon = PERSON_ICON[b.who] || '👤';
           const color = isAway
             ? 'bg-amber-100 dark:bg-amber-900/70 text-amber-800 dark:text-amber-200'
@@ -920,8 +1092,8 @@
                 : (b.who === 'Róża'
                     ? 'bg-rose-100 dark:bg-rose-900/70 text-rose-800 dark:text-rose-200'
                     : 'bg-red-100 dark:bg-red-900/70 text-red-800 dark:text-red-200'));
-          const timeHint = b.startDate === b.endDate ? `${b.startTime}` : (isAway ? 'Wyjazd' : 'N/A');
-          return `<div class="text-[9px] font-bold px-1 py-0.5 rounded ${color} truncate">${whoIcon}${isAway ? '🏠' : '⛔'} ${timeHint}</div>`;
+          const timeHint = b.startDate === b.endDate || isRecurring ? `${b.startTime}` : (isAway ? 'Wyjazd' : 'N/A');
+          return `<div class="text-[9px] font-bold px-1 py-0.5 rounded ${color} truncate">${whoIcon}${isRecurring ? '↻' : (isAway ? '🏠' : '⛔')} ${timeHint}</div>`;
         }).join('');
 
         let taskPills = '';
@@ -962,7 +1134,7 @@
       const list = document.getElementById('selected-day-na-list');
       if (!selectedDateStr) return;
 
-      const d = new Date(selectedDateStr);
+      const d = parseLocalDate(selectedDateStr);
       label.textContent = d.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
 
       const blocks = getBlocksForDate(selectedDateStr);
@@ -974,52 +1146,25 @@
       list.innerHTML = blocks.map(b => {
         const isAway = b.mode === 'away';
         const whoIcon = PERSON_ICON[b.who] || '👤';
-        const rangeText = b.startDate === b.endDate
+        const repeat = b.repeat || 'once';
+        const repeatTag = repeat === 'weekly' ? ' • ↻ Co tydzień' : (repeat === 'biweekly' ? ' • ↻ Co 2 tyg.' : '');
+        const rangeText = repeat !== 'once' || b.startDate === b.endDate
           ? `${b.startTime} – ${b.endTime}`
           : `${b.startDate} (${b.startTime}) → ${b.endDate} (${b.endTime})`;
         return `
           <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs border ${isAway ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-900 text-amber-900 dark:text-amber-200' : 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900 text-red-900 dark:text-red-200'}">
             <div>
-              <span class="font-bold">${whoIcon} ${b.who} • ${isAway ? '🏠 Poza domem' : '⛔ N/A (Brak czasu)'}</span>
-              <span class="opacity-80 ml-1">(${rangeText})</span>
+              <span class="font-bold">${whoIcon} ${b.who} • ${isAway ? '🏠 Poza domem' : '⛔ N/A'} (${rangeText})${repeatTag}</span>
               ${b.note ? `<span class="block text-[11px] opacity-75">${b.note}</span>` : ''}
             </div>
-            <button onclick="deleteNaBlock('${b.id}')" class="px-1.5 py-0.5 rounded hover:bg-black/10 font-bold">✕</button>
+            <div class="flex items-center gap-1">
+              <button onclick="openNaManagerModal()" title="Edytuj" class="px-1.5 py-0.5 rounded hover:bg-black/10 font-bold">✏️</button>
+              <button onclick="deleteNaBlock('${b.id}')" title="Usuń" class="px-1.5 py-0.5 rounded hover:bg-black/10 font-bold">✕</button>
+            </div>
           </div>
         `;
       }).join('');
     }
-
-    window.toggleNaForm = () => {
-      document.getElementById('na-form').classList.toggle('hidden');
-    };
-
-    document.getElementById('na-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const who = document.getElementById('na-who').value;
-      const mode = document.getElementById('na-mode').value;
-      const startDate = document.getElementById('na-start-date').value;
-      const startTime = document.getElementById('na-start-time').value;
-      const endDate = document.getElementById('na-end-date').value;
-      const endTime = document.getElementById('na-end-time').value;
-      const note = document.getElementById('na-note').value.trim();
-
-      if (endDate < startDate) {
-        alert("Data końcowa nie może być wcześniejsza niż początkowa.");
-        return;
-      }
-
-      await addDoc(collection(db, "naBlocks"), {
-        secret: homeSecret, who, mode, startDate, startTime, endDate, endTime, note
-      });
-
-      document.getElementById('na-note').value = '';
-      toggleNaForm();
-    });
-
-    window.deleteNaBlock = async (id) => {
-      await deleteDoc(doc(db, "naBlocks", id));
-    };
 
     window.changeMonth = (delta) => {
       currentMonth += delta;
@@ -1028,7 +1173,7 @@
       subscribeFirestore();
     };
 
-    // LISTA ZADAŃ W MIESIĄCU (Z SZYBKIM PRZYPISANIEM OSOBY)
+    // LISTA ZADAŃ W MIESIĄCU
     function renderTasks() {
       const list = document.getElementById('tasks-list');
       let filtered = [...allTasks];
@@ -1106,7 +1251,7 @@
       const remoteOk = document.getElementById('task-remote-ok').checked;
       const monthKey = getMonthKey(currentYear, currentMonth);
 
-      let baseDate = date ? new Date(date) : new Date(currentYear, currentMonth, 1);
+      let baseDate = date ? parseLocalDate(date) : new Date(currentYear, currentMonth, 1);
       const stepDays = count === 2 ? 14 : 7;
 
       for (let i = 0; i < count; i++) {
@@ -1160,15 +1305,21 @@
         return;
       }
 
-      out.textContent = "Analizuję grafik, wolne środy, bloki godzinowe N/A oraz wyjazdy poza dom...";
+      out.textContent = "Analizuję grafik, wolne środy, cykliczne blokady N/A oraz wyjazdy poza dom...";
 
-      const naSummary = naBlocks.map(b => {
-        const typeLabel = b.mode === 'away'
-          ? 'POZA DOMEM (wyjazd — brak zadań stacjonarnych w domu, ale można planować zadania zdalne/wyjazdowe)'
-          : 'N/A BRAK CZASU (zero jakichkolwiek zadań w tych godzinach)';
-        return `- ${b.who}: ${typeLabel} od ${b.startDate} ${b.startTime} do ${b.endDate} ${b.endTime} (${b.note || 'bez notatki'})`;
-      }).join('\n') || 'brak wpisanych blokad';
+      // Zbierz wszystkie wystąpienia blokad w bieżącym miesiącu
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      const monthNaOccurrences = [];
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = formatDate(new Date(currentYear, currentMonth, d));
+        const dayBlocks = getBlocksForDate(dateStr);
+        dayBlocks.forEach(b => {
+          const typeLabel = b.mode === 'away' ? 'POZA DOMEM (wyjazd)' : 'N/A BRAK CZASU';
+          monthNaOccurrences.push(`- ${dateStr} (${b.startTime}-${b.endTime}): ${b.who} -> ${typeLabel} (${b.note || 'brak opisu'})`);
+        });
+      }
 
+      const naSummary = monthNaOccurrences.join('\n') || 'brak wpisanych blokad w tym miesiącu';
       const tasksSummary = openTasks.map(t =>
         `- ${t.title} [${t.category}, obecnie: ${t.assignee || 'Nieprzypisane'}, data: ${t.date || 'brak'}, zdalne/wyjazdowe: ${t.remoteOk ? 'TAK' : 'NIE'}]`
       ).join('\n');
@@ -1180,7 +1331,7 @@ Kontekst:
 - Oboje mają WOLNE ŚRODY w każdym tygodniu.
 - Miesiąc: ${getMonthKey(currentYear, currentMonth)}.
 
-Blokady N/A i wyjazdy poza dom:
+Wszystkie niedostępności N/A i wyjazdy w tym miesiącu (włącznie z cyklicznymi):
 ${naSummary}
 
 Lista otwartych zadań (część jest nieprzypisana):
