@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Domowy Planer — Przemo, Róża & Gosiek</title>
+  <title>Domowy Planer — Przemo, Róża & Czosnek</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -53,7 +53,7 @@
         🐾
       </div>
       <h1 class="text-2xl font-extrabold text-warm-900 dark:text-white mb-2">Domowy Planer</h1>
-      <p class="text-stone-500 dark:text-stone-400 text-sm mb-6">Przemo, Róża, Gosiek & Auto.<br>Wpisz hasło domowe, aby zsynchronizować listę.</p>
+      <p class="text-stone-500 dark:text-stone-400 text-sm mb-6">Przemo, Róża, Czosnek & Auto.<br>Wpisz hasło domowe, aby zsynchronizować listę.</p>
       <form id="auth-form" class="space-y-4">
         <input id="secret-input" type="password" required placeholder="Twoje hasło z reguł Firestore..."
           class="w-full px-4 py-3 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-center font-medium" />
@@ -80,7 +80,7 @@
               🧪 Miesiąc testowy (bez czerwonych alertów)
             </span>
           </div>
-          <p class="text-stone-500 dark:text-stone-400 text-xs sm:text-sm mt-1">🐕 Gosiek • 🛁 Łazienka • 🧹 Mieszkanie • 🍳 Kuchnia • 🚗 Auto — <span id="current-month-label" class="font-semibold text-brand-600 dark:text-brand-400 capitalize"></span></p>
+          <p class="text-stone-500 dark:text-stone-400 text-xs sm:text-sm mt-1">🐕 Czosnek • 🛁 Łazienka • 🧹 Mieszkanie • 🍳 Kuchnia • 🚗 Auto — <span id="current-month-label" class="font-semibold text-brand-600 dark:text-brand-400 capitalize"></span></p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -95,7 +95,7 @@
           </div>
 
           <button onclick="openConfigScreen()" class="px-3.5 py-2 rounded-xl bg-brand-50 dark:bg-brand-950/80 hover:bg-brand-100 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 font-bold text-xs sm:text-sm transition flex items-center gap-1.5 border border-brand-200/70 dark:border-brand-800">
-            <span>🛠️</span> Baza zadań
+            <span>🛠️</span> Baza zadań (39)
           </button>
           <button onclick="openAiModal()" class="px-3.5 py-2 rounded-xl bg-warm-900 dark:bg-brand-500 hover:bg-stone-800 dark:hover:bg-brand-600 text-white font-semibold text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm">
             <span>✨</span> Plan AI
@@ -109,19 +109,28 @@
         </div>
       </div>
 
-      <!-- SPERSONALIZOWANA KARTA SUGESTII DLA AKTYWNEGO PROFILU -->
+      <!-- SPERSONALIZOWANA KARTA: CO ZROBIĆ TERAZ? (DOBÓR POD DOSTĘPNY CZAS + W POJEDYNKĘ / RAZEM) -->
       <div id="personal-focus-card" class="rounded-2xl border p-4 transition-all bg-sky-50/70 dark:bg-sky-950/30 border-sky-200/80 dark:border-sky-900/60">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
-          <div class="flex items-center gap-2">
-            <span id="personal-focus-icon" class="text-xl">🧔</span>
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
+          <div class="flex items-center gap-2.5">
+            <span id="personal-focus-icon" class="text-2xl">🧔</span>
             <div>
-              <h2 id="personal-focus-title" class="text-sm font-extrabold text-warm-900 dark:text-white">Na czym warto dziś popracować — Przemo</h2>
-              <p id="personal-focus-subtitle" class="text-[11px] text-stone-500 dark:text-stone-400">Dopasowane do Twojego grafiku i wolnych okienek</p>
+              <h2 id="personal-focus-title" class="text-sm font-extrabold text-warm-900 dark:text-white">Mam chwilę teraz — co wybrać? (Przemo)</h2>
+              <p id="personal-focus-subtitle" class="text-[11px] text-stone-500 dark:text-stone-400">Wybierz, ile masz teraz czasu, a AI dobierze zadanie na już</p>
             </div>
           </div>
-          <button id="personal-ai-refresh-btn" onclick="generatePersonalAiTips()" class="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 hover:border-brand-400 text-xs font-bold text-warm-900 dark:text-white transition shadow-2xs flex items-center gap-1.5">
-            <span>✨</span> Podpowiedź AI dla mnie
-          </button>
+
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-[11px] font-bold text-stone-500 dark:text-stone-400 mr-1">Ile masz czasu?</span>
+            <button onclick="selectNowTime('15 min')" data-nowtime="15 min" class="now-time-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 text-stone-700 dark:text-stone-200 hover:border-brand-400 transition">15 min</button>
+            <button onclick="selectNowTime('30 min')" data-nowtime="30 min" class="now-time-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-500 text-white border border-brand-500 transition">30 min</button>
+            <button onclick="selectNowTime('1 godz.')" data-nowtime="1 godz." class="now-time-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 text-stone-700 dark:text-stone-200 hover:border-brand-400 transition">1 godz.</button>
+            <button onclick="selectNowTime('2 godz.+')" data-nowtime="2 godz.+" class="now-time-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 text-stone-700 dark:text-stone-200 hover:border-brand-400 transition">2 godz.+</button>
+
+            <button id="personal-ai-refresh-btn" onclick="generatePersonalAiTips()" class="ml-1 px-3 py-1.5 rounded-xl bg-warm-900 dark:bg-brand-500 hover:bg-stone-800 dark:hover:bg-brand-600 text-xs font-bold text-white transition shadow-2xs flex items-center gap-1.5">
+              <span>✨</span> Dobierz na teraz
+            </button>
+          </div>
         </div>
         <div id="personal-focus-list" class="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs"></div>
       </div>
@@ -301,22 +310,32 @@
               </select>
             </div>
             <div>
-              <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Sekcja / Kategoria</label>
-              <select id="task-category" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm">
-                <option value="Łazienka">🛁 Łazienka i pranie</option>
-                <option value="Gosiek">🐕 Opieka nad Gośkiem</option>
-                <option value="Mieszkanie">🧹 Sprzątanie mieszkania</option>
-                <option value="Rachunki i auto">🚗 Rachunki, auto i zakupy</option>
-                <option value="Kuchnia">🍳 Kuchnia</option>
+              <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Tryb (solo / razem)</label>
+              <select id="task-coop" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm">
+                <option value="solo">👤 W pojedynkę</option>
+                <option value="together">👫 Razem (we dwoje)</option>
               </select>
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
             <div>
+              <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Sekcja / Kategoria</label>
+              <select id="task-category" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm">
+                <option value="Łazienka">🛁 Łazienka i pranie</option>
+                <option value="Czosnek">🐕 Opieka nad Czosnkiem</option>
+                <option value="Mieszkanie">🧹 Sprzątanie mieszkania</option>
+                <option value="Rachunki i auto">🚗 Rachunki, auto i zakupy</option>
+                <option value="Kuchnia">🍳 Kuchnia</option>
+              </select>
+            </div>
+            <div>
               <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Data w kalendarzu</label>
               <input id="task-date" type="date" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
             </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 items-center">
             <div>
               <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Powtarzalność</label>
               <select id="task-recurrence" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm">
@@ -325,17 +344,16 @@
                 <option value="4">4x w tym miesiącu (co tydz.)</option>
               </select>
             </div>
-          </div>
-
-          <div class="flex flex-wrap gap-4 pt-1">
-            <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
-              <input id="task-remote-ok" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
-              <span>🌍 Poza domem / zakupy</span>
-            </label>
-            <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
-              <input id="task-starred" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
-              <span>⭐ Wyróżnij gwiazdką</span>
-            </label>
+            <div class="space-y-1.5 pt-4">
+              <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
+                <input id="task-remote-ok" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
+                <span>🌍 Poza domem / zakupy</span>
+              </label>
+              <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
+                <input id="task-starred" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
+                <span>⭐ Wyróżnij gwiazdką</span>
+              </label>
+            </div>
           </div>
 
           <div class="flex justify-end gap-2 pt-1">
@@ -344,14 +362,15 @@
           </div>
         </form>
 
-        <!-- FILTRY OSÓB I 5 SEKCJI -->
+        <!-- FILTRY OSÓB, TRYBU RAZEM I 5 SEKCJI -->
         <div class="flex flex-wrap gap-1.5 mb-4">
           <button onclick="setFilter('all')" data-filter="all" class="filter-btn px-2.5 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white">Wszystkie</button>
           <button onclick="setFilter('Przemo')" data-filter="Przemo" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🧔 Przemo</button>
           <button onclick="setFilter('Róża')" data-filter="Róża" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">👩 Róża</button>
+          <button onclick="setFilter('together')" data-filter="together" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">👫 Razem</button>
           <button onclick="setFilter('Nieprzypisane')" data-filter="Nieprzypisane" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">❓ Nieprzypisane</button>
           <button onclick="setFilter('Łazienka')" data-filter="Łazienka" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🛁 Łazienka</button>
-          <button onclick="setFilter('Gosiek')" data-filter="Gosiek" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Gosiek</button>
+          <button onclick="setFilter('Czosnek')" data-filter="Czosnek" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Czosnek</button>
           <button onclick="setFilter('Mieszkanie')" data-filter="Mieszkanie" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🧹 Mieszkanie</button>
           <button onclick="setFilter('Rachunki i auto')" data-filter="Rachunki i auto" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🚗 Auto/Zakupy</button>
           <button onclick="setFilter('Kuchnia')" data-filter="Kuchnia" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🍳 Kuchnia</button>
@@ -364,7 +383,7 @@
       </section>
     </div>
 
-    <!-- EKRAN KONFIGURACJI BAZY ZADAŃ -->
+    <!-- EKRAN KONFIGURACJI BAZY ZADAŃ (39 OBOWIĄZKÓW W 5 SEKCJACH) -->
     <div id="config-view" class="hidden space-y-5">
       <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-4 sm:p-6 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-warm-100 dark:border-warm-800">
@@ -373,15 +392,15 @@
               <button onclick="closeConfigScreen()" class="px-3 py-1.5 rounded-xl bg-warm-100 dark:bg-warm-800 hover:bg-warm-200 dark:hover:bg-warm-700 text-xs font-bold transition">
                 ← Wróć do kalendarza
               </button>
-              <h2 class="text-xl font-extrabold text-warm-900 dark:text-white">🛠️ Konfiguracja stałej bazy zadań (5 sekcji)</h2>
+              <h2 class="text-xl font-extrabold text-warm-900 dark:text-white">🛠️ Konfiguracja bazy zadań (5 sekcji)</h2>
             </div>
             <p class="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1.5">
-              Każde nowe zadanie dodane tutaj <strong>automatycznie wpada</strong> też do bieżącego miesiąca. Możesz też przeładować pełną listę na wybrany miesiąc.
+              Ustawiacie tu częstotliwość, kto robi oraz czy zadanie opłaca się zrobić <strong>👤 w pojedynkę</strong> czy <strong>👫 razem</strong>. Każde dodane zadanie od razu wpada na ten miesiąc.
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
             <button onclick="replaceWithFull39Tasks()" class="px-3.5 py-2.5 rounded-xl border border-warm-200 dark:border-warm-700 hover:bg-warm-100 dark:hover:bg-warm-800 text-xs font-semibold text-stone-600 dark:text-stone-300 transition">
-              Załaduj listę 39 obowiązków
+              Załaduj pełną listę 39 obowiązków
             </button>
             <button onclick="generateMonthFromConfig()" class="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-500/20 transition">
               🚀 Wrzuć aktywne na wybrany miesiąc
@@ -389,42 +408,47 @@
           </div>
         </div>
 
-        <!-- DODAWANIE NOWEGO STAŁEGO ZADANIA DO BAZY (OD RAZU WPADA TEŻ DO BIEŻĄCEGO MIESIĄCA) -->
+        <!-- DODAWANIE NOWEGO STAŁEGO ZADANIA DO BAZY -->
         <form id="new-template-form" class="mt-5 bg-warm-50 dark:bg-warm-800/50 border border-warm-200 dark:border-warm-700 rounded-2xl p-4 space-y-3">
           <div class="text-xs font-extrabold uppercase tracking-wider text-brand-600 dark:text-brand-400">+ Dodaj nowy stały obowiązek (od razu trafi na ten miesiąc)</div>
           <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5">
             <input id="tpl-title" type="text" required placeholder="Nazwa zadania (np. Mycie okien)"
-              class="md:col-span-4 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
-            <input id="tpl-desc" type="text" placeholder="Krótki opis / wskazówka (opcjonalnie)"
+              class="md:col-span-3 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
+            <input id="tpl-desc" type="text" placeholder="Krótki opis / wskazówka"
               class="md:col-span-3 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
             <select id="tpl-category" class="md:col-span-2 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
               <option value="Łazienka">🛁 Łazienka i pranie</option>
-              <option value="Gosiek">🐕 Opieka nad Gośkiem</option>
+              <option value="Czosnek">🐕 Opieka nad Czosnkiem</option>
               <option value="Mieszkanie">🧹 Sprzątanie mieszkania</option>
               <option value="Rachunki i auto">🚗 Rachunki, auto i zakupy</option>
               <option value="Kuchnia">🍳 Kuchnia</option>
             </select>
-            <select id="tpl-freq" class="md:col-span-1 px-2.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
+            <select id="tpl-freq" class="md:col-span-2 px-2.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
+              <option value="30">Codziennie / nawyk</option>
               <option value="1">1x / mies.</option>
               <option value="2">2x / mies.</option>
-              <option value="4">4x / mies.</option>
+              <option value="4">4x / mies. (co tydz.)</option>
             </select>
-            <select id="tpl-assignee" class="md:col-span-2 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
-              <option value="Nieprzypisane">❓ Do ustalenia</option>
-              <option value="Przemo">🧔 Przemo</option>
-              <option value="Róża">👩 Róża</option>
-              <option value="Wspólne">👫 Wspólne</option>
+            <select id="tpl-coop" class="md:col-span-2 px-2.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
+              <option value="solo">👤 W pojedynkę</option>
+              <option value="together">👫 Razem</option>
             </select>
           </div>
           <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <div class="flex flex-wrap gap-4">
+            <div class="flex flex-wrap items-center gap-4">
+              <select id="tpl-assignee" class="px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
+                <option value="Nieprzypisane">❓ Kto: Do ustalenia</option>
+                <option value="Przemo">🧔 Przemo</option>
+                <option value="Róża">👩 Róża</option>
+                <option value="Wspólne">👫 Wspólne</option>
+              </select>
               <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
                 <input id="tpl-remote" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
                 <span>🌍 Poza domem / zakupy</span>
               </label>
               <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
                 <input id="tpl-starred" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
-                <span>⭐ Wyróżnij gwiazdką</span>
+                <span>⭐ Gwiazdka</span>
               </label>
             </div>
             <button type="submit" class="px-4 py-2 rounded-xl bg-warm-900 dark:bg-brand-500 hover:bg-stone-800 dark:hover:bg-brand-600 text-white text-xs font-bold transition">
@@ -437,7 +461,7 @@
           <div class="flex flex-wrap gap-1.5">
             <button onclick="setConfigFilter('all')" data-cfilter="all" class="cfilter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white">Wszystkie</button>
             <button onclick="setConfigFilter('Łazienka')" data-cfilter="Łazienka" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🛁 Łazienka i pranie</button>
-            <button onclick="setConfigFilter('Gosiek')" data-cfilter="Gosiek" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Opieka nad Gośkiem</button>
+            <button onclick="setConfigFilter('Czosnek')" data-cfilter="Czosnek" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Opieka nad Czosnkiem</button>
             <button onclick="setConfigFilter('Mieszkanie')" data-cfilter="Mieszkanie" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🧹 Mieszkanie</button>
             <button onclick="setConfigFilter('Rachunki i auto')" data-cfilter="Rachunki i auto" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🚗 Rachunki, auto, zakupy</button>
             <button onclick="setConfigFilter('Kuchnia')" data-cfilter="Kuchnia" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🍳 Kuchnia</button>
@@ -476,7 +500,7 @@
         <button onclick="closeModal('ai-modal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-white text-xl font-bold">✕</button>
       </div>
       <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
-        AI uwzględnia <strong>profile Przema i Róży</strong> (wolne środy po pracy, wtorki i piątki Róży, pisanie e-booka o panieńskich), cykliczne <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong>.
+        AI uwzględnia <strong>profile Przema i Róży</strong>, tryb <strong>👤 W pojedynkę / 👫 Razem</strong>, cykliczne <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong>.
       </p>
       <div id="ai-output" class="bg-warm-50 dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-2xl p-4 text-sm text-stone-700 dark:text-stone-200 whitespace-pre-line min-h-[120px] max-h-[300px] overflow-y-auto custom-scroll">
         Kliknij przycisk poniżej, aby wygenerować propozycję rozkładu zadań.
@@ -517,7 +541,7 @@
 
         <div class="bg-warm-50 dark:bg-warm-800/50 border border-warm-200 dark:border-warm-700 rounded-2xl p-3.5 space-y-1.5">
           <label class="text-xs font-extrabold text-warm-900 dark:text-stone-200 flex items-center gap-1.5">
-            <span>🐾</span> Dodatkowe wskazówki o domu (Gosiek, auto, zasady podziału)
+            <span>🐾</span> Dodatkowe wskazówki o domu (Czosnek, auto, zasady podziału)
           </label>
           <textarea id="profile-home-input" rows="2"
             class="w-full px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
@@ -567,7 +591,7 @@
 
     const CAT_ICON = {
       'Łazienka': '🛁',
-      'Gosiek': '🐕',
+      'Czosnek': '🐕',
       'Mieszkanie': '🧹',
       'Rachunki i auto': '🚗',
       'Kuchnia': '🍳',
@@ -577,59 +601,59 @@
     const DEFAULT_PROFILES = {
       przemo: "Pracuje stacjonarnie 8h dziennie od poniedziałku do piątku (w tym w środy). W ŚRODY PO PRACY ma wolne od domowych obowiązków (czas na odpoczynek). Wolne ma też weekendy.",
       roza: "Pracuje w poniedziałki, środy i czwartki (w ŚRODY PO PRACY ma wolne od domowych obowiązków). We WTORKI i PIĄTKI ma wolne i pracę zdalną (jest w domu). Wolne weekendy. Dodatkowo Róża pisze teraz e-booka o wieczorach panieńskich — czasem podsuń jej lekko i wspierająco sugestię, że w spokojniejszy dzień (np. we wtorek lub piątek) mogłaby nad nim popracować.",
-      home: "Mamy psa Gośka (berneńczyk) oraz samochód. Środy po pracy są dla nas obojga wolne od obowiązków domowych — nie planuj wtedy sprzątania ani spraw przy aucie. Rozkładaj zadania sprawiedliwie na pozostałe dni (np. wtorki/piątki Róży, inne popołudnia i weekendy)."
+      home: "Mamy psa o imieniu Czosnek (berneńczyk) oraz samochód. Środy po pracy są dla nas obojga wolne od obowiązków domowych — nie planuj wtedy sprzątania ani spraw przy aucie. Rozkładaj zadania sprawiedliwie na pozostałe dni, uwzględniając czy dane zadanie robimy w pojedynkę czy razem we dwoje."
     };
 
-    // PEŁNA LISTA 39 OBOWIĄZKÓW W 5 SEKCJACH
+    // KOMPLET WSZYSTKICH 39 OBOWIĄZKÓW W 5 SEKCJACH (Z CZOSNKIEM I TRYBEM SOLO/RAZEM)
     const DEFAULT_MONTHLY_TASKS = [
-      // Sekcja 1: Łazienka i pranie
-      { title: "Pranie (plus dbanie o pralkę)", desc: "Segregacja, pranie i czyszczenie filtra/szuflady pralki", category: "Łazienka", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Mycie lustra, kibla, zlewu, prysznica, mydelniczki", desc: "Kompleksowe mycie łazienki", category: "Łazienka", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Uzupełnianie mydła i patyczków do uszu", desc: "Kontrola zapasów w łazience", category: "Łazienka", freq: 2, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Suszenie i rozkładanie prania", desc: "Rozwieszenie i schowanie do szaf", category: "Łazienka", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Pranie rzeczy Gośka", desc: "Posłanie, kocyki, ręczniki i zabawki", category: "Łazienka", freq: 2, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Odtykanie odpływów", desc: "Profilaktyczne czyszczenie syfonu pod prysznicem i w zlewie", category: "Łazienka", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      // Sekcja 1: Łazienka i pranie (6)
+      { title: "Pranie (plus dbanie o pralkę)", desc: "Segregacja, pranie i czyszczenie filtra/szuflady pralki", category: "Łazienka", freq: 4, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie lustra, kibla, zlewu, prysznica, mydelniczki", desc: "Kompleksowe mycie łazienki", category: "Łazienka", freq: 4, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Uzupełnianie mydła i patyczków do uszu", desc: "Kontrola zapasów w łazience", category: "Łazienka", freq: 2, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Suszenie i rozkładanie prania", desc: "Rozwieszenie i schowanie do szaf", category: "Łazienka", freq: 4, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Pranie rzeczy Czosnka", desc: "Posłanie, kocyki, ręczniki i zabawki Czosnka", category: "Łazienka", freq: 2, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Odtykanie odpływów", desc: "Profilaktyczne czyszczenie syfonu pod prysznicem i w zlewie", category: "Łazienka", freq: 1, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
 
-      // Sekcja 2: Opieka nad psem / Gośkiem
-      { title: "Kupowanie karmy i smaczków", desc: "Kontrola zapasu i zamówienie z wyprzedzeniem", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
-      { title: "Spacery z Gośkiem", desc: "Codzienne wyjścia i dłuższy spacer", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Karmienie + suple", desc: "Porcje karmy oraz suplementy dla Gośka", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Dawanie leków", desc: "Pilnowanie dawkowania leków Gośka", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Umawianie do weta", desc: "Kontrola terminów szczepień/badań i rejestracja", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
-      { title: "Czesanie Gośka", desc: "Wyczesywanie podszerstka (szczególnie za uszami i portki)", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Mycie Gośka", desc: "Kąpiel / mycie łap i brzucha po błocie", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Obcinanie pazurów", desc: "Kontrola długości i przycięcie", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Mycie zębów Gośka ⭐", desc: "Regularne szczotkowanie zębów psa", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: true, enabled: true },
-      { title: "Krople na kleszcze", desc: "Aplikacja ochrony przeciwkleszczowej", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
-      { title: "Odrobaczanie", desc: "Podanie tabletki na odrobaczanie", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
-      { title: "Mycie misek", desc: "Umycie i wyparzenie misek na wodę i karmę", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      // Sekcja 2: Opieka nad Czosnkiem (12)
+      { title: "Kupowanie karmy i smaczków", desc: "Kontrola zapasu i zamówienie z wyprzedzeniem", category: "Czosnek", freq: 1, coop: "solo", assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Spacery z Czosnkiem", desc: "Codzienne wyjścia i dłuższy spacer", category: "Czosnek", freq: 30, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Karmienie + suple", desc: "Codzienne porcje karmy oraz suplementy dla Czosnka", category: "Czosnek", freq: 30, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Dawanie leków", desc: "Codzienne pilnowanie dawkowania leków Czosnka", category: "Czosnek", freq: 30, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Umawianie do weta", desc: "Kontrola terminów szczepień/badań i rejestracja", category: "Czosnek", freq: 1, coop: "solo", assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Czesanie Czosnka", desc: "Wyczesywanie podszerstka (szczególnie za uszami i portki)", category: "Czosnek", freq: 4, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie Czosnka", desc: "Kąpiel / mycie łap i brzucha po błocie", category: "Czosnek", freq: 1, coop: "together", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Obcinanie pazurów", desc: "Kontrola długości i przycięcie (łatwiej we dwoje)", category: "Czosnek", freq: 1, coop: "together", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie zębów Czosnka ⭐", desc: "Regularne szczotkowanie zębów psa", category: "Czosnek", freq: 30, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: true, enabled: true },
+      { title: "Krople na kleszcze", desc: "Aplikacja ochrony przeciwkleszczowej", category: "Czosnek", freq: 1, coop: "solo", assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Odrobaczanie", desc: "Podanie tabletki na odrobaczanie", category: "Czosnek", freq: 1, coop: "solo", assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Mycie misek", desc: "Codzienne umycie i wyparzenie misek na wodę i karmę", category: "Czosnek", freq: 30, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
 
-      // Sekcja 3: Sprzątanie mieszkania
-      { title: "Odkurzanie", desc: "Dokładne odkurzenie sierści z całego mieszkania", category: "Mieszkanie", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Mycie podłóg", desc: "Umycie podłóg po odkurzaniu", category: "Mieszkanie", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Wynoszenie śmieci", desc: "Segregacja i wyniesienie odpadów", category: "Mieszkanie", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Podlewanie roślin", desc: "Sprawdzenie wilgotności ziemi i podlanie kwiatów", category: "Mieszkanie", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Zmiana pościeli + obracanie materaca", desc: "Świeża pościel oraz obrócenie materaca co miesiąc", category: "Mieszkanie", freq: 2, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Mycie ścian w łazience, przy wejściu i obok Gośka", desc: "Przetarcie zabrudzeń w strategicznych miejscach", category: "Mieszkanie", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      // Sekcja 3: Sprzątanie mieszkania (6)
+      { title: "Odkurzanie", desc: "Codzienne zebranie sierści Czosnka z mieszkania", category: "Mieszkanie", freq: 30, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie podłóg", desc: "Umycie podłóg po odkurzaniu", category: "Mieszkanie", freq: 4, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Wynoszenie śmieci", desc: "Segregacja i wyniesienie odpadów", category: "Mieszkanie", freq: 4, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Podlewanie roślin", desc: "Sprawdzenie wilgotności ziemi i podlanie kwiatów", category: "Mieszkanie", freq: 4, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Zmiana pościeli + obracanie materaca", desc: "Świeża pościel oraz obrócenie materaca (najlepiej razem)", category: "Mieszkanie", freq: 2, coop: "together", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie ścian w łazience, przy wejściu i obok Czosnka", desc: "Przetarcie zabrudzeń w strategicznych miejscach", category: "Mieszkanie", freq: 1, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
 
-      // Sekcja 4: Rachunki, auto i zakupy
-      { title: "Płacenie rachunków", desc: "Czynsz, prąd, gaz, internet i abonamenty", category: "Rachunki i auto", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
-      { title: "Tankowanie auta", desc: "Zatankowanie do pełna + sprawdzenie płynu do spryskiwaczy", category: "Rachunki i auto", freq: 2, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
-      { title: "Mycie i sprzątanie auta", desc: "Myjnia + odkurzanie sierści Gośka z bagażnika i kanapy", category: "Rachunki i auto", freq: 2, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Kupowanie tytoniu", desc: "Uzupełnienie zapasu", category: "Rachunki i auto", freq: 2, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
-      { title: "Kupowanie kawy", desc: "Zamówienie lub zakup ziaren kawy", category: "Rachunki i auto", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      // Sekcja 4: Rachunki, auto i zakupy (5)
+      { title: "Płacenie rachunków", desc: "Czynsz, prąd, gaz, internet i abonamenty", category: "Rachunki i auto", freq: 1, coop: "solo", assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Tankowanie auta", desc: "Zatankowanie do pełna + sprawdzenie płynu do spryskiwaczy", category: "Rachunki i auto", freq: 2, coop: "solo", assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Mycie i sprzątanie auta", desc: "Myjnia + odkurzanie sierści Czosnka z bagażnika i kanapy", category: "Rachunki i auto", freq: 2, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Kupowanie tytoniu", desc: "Uzupełnienie zapasu", category: "Rachunki i auto", freq: 2, coop: "solo", assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Kupowanie kawy", desc: "Zamówienie lub zakup ziaren kawy", category: "Rachunki i auto", freq: 1, coop: "solo", assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
 
-      // Sekcja 5: Kuchnia
-      { title: "Zmywanie", desc: "Ręczne mycie garnków, patelni i noży", category: "Kuchnia", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Wstawianie zmywarki i rozładowywanie", desc: "Bieżące ogarnianie zmywarki", category: "Kuchnia", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Zakupy + planowanie + dbanie o zjedzenie resztek", desc: "Lista zakupów i zero marnowania jedzenia", category: "Kuchnia", freq: 4, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
-      { title: "Gotowanie", desc: "Przygotowanie posiłków na kolejne dni", category: "Kuchnia", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Ogólne sprzątanie z wierzchu", desc: "Blaty, stół, płyta indukcyjna i zlew", category: "Kuchnia", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Mycie piekarnika", desc: "Wyczyszczenie wnętrza i szyby piekarnika", category: "Kuchnia", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Oddawanie butelek kaucyjnych", desc: "Zebranie i zwrot butelek w sklepie", category: "Kuchnia", freq: 2, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
-      { title: "Mycie lodówki", desc: "Przegląd zawartości i umycie półek", category: "Kuchnia", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Odkamienianie czajnika", desc: "Odkamienienie czajnika elektrycznego", category: "Kuchnia", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
-      { title: "Mycie ekspresu i odkamienianie + pojemnika na fusy", desc: "Czyszczenie zaparzacza, odkamienianie i tacki na fusy", category: "Kuchnia", freq: 2, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true }
+      // Sekcja 5: Kuchnia (10)
+      { title: "Zmywanie", desc: "Codzienne ręczne mycie garnków, patelni i noży", category: "Kuchnia", freq: 30, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Wstawianie zmywarki i rozładowywanie", desc: "Codzienne ogarnianie zmywarki", category: "Kuchnia", freq: 30, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Zakupy + planowanie + dbanie o zjedzenie resztek", desc: "Lista zakupów i zero marnowania jedzenia", category: "Kuchnia", freq: 4, coop: "together", assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Gotowanie", desc: "Przygotowanie posiłków na kolejne dni", category: "Kuchnia", freq: 4, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Ogólne sprzątanie z wierzchu", desc: "Codzienne przetarcie blatów, stołu, płyty i zlewu", category: "Kuchnia", freq: 30, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie piekarnika", desc: "Wyczyszczenie wnętrza i szyby piekarnika", category: "Kuchnia", freq: 1, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Oddawanie butelek kaucyjnych", desc: "Zebranie i zwrot butelek w sklepie", category: "Kuchnia", freq: 2, coop: "solo", assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Mycie lodówki", desc: "Przegląd zawartości i umycie półek", category: "Kuchnia", freq: 1, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Odkamienianie czajnika", desc: "Odkamienienie czajnika elektrycznego", category: "Kuchnia", freq: 1, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie ekspresu i odkamienianie + pojemnika na fusy", desc: "Czyszczenie zaparzacza, odkamienianie i tacki na fusy", category: "Kuchnia", freq: 2, coop: "solo", assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true }
     ];
 
     // TRYB JASNY / CIEMNY
@@ -655,6 +679,7 @@
     // STAN APLIKACJI
     let homeSecret = localStorage.getItem('home_planner_secret') || '';
     let activeUser = localStorage.getItem('home_planner_active_user') || 'Przemo';
+    let selectedNowTime = '30 min';
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
     let selectedDateStr = formatDate(new Date());
@@ -687,17 +712,28 @@
       return `${year}-${String(month + 1).padStart(2, '0')}`;
     }
 
-    // CZY MIESIĄC JEST TESTOWY (LISTOPAD 2026 -> BRAK CZERWONYCH PODŚWIETLEŃ ZALEGŁOŚCI)
     function isTestMonth(year, month) {
-      return year === 2026 && month === 10; // miesiąc 10 = listopad (0-indexed)
+      return year === 2026 && month === 10;
     }
 
     function isTaskOverdue(task) {
-      if (task.completed || !task.date) return false;
+      if (task.completed || !task.date || task.isDailyHabit) return false;
       if (isTestMonth(currentYear, currentMonth)) return false;
       const todayStr = formatDate(new Date());
       return task.date < todayStr;
     }
+
+    // WYBÓR CZASU "NA TERAZ"
+    window.selectNowTime = (timeLabel) => {
+      selectedNowTime = timeLabel;
+      document.querySelectorAll('.now-time-btn').forEach(btn => {
+        if (btn.dataset.nowtime === timeLabel) {
+          btn.className = 'now-time-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-500 text-white border border-brand-500 transition';
+        } else {
+          btn.className = 'now-time-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 text-stone-700 dark:text-stone-200 hover:border-brand-400 transition';
+        }
+      });
+    };
 
     // PRZEŁĄCZANIE AKTYWNEGO PROFILU
     window.switchActiveUser = (user) => {
@@ -721,7 +757,7 @@
       }
     }
 
-    // SPERSONALIZOWANA KARTA SUGESTII
+    // SPERSONALIZOWANA KARTA SUGESTII "NA TERAZ"
     function renderPersonalFocusCard() {
       const card = document.getElementById('personal-focus-card');
       const iconEl = document.getElementById('personal-focus-icon');
@@ -739,11 +775,11 @@
       if (isPrzemo) {
         card.className = 'rounded-2xl border p-4 transition-all bg-sky-50/70 dark:bg-sky-950/30 border-sky-200/80 dark:border-sky-900/60';
         iconEl.textContent = '🧔';
-        titleEl.textContent = 'Na czym warto dziś popracować — Przemo';
+        titleEl.textContent = 'Mam chwilę teraz — co wybrać? (Przemo)';
       } else {
         card.className = 'rounded-2xl border p-4 transition-all bg-rose-50/70 dark:bg-rose-950/30 border-rose-200/80 dark:border-rose-900/60';
         iconEl.textContent = '👩';
-        titleEl.textContent = 'Na czym warto dziś popracować — Róża';
+        titleEl.textContent = 'Mam chwilę teraz — co wybrać? (Róża)';
       }
 
       if (dayOfWeek === 3) {
@@ -751,16 +787,15 @@
       } else if (!isPrzemo && (dayOfWeek === 2 || dayOfWeek === 5)) {
         subEl.textContent = 'Dziś masz wolny / zdalny dzień — dobry moment na lekkie domowe rzeczy lub e-booka o panieńskich.';
       } else if (dayOfWeek === 0 || dayOfWeek === 6) {
-        subEl.textContent = 'Weekend — dobry czas na większe sprawy domowe lub przy aucie i Gośku.';
+        subEl.textContent = 'Weekend — dobry czas na większe sprawy domowe (solo lub razem) albo przy aucie i Czosnku.';
       } else {
-        subEl.textContent = isPrzemo
-          ? 'Dzień roboczy stacjonarnie — skup się tylko na drobnych tematach lub odpocznij.'
-          : 'Dzień pracy — nie przeładowuj wieczoru.';
+        subEl.textContent = 'Wybierz ile masz teraz minut i kliknij „✨ Dobierz na teraz”';
       }
 
       if (personalAiCache[activeUser]) {
         listEl.innerHTML = personalAiCache[activeUser].map(tip => `
           <div class="bg-white/90 dark:bg-warm-900/80 border border-warm-200/80 dark:border-warm-700 rounded-xl p-3 space-y-1">
+            <div class="text-[10px] font-extrabold uppercase tracking-wider text-brand-600 dark:text-brand-400">${tip.badge || `⏱️ Na ${selectedNowTime}`}</div>
             <div class="font-bold text-warm-900 dark:text-white">${tip.title}</div>
             <div class="text-[11px] text-stone-500 dark:text-stone-400 leading-relaxed">${tip.desc}</div>
           </div>
@@ -781,34 +816,34 @@
           badge: b.mode === 'away' ? '🏠 Poza domem' : '⛔ Blokada N/A',
           title: b.note || (b.mode === 'away' ? 'Jesteś dziś poza domem' : 'Masz dziś wpisane N/A'),
           desc: b.mode === 'away'
-            ? 'Wchodzą w grę tylko zadania zdalne/zakupowe (np. opłaty, zamówienie karmy).'
-            : `Zablokowane w godz. ${b.startTime}–${b.endTime}. Nie planuj na siłę innych rzeczy.`
+            ? 'Wchodzą w grę tylko zadania zdalne/zakupowe (np. opłaty, karma dla Czosnka).'
+            : `Zablokowane w godz. ${b.startTime}–${b.endTime}.`
         });
       } else if (dayOfWeek === 3) {
         suggestions.push({
           badge: '🌿 Środa po pracy',
           title: 'Wieczór wolny od obowiązków',
-          desc: 'Po pracy odpoczywacie — domowe porządki przerzuć na wtorek/piątek Róży albo weekend.'
+          desc: 'Po pracy odpoczywacie — grubsze rzeczy przerzuć na wtorek/piątek Róży albo weekend.'
         });
       }
 
       if (!isPrzemo) {
         suggestions.push({
-          badge: '✍️ Projekt własny',
+          badge: '✍️ Projekt własny • 👤 Solo',
           title: 'E-book o wieczorach panieńskich',
           desc: (dayOfWeek === 2 || dayOfWeek === 5)
             ? 'Masz dziś wolny/zdalny dzień — może 30–45 minut na kolejny rozdział albo spis treści?'
-            : 'Gdy złapiesz luźniejszą chwilę we wtorek lub piątek, warto dopisać choć kawałek e-booka.'
+            : 'Gdy złapiesz 30 minut w luźniejszy dzień, warto dopisać kawałek e-booka.'
         });
       }
 
       for (const task of myTasks) {
         if (suggestions.length >= 3) break;
-        const isAssignedToMe = task.assignee === activeUser;
+        const coopLabel = task.coop === 'together' ? '👫 Razem' : '👤 Solo';
         suggestions.push({
-          badge: task.starred ? '⭐ Ważne zadanie' : (isAssignedToMe ? '📌 Twoje zadanie' : '❓ Do przejęcia'),
+          badge: `${task.starred ? '⭐ ' : ''}${coopLabel}`,
           title: task.title,
-          desc: `${task.category}${task.date ? ` • termin: ${task.date}` : ''}${task.desc ? ` — ${task.desc}` : ''}`
+          desc: `${task.category}${task.desc ? ` — ${task.desc}` : ''}`
         });
       }
 
@@ -816,7 +851,7 @@
         suggestions.push({
           badge: '✅ Luz',
           title: 'Brak pilnych zadań na ten moment',
-          desc: 'Wszystko pod kontrolą — możesz wrzucić zadania z „🛠️ Baza zadań” lub dodać coś jednorazowego.'
+          desc: 'Wszystko pod kontrolą — kliknij „🛠️ Baza zadań (39)”, aby zarządzać obowiązkami.'
         });
       }
 
@@ -829,6 +864,7 @@
       `).join('');
     }
 
+    // DOBÓR ZADAŃ "NA TERAZ" PRZEZ AI POD DOSTĘPNY CZAS
     window.generatePersonalAiTips = async () => {
       const apiKey = localStorage.getItem('gemini_api_key');
       if (!apiKey) {
@@ -838,28 +874,38 @@
 
       const btn = document.getElementById('personal-ai-refresh-btn');
       const origText = btn.innerHTML;
-      btn.innerHTML = '⏳ Myślę...';
+      btn.innerHTML = '⏳ Dobieram...';
       btn.disabled = true;
 
       const todayStr = formatDate(new Date());
-      const openTasks = allTasks.filter(t => !t.completed).slice(0, 25).map(t =>
-        `- ${t.title} [sekcja: ${t.category}, przypisane: ${t.assignee || 'Nieprzypisane'}, data: ${t.date || 'brak'}, gwiazdka: ${t.starred ? 'TAK' : 'NIE'}]`
+      const nowTimeStr = new Date().toTimeString().slice(0, 5);
+      const openTasks = allTasks.filter(t => !t.completed).slice(0, 35).map(t =>
+        `- ${t.title} [sekcja: ${t.category}, tryb: ${t.coop === 'together' ? 'RAZEM we dwoje' : 'W POJEDYNKĘ'}, przypisane: ${t.assignee || 'Nieprzypisane'}, gwiazdka: ${t.starred ? 'TAK' : 'NIE'}, poza domem: ${t.remoteOk ? 'TAK' : 'NIE'}]`
       ).join('\n') || 'Brak otwartych zadań w kalendarzu.';
 
       const myProfile = activeUser === 'Przemo' ? userProfiles.przemo : userProfiles.roza;
       const myBlocks = getBlocksForDate(todayStr).map(b => `${b.who}: ${b.mode} (${b.startTime}-${b.endTime}, ${b.note || ''})`).join('; ') || 'brak';
 
       const prompt = `Jesteś osobistym asystentem dla: ${activeUser}.
-Dzisiejsza data: ${todayStr}.
-Profil i grafik ${activeUser}: ${myProfile}
+Dzisiejsza data: ${todayStr}, aktualna godzina: ${nowTimeStr}.
+${activeUser} ma teraz wolne okienko dokładnie: ${selectedNowTime} i zastanawia się, na czym warto teraz popracować.
+
+Profil ${activeUser}: ${myProfile}
 Kontekst domu: ${userProfiles.home}
 Dzisiejsze blokady N/A/wyjazdy: ${myBlocks}
-Otwarte zadania w tym miesiącu:
+
+Otwarte zadania do wyboru:
 ${openTasks}
 
-Podaj dokładnie 3 krótkie, spersonalizowane sugestie „na czym warto dziś/w najbliższych dniach popracować” dla ${activeUser}.
+Dobierz dokładnie 3 najlepsze propozycje zadań do zrobienia TERAZ w ciągu ${selectedNowTime}.
+Zasady:
+1. Dopasuj czasochłonność zadań do zadeklarowanego czasu (${selectedNowTime}) — np. na 15 min daj coś szybkiego (mycie zębów Czosnka, uzupełnienie mydła, wyniesienie śmieci, ekspres), na 1-2h większe (odkurzanie + mycie podłóg, auto, pranie).
+2. Wyraźnie zaznacz w badge czy zadanie jest "👤 W pojedynkę" czy "👫 Razem" (i czy opłaca się zrobić je samemu, czy zawołać drugą osobę).
+3. Jeśli to Róża i ma spokojniejsze okienko, jedna z 3 sugestii może dotyczyć pracy nad e-bookiem o wieczorach panieńskich.
+4. Jeśli jest środa po pracy lub blokada N/A, uszanuj to.
+
 Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
-[{"title": "krótki nagłówek z emoji", "desc": "1-2 zdania konkretnej, życzliwej wskazówki"}]`;
+[{"badge": "⏱️ ${selectedNowTime} • 👤 Solo lub 👫 Razem", "title": "nazwa zadania z emoji", "desc": "1-2 zdania dlaczego teraz i jak to ugryźć"}]`;
 
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -877,7 +923,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
         }
       } catch (e) {
         console.error(e);
-        alert("Nie udało się pobrać podpowiedzi AI. Sprawdź klucz API w ⚙️ Profile.");
+        alert("Nie udało się dobrać zadań przez AI. Sprawdź klucz API w ⚙️ Profile.");
       } finally {
         btn.innerHTML = origText;
         btn.disabled = false;
@@ -920,14 +966,17 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       document.getElementById('na-end-date').value = dateStr;
     }
 
-    // POMOCNICZE GENEROWANIE DAT W MIESIĄCU DLA WZORCA
+    // GENEROWANIE DAT W MIESIĄCU DLA WZORCA
     function getTargetDatesForFreq(year, month, freq) {
       const monthKey = getMonthKey(year, month);
+      if (freq >= 30) {
+        return [formatDate(new Date())];
+      }
+
       const goodDays = [];
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       for (let d = 1; d <= daysInMonth; d++) {
         const dt = new Date(year, month, d);
-        // Preferuj piątki, soboty i wtorki (pomijając środy po pracy)
         if (dt.getDay() === 2 || dt.getDay() === 5 || dt.getDay() === 6) {
           goodDays.push(formatDate(dt));
         }
@@ -949,17 +998,20 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       const monthKey = getMonthKey(year, month);
       const freq = Number(tpl.freq || 1);
       const assignee = tpl.assignee || 'Nieprzypisane';
+      const isDailyHabit = freq >= 30;
       const dates = getTargetDatesForFreq(year, month, freq);
 
       for (let idx = 0; idx < dates.length; idx++) {
         await addDoc(collection(db, "tasks"), {
           secret: homeSecret,
-          title: dates.length > 1 ? `${tpl.title} (${idx + 1}/${dates.length})` : tpl.title,
+          title: (!isDailyHabit && dates.length > 1) ? `${tpl.title} (${idx + 1}/${dates.length})` : tpl.title,
           desc: tpl.desc || '',
           assignee,
+          coop: tpl.coop || 'solo',
           category: tpl.category,
           date: dates[idx],
-          recurrence: freq > 1 ? 'recurring' : 'monthly',
+          recurrence: isDailyHabit ? 'daily' : (freq > 1 ? 'recurring' : 'monthly'),
+          isDailyHabit,
           remoteOk: !!tpl.remoteOk,
           starred: !!tpl.starred,
           monthKey,
@@ -1032,7 +1084,6 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
           for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
             const tplData = { secret: homeSecret, order: i, ...DEFAULT_MONTHLY_TASKS[i] };
             await addDoc(collection(db, "taskTemplates"), tplData);
-            // Od razu wrzuć startowy zestaw do bieżącego miesiąca
             await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
           }
           return;
@@ -1223,8 +1274,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       if (!container) return;
 
       const activeTemplates = taskTemplates.filter(t => t.enabled !== false);
-      const totalMonthlyInstances = activeTemplates.reduce((sum, t) => sum + Number(t.freq || 1), 0);
-      summaryEl.textContent = `Aktywnych wzorców: ${activeTemplates.length} (${totalMonthlyInstances} zadań miesięcznie)`;
+      summaryEl.textContent = `Aktywnych wzorców: ${activeTemplates.length} z ${taskTemplates.length}`;
 
       let list = [...taskTemplates];
       if (configFilter !== 'all') {
@@ -1238,6 +1288,8 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
 
       container.innerHTML = list.map(t => {
         const isEnabled = t.enabled !== false;
+        const freqVal = Number(t.freq || 1);
+        const coopVal = t.coop || 'solo';
         return `
           <div class="p-3.5 rounded-2xl border transition flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${isEnabled ? 'bg-white dark:bg-warm-800/60 border-warm-200 dark:border-warm-700' : 'bg-warm-50 dark:bg-warm-900/40 border-warm-100 dark:border-warm-800 opacity-55'}">
             <div class="flex items-start gap-3 flex-1 min-w-0">
@@ -1255,7 +1307,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
               <select onchange="updateTemplateField('${t.id}', 'category', this.value)"
                 class="px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-xs font-semibold">
                 <option value="Łazienka" ${t.category === 'Łazienka' ? 'selected' : ''}>🛁 Łazienka</option>
-                <option value="Gosiek" ${t.category === 'Gosiek' ? 'selected' : ''}>🐕 Gosiek</option>
+                <option value="Czosnek" ${t.category === 'Czosnek' ? 'selected' : ''}>🐕 Czosnek</option>
                 <option value="Mieszkanie" ${t.category === 'Mieszkanie' ? 'selected' : ''}>🧹 Mieszkanie</option>
                 <option value="Rachunki i auto" ${t.category === 'Rachunki i auto' ? 'selected' : ''}>🚗 Auto/Zakupy</option>
                 <option value="Kuchnia" ${t.category === 'Kuchnia' ? 'selected' : ''}>🍳 Kuchnia</option>
@@ -1263,9 +1315,16 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
 
               <select onchange="updateTemplateField('${t.id}', 'freq', Number(this.value))"
                 class="px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-xs font-bold text-brand-700 dark:text-brand-300">
-                <option value="1" ${Number(t.freq) === 1 ? 'selected' : ''}>1x / mies.</option>
-                <option value="2" ${Number(t.freq) === 2 ? 'selected' : ''}>2x / mies.</option>
-                <option value="4" ${Number(t.freq) === 4 ? 'selected' : ''}>4x / mies. (co tydz.)</option>
+                <option value="30" ${freqVal >= 30 ? 'selected' : ''}>Codziennie / nawyk</option>
+                <option value="1" ${freqVal === 1 ? 'selected' : ''}>1x / mies.</option>
+                <option value="2" ${freqVal === 2 ? 'selected' : ''}>2x / mies.</option>
+                <option value="4" ${freqVal === 4 ? 'selected' : ''}>4x / mies. (co tydz.)</option>
+              </select>
+
+              <select onchange="updateTemplateField('${t.id}', 'coop', this.value)"
+                class="px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-xs font-semibold">
+                <option value="solo" ${coopVal === 'solo' ? 'selected' : ''}>👤 W pojedynkę</option>
+                <option value="together" ${coopVal === 'together' ? 'selected' : ''}>👫 Razem</option>
               </select>
 
               <select onchange="updateTemplateField('${t.id}', 'assignee', this.value)"
@@ -1310,6 +1369,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       const desc = document.getElementById('tpl-desc').value.trim();
       const category = document.getElementById('tpl-category').value;
       const freq = Number(document.getElementById('tpl-freq').value);
+      const coop = document.getElementById('tpl-coop').value;
       const assignee = document.getElementById('tpl-assignee').value;
       const remoteOk = document.getElementById('tpl-remote').checked;
       const starred = document.getElementById('tpl-starred').checked;
@@ -1321,6 +1381,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
         desc,
         category,
         freq,
+        coop,
         assignee,
         remoteOk,
         starred,
@@ -1335,7 +1396,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
 
     // ZASTĄPIENIE STAREJ BAZY NOWĄ LISTĄ 39 ZADAŃ I WRZUCENIE NA BIEŻĄCY MIESIĄC
     window.replaceWithFull39Tasks = async () => {
-      if (!confirm("Czy podmienić bazę na pełną listę 39 obowiązków (5 sekcji) i od razu wrzucić ją do bieżącego miesiąca?")) return;
+      if (!confirm("Czy podmienić bazę na pełną listę 39 obowiązków (5 sekcji z Czosnkiem) i od razu wrzucić ją do bieżącego miesiąca?")) return;
 
       const oldTpls = await getDocs(query(collection(db, "taskTemplates"), where("secret", "==", homeSecret)));
       for (const d of oldTpls.docs) {
@@ -1421,7 +1482,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
         const hasBusy = blocks.some(b => b.mode === 'busy');
         const hasAway = blocks.some(b => b.mode === 'away');
 
-        const dayTasks = allTasks.filter(t => t.date === dateStr);
+        const dayTasks = allTasks.filter(t => t.date === dateStr && !t.isDailyHabit);
         const openTasks = dayTasks.filter(t => !t.completed);
         const hasOverdueDay = openTasks.some(t => isTaskOverdue(t));
         const przemoOpen = openTasks.filter(t => t.assignee === 'Przemo').length;
@@ -1530,13 +1591,17 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       subscribeFirestore();
     };
 
-    // LISTA ZADAŃ W MIESIĄCU (Z GWIAZDKAMI I CZERWONYM ALERTEM PO LISTOPADZIE 2026)
+    // LISTA ZADAŃ W MIESIĄCU (Z PRZEŁĄCZNIKIEM W POJEDYNKĘ / RAZEM)
     function renderTasks() {
       const list = document.getElementById('tasks-list');
       let filtered = [...allTasks];
 
       if (currentFilter !== 'all') {
-        filtered = filtered.filter(t => (t.assignee || 'Nieprzypisane') === currentFilter || t.category === currentFilter);
+        if (currentFilter === 'together') {
+          filtered = filtered.filter(t => t.coop === 'together');
+        } else {
+          filtered = filtered.filter(t => (t.assignee || 'Nieprzypisane') === currentFilter || t.category === currentFilter);
+        }
       }
 
       filtered.sort((a, b) =>
@@ -1547,13 +1612,14 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
 
       if (filtered.length === 0) {
         list.innerHTML = `<div class="text-center text-stone-400 text-sm py-10 bg-warm-50 dark:bg-warm-800/40 rounded-2xl border border-dashed border-warm-200 dark:border-warm-700">
-          Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań”</strong> na górze, aby zarządzać obowiązkami.
+          Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań (39)”</strong> na górze, aby zarządzać obowiązkami.
         </div>`;
         return;
       }
 
       list.innerHTML = filtered.map(task => {
         const who = task.assignee || 'Nieprzypisane';
+        const coop = task.coop || 'solo';
         const overdue = isTaskOverdue(task);
 
         let cardStyle = 'bg-white dark:bg-warm-800/60 border-warm-200 dark:border-warm-700 hover:border-brand-300';
@@ -1576,7 +1642,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
               ${overdue ? `<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-red-600 text-white">⚠️ Zaległe</span>` : ''}
             </div>
             ${task.desc ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${task.desc}</p>` : ''}
-            <div class="flex items-center gap-2 mt-2 flex-wrap">
+            <div class="flex items-center gap-1.5 mt-2 flex-wrap">
               <select onchange="reassignTask('${task.id}', this.value)"
                 class="text-[11px] font-bold px-2 py-0.5 rounded-md border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 cursor-pointer">
                 <option value="Nieprzypisane" ${who === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
@@ -1584,7 +1650,16 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
                 <option value="Róża" ${who === 'Róża' ? 'selected' : ''}>👩 Róża</option>
                 <option value="Wspólne" ${who === 'Wspólne' ? 'selected' : ''}>👫 Wspólne</option>
               </select>
-              ${task.date ? `<span class="text-[11px] ${overdue ? 'text-red-700 dark:text-red-300 font-bold' : 'text-stone-500 dark:text-stone-400 font-medium'}">📅 ${task.date}</span>` : ''}
+
+              <button onclick="toggleTaskCoop('${task.id}', '${coop === 'together' ? 'solo' : 'together'}')" title="Kliknij, aby przełączyć W pojedynkę / Razem"
+                class="text-[10px] font-bold px-2 py-0.5 rounded-md border transition ${coop === 'together' ? 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-800' : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700'}">
+                ${coop === 'together' ? '👫 Razem' : '👤 Solo'}
+              </button>
+
+              ${task.isDailyHabit
+                ? `<span class="text-[10px] bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-semibold">↻ Codziennie</span>`
+                : (task.date ? `<span class="text-[11px] ${overdue ? 'text-red-700 dark:text-red-300 font-bold' : 'text-stone-500 dark:text-stone-400 font-medium'}">📅 ${task.date}</span>` : '')}
+
               ${task.remoteOk ? `<span class="text-[10px] bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-semibold">🌍 Poza domem</span>` : ''}
             </div>
           </div>
@@ -1595,6 +1670,10 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
 
     window.reassignTask = async (id, assignee) => {
       await updateDoc(doc(db, "tasks", id), { assignee });
+    };
+
+    window.toggleTaskCoop = async (id, coop) => {
+      await updateDoc(doc(db, "tasks", id), { coop });
     };
 
     window.setFilter = (f) => {
@@ -1616,6 +1695,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       const title = document.getElementById('task-title').value.trim();
       const desc = document.getElementById('task-desc').value.trim();
       const assignee = document.getElementById('task-assignee').value;
+      const coop = document.getElementById('task-coop').value;
       const category = document.getElementById('task-category').value;
       const date = document.getElementById('task-date').value;
       const count = Number(document.getElementById('task-recurrence').value);
@@ -1633,9 +1713,11 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
             title: count > 1 ? `${title} (${i + 1}/${count})` : title,
             desc,
             assignee,
+            coop,
             category,
             date: formatDate(baseDate),
             recurrence: count > 1 ? 'recurring' : 'once',
+            isDailyHabit: false,
             remoteOk,
             starred,
             monthKey,
@@ -1673,7 +1755,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       }
 
       if (allTasks.length === 0) {
-        out.textContent = "W tym miesiącu nie ma jeszcze żadnych zadań w kalendarzu.\n\nKliknij „🛠️ Baza zadań” -> „🚀 Wrzuć aktywne na wybrany miesiąc”, a potem wróć tutaj!";
+        out.textContent = "W tym miesiącu nie ma jeszcze żadnych zadań w kalendarzu.\n\nKliknij „🛠️ Baza zadań (39)” -> „🚀 Wrzuć aktywne na wybrany miesiąc”, a potem wróć tutaj!";
         return;
       }
 
@@ -1683,7 +1765,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
         return;
       }
 
-      out.textContent = "Analizuję profile Przema i Róży, cykliczne blokady N/A oraz wyjazdy poza dom...";
+      out.textContent = "Analizuję profile Przema i Róży, tryb solo/razem, cykliczne blokady N/A oraz wyjazdy poza dom...";
 
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       const monthNaOccurrences = [];
@@ -1698,7 +1780,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
 
       const naSummary = monthNaOccurrences.join('\n') || 'brak wpisanych blokad w tym miesiącu';
       const tasksSummary = openTasks.map(t =>
-        `- ${t.title} [sekcja: ${t.category}, obecnie: ${t.assignee || 'Nieprzypisane'}, data: ${t.date || 'brak'}, poza domem: ${t.remoteOk ? 'TAK' : 'NIE'}]`
+        `- ${t.title} [sekcja: ${t.category}, tryb: ${t.coop === 'together' ? 'RAZEM we dwoje' : 'W POJEDYNKĘ'}, obecnie: ${t.assignee || 'Nieprzypisane'}, data: ${t.isDailyHabit ? 'codzienne' : (t.date || 'brak')}, poza domem: ${t.remoteOk ? 'TAK' : 'NIE'}]`
       ).join('\n');
 
       const prompt = `Jesteś domowym asystentem planowania dla małżeństwa: Przemo i Róża.
@@ -1712,15 +1794,15 @@ Aktualne profile i grafiki domowników:
 Wszystkie niedostępności N/A i wyjazdy w tym miesiącu (włącznie z cyklicznymi):
 ${naSummary}
 
-Lista otwartych zadań (część jest nieprzypisana):
+Lista otwartych zadań:
 ${tasksSummary}
 
-Zaproponuj konkretny, realistyczny i sprawiedliwy plan po polsku: kiedy (konkretne daty i pory dnia) oraz kto (Przemo czy Róża) powinien wykonać te zadania.
+Zaproponuj konkretny, realistyczny i sprawiedliwy plan po polsku: kiedy i kto (Przemo, Róża lub Razem we dwoje) powinien wykonać te zadania.
 Zasady:
-1. Ściśle trzymaj się grafików z profili powyżej (np. wykorzystuj wolne/zdalne wtorki i piątki Róży oraz weekendy, a w środy po pracy nie planuj obowiązków domowych, bo wtedy odpoczywają).
-2. Czasem podsuń Róży lekką, wspierającą sugestię okienka na pisanie e-booka o wieczorach panieńskich.
-3. W okresach "N/A BRAK CZASU" nie planuj nic dla danej osoby.
-4. W okresach "POZA DOMEM" nie planuj zadań stacjonarnych w domu, ale możesz zaplanować zadania oznaczone jako poza domem/zakupowe.`;
+1. Uwzględnij tryb "RAZEM we dwoje" (np. obcinanie pazurów Czosnka, zmiana pościeli z obracaniem materaca, zakupy) — zaplanuj je na wspólny moment (np. weekend), a zadania "W POJEDYNKĘ" rozdziel równolegle, żeby nie tracić czasu na robienie tego samego.
+2. Ściśle trzymaj się grafików z profili powyżej (wykorzystuj wolne/zdalne wtorki i piątki Róży oraz weekendy, a w środy po pracy nie planuj obowiązków domowych, bo wtedy odpoczywają).
+3. Czasem podsuń Róży lekką, wspierającą sugestię okienka na pisanie e-booka o wieczorach panieńskich.
+4. W okresach "N/A BRAK CZASU" nie planuj nic dla danej osoby, a w okresach "POZA DOMEM" planuj tylko zadania oznaczone jako poza domem.`;
 
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
