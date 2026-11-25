@@ -67,105 +67,106 @@
   </div>
 
   <!-- GŁÓWNA APLIKACJA -->
-  <div id="app-container" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <div id="app-container" class="hidden max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6">
 
     <!-- NAGŁÓWEK I LICZNIK MIESIĄCA -->
-    <header class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-6 shadow-sm">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-warm-100 dark:border-warm-800">
+    <header class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-4 sm:p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-5 border-b border-warm-100 dark:border-warm-800">
         <div>
           <div class="flex items-center gap-2.5">
             <span class="text-2xl">🏡</span>
-            <h1 class="text-2xl font-extrabold tracking-tight text-warm-900 dark:text-white">Domowe Centrum Dowodzenia</h1>
+            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-warm-900 dark:text-white">Domowe Centrum Dowodzenia</h1>
           </div>
-          <p class="text-stone-500 dark:text-stone-400 text-sm mt-1">Przemo • Róża • Berneńczyk • Auto — <span id="current-month-label" class="font-semibold text-brand-600 dark:text-brand-400 capitalize"></span></p>
+          <p class="text-stone-500 dark:text-stone-400 text-xs sm:text-sm mt-1">🧔 Przemo • 👩 Róża • 🐕 Berneńczyk • 🚗 Auto — <span id="current-month-label" class="font-semibold text-brand-600 dark:text-brand-400 capitalize"></span></p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick="openTemplateModal()" class="px-4 py-2.5 rounded-xl bg-brand-50 dark:bg-brand-950/80 hover:bg-brand-100 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 font-semibold text-sm transition flex items-center gap-2">
+          <button onclick="openTemplateModal()" class="px-3.5 py-2 rounded-xl bg-brand-50 dark:bg-brand-950/80 hover:bg-brand-100 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 font-semibold text-xs sm:text-sm transition flex items-center gap-1.5">
             <span>📋</span> Szablon startowy
           </button>
-          <button onclick="openAiModal()" class="px-4 py-2.5 rounded-xl bg-warm-900 dark:bg-brand-500 hover:bg-stone-800 dark:hover:bg-brand-600 text-white font-semibold text-sm transition flex items-center gap-2 shadow-sm">
-            <span>✨</span> Sugestie AI (wolne środy)
+          <button onclick="openAiModal()" class="px-3.5 py-2 rounded-xl bg-warm-900 dark:bg-brand-500 hover:bg-stone-800 dark:hover:bg-brand-600 text-white font-semibold text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm">
+            <span>✨</span> Sugestie AI
           </button>
-          <button onclick="toggleTheme()" id="theme-toggle-btn" title="Przełącz tryb jasny/ciemny" class="px-3 py-2.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 hover:bg-warm-100 dark:hover:bg-warm-700 text-sm font-semibold transition">
+          <button onclick="toggleTheme()" id="theme-toggle-btn" title="Przełącz tryb jasny/ciemny" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 hover:bg-warm-100 dark:hover:bg-warm-700 text-sm font-semibold transition">
             🌙
           </button>
-          <button onclick="openSettingsModal()" title="Ustawienia" class="p-2.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 hover:bg-warm-100 dark:hover:bg-warm-700 text-stone-600 dark:text-stone-300 transition">
+          <button onclick="openSettingsModal()" title="Ustawienia" class="p-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 hover:bg-warm-100 dark:hover:bg-warm-700 text-stone-600 dark:text-stone-300 transition">
             ⚙️
           </button>
         </div>
       </div>
 
       <!-- STATYSTYKI POSTĘPU -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-6">
-        <div class="bg-brand-50/70 dark:bg-brand-950/50 border border-brand-100 dark:border-brand-900/60 rounded-2xl p-4">
-          <div class="text-xs font-bold uppercase tracking-wider text-brand-700 dark:text-brand-400">Do końca miesiąca</div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 pt-5">
+        <div class="col-span-2 md:col-span-1 bg-brand-50/70 dark:bg-brand-950/50 border border-brand-100 dark:border-brand-900/60 rounded-2xl p-3.5 sm:p-4">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:text-brand-400">Do końca miesiąca</div>
           <div class="mt-1 flex items-baseline gap-2">
-            <span id="stat-remaining" class="text-3xl font-extrabold text-brand-600 dark:text-brand-400">0</span>
-            <span id="stat-total" class="text-sm text-stone-500 dark:text-stone-400 font-medium">z 0 zadań</span>
+            <span id="stat-remaining" class="text-2xl sm:text-3xl font-extrabold text-brand-600 dark:text-brand-400">0</span>
+            <span id="stat-total" class="text-xs sm:text-sm text-stone-500 dark:text-stone-400 font-medium">z 0 zadań</span>
           </div>
-          <div class="w-full bg-brand-200/60 dark:bg-warm-800 h-2 rounded-full mt-3 overflow-hidden">
+          <div class="w-full bg-brand-200/60 dark:bg-warm-800 h-2 rounded-full mt-2.5 overflow-hidden">
             <div id="stat-progress-bar" class="bg-brand-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
           </div>
         </div>
 
-        <div class="bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-4 flex items-center justify-between">
+        <div class="bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
           <div>
-            <div class="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Przemo (pozostało)</div>
-            <div id="stat-przemo" class="text-2xl font-extrabold text-warm-900 dark:text-white mt-1">0</div>
-            <div class="text-xs text-stone-400 mt-0.5">Praca 8h • Wolne środy</div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Przemo</div>
+            <div id="stat-przemo" class="text-xl sm:text-2xl font-extrabold text-warm-900 dark:text-white mt-0.5">0</div>
+            <div class="text-[11px] text-stone-400">Praca 8h • Środy wolne</div>
           </div>
-          <div class="w-11 h-11 rounded-2xl bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 flex items-center justify-center font-bold text-lg">P</div>
+          <div class="w-10 h-10 rounded-2xl bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 flex items-center justify-center text-xl">🧔</div>
         </div>
 
-        <div class="bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-4 flex items-center justify-between">
+        <div class="bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
           <div>
-            <div class="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Róża (pozostało)</div>
-            <div id="stat-roza" class="text-2xl font-extrabold text-warm-900 dark:text-white mt-1">0</div>
-            <div class="text-xs text-stone-400 mt-0.5">Wolne środy</div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Róża</div>
+            <div id="stat-roza" class="text-xl sm:text-2xl font-extrabold text-warm-900 dark:text-white mt-0.5">0</div>
+            <div class="text-[11px] text-stone-400">Środy wolne</div>
           </div>
-          <div class="w-11 h-11 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 flex items-center justify-center font-bold text-lg">R</div>
+          <div class="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 flex items-center justify-center text-xl">👩</div>
         </div>
 
-        <div class="bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-4 flex items-center justify-between">
+        <div class="col-span-2 md:col-span-1 bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
           <div>
-            <div class="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Wspólne / Nieprzypisane</div>
-            <div id="stat-shared" class="text-2xl font-extrabold text-warm-900 dark:text-white mt-1">0</div>
-            <div class="text-xs text-stone-400 mt-0.5">Do podziału</div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Wspólne</div>
+            <div id="stat-shared" class="text-xl sm:text-2xl font-extrabold text-warm-900 dark:text-white mt-0.5">0</div>
+            <div class="text-[11px] text-stone-400">Do podziału</div>
           </div>
-          <div class="w-11 h-11 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold text-lg">👥</div>
+          <div class="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center text-xl">👫</div>
         </div>
       </div>
     </header>
 
     <!-- GŁÓWNY UKŁAD: KALENDARZ (LEWA) + LISTA ZADAŃ (PRAWA) -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
 
       <!-- LEWA KOLUMNA: KALENDARZ + GODZINOWE / WYJAZDOWE N/A -->
-      <section class="lg:col-span-7 bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-6 shadow-sm flex flex-col">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <div class="flex items-center gap-2">
+      <section class="lg:col-span-7 bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-3.5 sm:p-6 shadow-sm flex flex-col">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4">
+          <div class="flex items-center gap-1.5 sm:gap-2">
             <button onclick="changeMonth(-1)" class="p-2 rounded-xl hover:bg-warm-100 dark:hover:bg-warm-800 text-stone-600 dark:text-stone-300 font-bold">←</button>
-            <h2 id="calendar-header" class="text-lg font-extrabold text-warm-900 dark:text-white capitalize min-w-[160px] text-center"></h2>
+            <h2 id="calendar-header" class="text-base sm:text-lg font-extrabold text-warm-900 dark:text-white capitalize min-w-[145px] text-center"></h2>
             <button onclick="changeMonth(1)" class="p-2 rounded-xl hover:bg-warm-100 dark:hover:bg-warm-800 text-stone-600 dark:text-stone-300 font-bold">→</button>
           </div>
-          <div class="flex flex-wrap items-center gap-3 text-xs text-stone-500 dark:text-stone-400">
-            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> Wolna środa</span>
-            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Poza domem</span>
-            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-400 inline-block"></span> N/A (zajęci)</span>
+          <div class="flex flex-wrap items-center gap-2.5 text-[11px] text-stone-500 dark:text-stone-400">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Wolna śr.</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Poza domem</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span> N/A</span>
+            <span>🧔 Przemo • 👩 Róża • 👫 Oboje</span>
           </div>
         </div>
 
         <!-- DNI TYGODNIA -->
-        <div class="grid grid-cols-7 gap-1.5 text-center text-xs font-bold text-stone-400 uppercase mb-2">
+        <div class="grid grid-cols-7 gap-1 sm:gap-1.5 text-center text-[11px] font-bold text-stone-400 uppercase mb-1.5">
           <div>Pon</div><div>Wt</div><div class="text-emerald-600 dark:text-emerald-400">Śr</div><div>Czw</div><div>Pt</div><div>Sob</div><div>Nd</div>
         </div>
 
         <!-- SIATKA KALENDARZA -->
-        <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 flex-1"></div>
+        <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-1.5 flex-1"></div>
 
         <!-- PANEL WYBRANEGO DNIA + DODAWANIE N/A / WYJAZDU -->
-        <div class="mt-5 pt-4 border-t border-warm-100 dark:border-warm-800 bg-warm-50 dark:bg-warm-800/50 p-4 rounded-2xl space-y-3">
+        <div class="mt-4 sm:mt-5 pt-4 border-t border-warm-100 dark:border-warm-800 bg-warm-50 dark:bg-warm-800/50 p-3.5 sm:p-4 rounded-2xl space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div class="text-[11px] font-bold uppercase text-stone-400">Wybrany dzień</div>
@@ -185,9 +186,9 @@
               <div>
                 <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Kogo dotyczy?</label>
                 <select id="na-who" class="w-full mt-1 px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
-                  <option value="Przemo">Przemo</option>
-                  <option value="Róża">Róża</option>
-                  <option value="Oboje">Oboje</option>
+                  <option value="Przemo">🧔 Przemo</option>
+                  <option value="Róża">👩 Róża</option>
+                  <option value="Oboje">👫 Oboje</option>
                 </select>
               </div>
               <div>
@@ -231,7 +232,7 @@
       </section>
 
       <!-- PRAWA KOLUMNA: DODAWANIE I LISTA OBOWIĄZKÓW -->
-      <section class="lg:col-span-5 bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-6 shadow-sm flex flex-col">
+      <section class="lg:col-span-5 bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-extrabold text-warm-900 dark:text-white">Obowiązki w tym miesiącu</h2>
           <button onclick="toggleAddForm()" class="bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-sm">
@@ -250,9 +251,9 @@
             <div>
               <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Kto robi?</label>
               <select id="task-assignee" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm">
-                <option value="Przemo">Przemo</option>
-                <option value="Róża">Róża</option>
-                <option value="Wspólne">Wspólne / Do ustalenia</option>
+                <option value="Przemo">🧔 Przemo</option>
+                <option value="Róża">👩 Róża</option>
+                <option value="Wspólne">👫 Wspólne / Do ustalenia</option>
               </select>
             </div>
             <div>
@@ -295,8 +296,8 @@
         <!-- FILTRY -->
         <div class="flex flex-wrap gap-1.5 mb-4">
           <button onclick="setFilter('all')" data-filter="all" class="filter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white">Wszystkie</button>
-          <button onclick="setFilter('Przemo')" data-filter="Przemo" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">Przemo</button>
-          <button onclick="setFilter('Róża')" data-filter="Róża" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">Róża</button>
+          <button onclick="setFilter('Przemo')" data-filter="Przemo" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🧔 Przemo</button>
+          <button onclick="setFilter('Róża')" data-filter="Róża" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">👩 Róża</button>
           <button onclick="setFilter('Berneńczyk')" data-filter="Berneńczyk" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Pies</button>
           <button onclick="setFilter('Auto')" data-filter="Auto" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🚗 Auto</button>
           <button onclick="setFilter('Dom')" data-filter="Dom" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🏠 Dom</button>
@@ -392,6 +393,14 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // IKONKI OSÓB W KALENDARZU I LISTACH
+    const PERSON_ICON = {
+      'Przemo': '🧔',
+      'Róża': '👩',
+      'Oboje': '👫',
+      'Wspólne': '👫'
+    };
+
     // TRYB JASNY / CIEMNY
     function applyTheme(theme) {
       const html = document.documentElement;
@@ -421,7 +430,7 @@
     let selectedDateStr = formatDate(new Date());
     let currentFilter = 'all';
     let allTasks = [];
-    let naBlocks = []; // { id, who, mode: 'away'|'busy', startDate, startTime, endDate, endTime, note }
+    let naBlocks = [];
     let unsubTasks = null;
     let unsubNa = null;
 
@@ -545,7 +554,7 @@
       document.getElementById('stat-shared').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Wspólne').length;
     }
 
-    // RENDEROWANIE KALENDARZA
+    // RENDEROWANIE KALENDARZA Z OSOBNYMI IKONKAMI PRZEMO / RÓŻA
     function renderCalendar() {
       const dateObj = new Date(currentYear, currentMonth, 1);
       const monthName = dateObj.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
@@ -560,7 +569,7 @@
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
       for (let i = 0; i < firstDay; i++) {
-        grid.innerHTML += `<div class="p-2 rounded-xl bg-warm-50/40 dark:bg-warm-800/20"></div>`;
+        grid.innerHTML += `<div class="p-1.5 rounded-xl bg-warm-50/40 dark:bg-warm-800/20"></div>`;
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
@@ -571,8 +580,12 @@
         const blocks = getBlocksForDate(dateStr);
         const hasBusy = blocks.some(b => b.mode === 'busy');
         const hasAway = blocks.some(b => b.mode === 'away');
+
         const dayTasks = allTasks.filter(t => t.date === dateStr);
-        const openTasks = dayTasks.filter(t => !t.completed).length;
+        const openTasks = dayTasks.filter(t => !t.completed);
+        const przemoOpen = openTasks.filter(t => t.assignee === 'Przemo').length;
+        const rozaOpen = openTasks.filter(t => t.assignee === 'Róża').length;
+        const sharedOpen = openTasks.filter(t => t.assignee === 'Wspólne').length;
 
         let bgClass = 'bg-white dark:bg-warm-800/70 border-warm-200 dark:border-warm-700 hover:border-brand-400';
         if (hasBusy) bgClass = 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-900';
@@ -581,26 +594,41 @@
 
         if (isSelected) bgClass += ' ring-2 ring-brand-500';
 
-        const badgesHtml = blocks.slice(0, 2).map(b => {
+        // Plakietki N/A z osobnymi ikonkami 🧔 Przemo / 👩 Róża / 👫 Oboje
+        const naBadgesHtml = blocks.slice(0, 2).map(b => {
           const isAway = b.mode === 'away';
+          const whoIcon = PERSON_ICON[b.who] || '👤';
           const color = isAway
             ? 'bg-amber-100 dark:bg-amber-900/70 text-amber-800 dark:text-amber-200'
-            : 'bg-red-100 dark:bg-red-900/70 text-red-800 dark:text-red-200';
-          const shortWho = b.who === 'Oboje' ? 'Oboje' : b.who[0];
-          const timeHint = b.startDate === b.endDate ? `${b.startTime}-${b.endTime}` : (isAway ? 'Wyjazd' : 'N/A');
-          return `<div class="text-[9px] font-bold px-1 py-0.5 rounded ${color} truncate">${isAway ? '🏠' : '⛔'} ${shortWho} ${timeHint}</div>`;
+            : (b.who === 'Przemo'
+                ? 'bg-sky-100 dark:bg-sky-900/70 text-sky-800 dark:text-sky-200'
+                : (b.who === 'Róża'
+                    ? 'bg-rose-100 dark:bg-rose-900/70 text-rose-800 dark:text-rose-200'
+                    : 'bg-red-100 dark:bg-red-900/70 text-red-800 dark:text-red-200'));
+          const timeHint = b.startDate === b.endDate ? `${b.startTime}` : (isAway ? 'Wyjazd' : 'N/A');
+          return `<div class="text-[9px] font-bold px-1 py-0.5 rounded ${color} truncate">${whoIcon}${isAway ? '🏠' : '⛔'} ${timeHint}</div>`;
         }).join('');
 
+        // Plakietki otwartych zadań w dniu rozbite na ikonki 🧔 / 👩 / 👫
+        let taskPills = '';
+        if (openTasks.length > 0) {
+          const parts = [];
+          if (przemoOpen > 0) parts.push(`<span class="bg-sky-100 dark:bg-sky-900/80 text-sky-800 dark:text-sky-200 px-1 rounded">🧔${przemoOpen}</span>`);
+          if (rozaOpen > 0) parts.push(`<span class="bg-rose-100 dark:bg-rose-900/80 text-rose-800 dark:text-rose-200 px-1 rounded">👩${rozaOpen}</span>`);
+          if (sharedOpen > 0) parts.push(`<span class="bg-amber-100 dark:bg-amber-900/80 text-amber-800 dark:text-amber-200 px-1 rounded">👫${sharedOpen}</span>`);
+          taskPills = `<div class="flex flex-wrap gap-0.5 text-[9px] font-extrabold">${parts.join('')}</div>`;
+        }
+
         grid.innerHTML += `
-          <button onclick="selectDay('${dateStr}')" class="p-2 rounded-2xl border text-left flex flex-col justify-between min-h-[76px] transition ${bgClass}">
+          <button onclick="selectDay('${dateStr}')" class="p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border text-left flex flex-col justify-between min-h-[72px] sm:min-h-[82px] transition ${bgClass}">
             <div class="flex justify-between items-center w-full">
               <span class="text-xs font-extrabold ${isWednesday ? 'text-emerald-700 dark:text-emerald-400' : 'text-warm-800 dark:text-stone-200'}">${day}</span>
               ${blocks.length > 2 ? `<span class="text-[9px] font-bold text-stone-400">+${blocks.length - 2}</span>` : ''}
             </div>
             <div class="mt-1 space-y-0.5 w-full">
-              ${badgesHtml}
-              ${openTasks > 0 ? `<div class="text-[10px] font-bold bg-brand-100 dark:bg-brand-900/70 text-brand-800 dark:text-brand-200 px-1.5 py-0.5 rounded-md truncate">${openTasks} zad.</div>` : ''}
-              ${dayTasks.length > 0 && openTasks === 0 ? `<div class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">✓ Gotowe</div>` : ''}
+              ${naBadgesHtml}
+              ${taskPills}
+              ${dayTasks.length > 0 && openTasks.length === 0 ? `<div class="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">✓</div>` : ''}
             </div>
           </button>
         `;
@@ -630,13 +658,14 @@
 
       list.innerHTML = blocks.map(b => {
         const isAway = b.mode === 'away';
+        const whoIcon = PERSON_ICON[b.who] || '👤';
         const rangeText = b.startDate === b.endDate
           ? `${b.startTime} – ${b.endTime}`
           : `${b.startDate} (${b.startTime}) → ${b.endDate} (${b.endTime})`;
         return `
           <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs border ${isAway ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-900 text-amber-900 dark:text-amber-200' : 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900 text-red-900 dark:text-red-200'}">
             <div>
-              <span class="font-bold">${isAway ? '🏠 Poza domem' : '⛔ N/A (Brak czasu)'} • ${b.who}</span>
+              <span class="font-bold">${whoIcon} ${b.who} • ${isAway ? '🏠 Poza domem' : '⛔ N/A (Brak czasu)'}</span>
               <span class="opacity-80 ml-1">(${rangeText})</span>
               ${b.note ? `<span class="block text-[11px] opacity-75">${b.note}</span>` : ''}
             </div>
@@ -727,7 +756,7 @@
             </div>
             ${task.desc ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${task.desc}</p>` : ''}
             <div class="flex items-center gap-2 mt-2 flex-wrap">
-              <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${personBadge[task.assignee] || 'bg-stone-100'}">${task.assignee}</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${personBadge[task.assignee] || 'bg-stone-100'}">${PERSON_ICON[task.assignee] || ''} ${task.assignee}</span>
               ${task.date ? `<span class="text-[11px] text-stone-500 dark:text-stone-400 font-medium">📅 ${task.date}</span>` : ''}
               ${task.remoteOk ? `<span class="text-[10px] bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-semibold">🌍 Zdalnie/wyjazd</span>` : ''}
               ${task.recurrence && task.recurrence !== 'once' ? `<span class="text-[10px] bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold">↻ ${task.recurrence === 'weekly' ? 'Co tydzień' : 'Co miesiąc'}</span>` : ''}
@@ -804,7 +833,7 @@
           <div class="flex-1">
             <div class="font-bold text-sm text-warm-900 dark:text-white">${item.title} <span class="text-xs font-normal text-brand-600 dark:text-brand-400">(${item.category})</span></div>
             <div class="text-xs text-stone-500 dark:text-stone-400">${item.desc}</div>
-            <div class="text-[11px] text-stone-400 mt-1">Sugestia: ${item.assignee} • ${item.tip} ${item.remoteOk ? '• 🌍 Zdalnie/wyjazd' : ''}</div>
+            <div class="text-[11px] text-stone-400 mt-1">Sugestia: ${PERSON_ICON[item.assignee] || ''} ${item.assignee} • ${item.tip} ${item.remoteOk ? '• 🌍 Zdalnie/wyjazd' : ''}</div>
           </div>
         </label>
       `).join('');
@@ -837,7 +866,7 @@
       closeModal('template-modal');
     };
 
-    // ASYSTENT AI (WOLNE ŚRODY + GODZINOWE N/A + POZA DOMEM)
+    // ASYSTENT AI
     window.openAiModal = () => {
       document.getElementById('ai-modal').classList.remove('hidden');
       document.getElementById('ai-modal').classList.add('flex');
