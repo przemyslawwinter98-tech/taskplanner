@@ -79,28 +79,47 @@ function isTaskOverdue(task) {
   return task.date < formatDate(new Date());
 }
 
-// HELPERY SEKCJI DYNAMICZNYCH
+function parseTagsInput(raw) {
+  if (!raw) return [];
+  return [...new Set(
+    String(raw)
+      .split(',')
+      .map(t => t.trim().replace(/^#+/, '').toLowerCase())
+      .filter(Boolean)
+  )];
+}
+
+function escapeAttr(str) {
+  return String(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// DOPASOWANIE STARYCH I NOWYCH NAZW SEKCJI
 function resolveSectionId(rawCat) {
   if (taskSections.length === 0) return rawCat || 'sec_mieszkanie';
   if (!rawCat) return taskSections[0].id;
-  // 1. Szukaj po dokładnym ID sekcji (zarówno doc.id jak i codeId)
+
   const byId = taskSections.find(s => s.id === rawCat || s.codeId === rawCat);
   if (byId) return byId.id;
-  // 2. Mapowanie starszych nazw tekstowych na sekcje
+
   const low = String(rawCat).toLowerCase();
   const keywordMap = [
-    { keys: ['łazienk', 'lazienk', 'pranie'], target: 'sec_lazienka' },
-    { keys: ['czosn', 'gośk', 'gosk', 'berneń', 'pies'], target: 'sec_czosnek' },
-    { keys: ['mieszkan', 'dom', 'sprząt'], target: 'sec_mieszkanie' },
-    { keys: ['rachunk', 'auto', 'zakup'], target: 'sec_auto' },
-    { keys: ['kuchn'], target: 'sec_kuchnia' }
+    { keys: ['łazienk', 'lazienk', 'pranie'], target: 'sec_lazienka', idx: 0 },
+    { keys: ['czosn', 'gośk', 'gosk', 'berneń', 'pies'], target: 'sec_czosnek', idx: 1 },
+    { keys: ['mieszkan', 'dom', 'sprząt'], target: 'sec_mieszkanie', idx: 2 },
+    { keys: ['rachunk', 'auto', 'zakup'], target: 'sec_auto', idx: 3 },
+    { keys: ['kuchn'], target: 'sec_kuchnia', idx: 4 }
   ];
+
   for (const rule of keywordMap) {
     if (rule.keys.some(k => low.includes(k))) {
-      const found = taskSections.find(s => s.codeId === rule.target || s.id === rule.target || s.name.toLowerCase().includes(rule.keys[0]));
+      const found =
+        taskSections.find(s => s.codeId === rule.target || s.id === rule.target) ||
+        taskSections.find(s => rule.keys.some(k => s.name.toLowerCase().includes(k))) ||
+        taskSections[rule.idx];
       if (found) return found.id;
     }
   }
+
   const byName = taskSections.find(s => s.name.toLowerCase() === low);
   return byName ? byName.id : taskSections[0].id;
 }
@@ -119,13 +138,11 @@ function buildSectionOptionsHtml(selectedRawId) {
 }
 
 function renderDynamicSectionControls() {
-  // 1. Selecty w formularzach dodawania
   const taskCatSel = document.getElementById('task-category');
   const tplCatSel = document.getElementById('tpl-category');
   if (taskCatSel) taskCatSel.innerHTML = buildSectionOptionsHtml(taskCatSel.value);
   if (tplCatSel) tplCatSel.innerHTML = buildSectionOptionsHtml(tplCatSel.value);
 
-  // 2. Pasek filtrów na głównej liście zadań
   const mainFilterBar = document.getElementById('main-filters-bar');
   if (mainFilterBar) {
     const fixedBtns = [
@@ -135,31 +152,40 @@ function renderDynamicSectionControls() {
       { id: 'together', label: '👫 Razem' }
     ];
     const sectionBtns = taskSections.map(s => ({ id: s.id, label: `${s.icon || '📌'} ${s.name}` }));
-    mainFilterBar.innerHTML = [...fixedBtns, ...sectionBtns].map(b => {
+
+    const allUniqueTags = [...new Set([
+      ...allTasks.flatMap(t => Array.isArray(t.tags) ? t.tags : []),
+      ...taskTemplates.flatMap(t => Array.isArray(t.tags) ? t.tags : [])
+    ])].sort();
+
+    const tagBtns = allUniqueTags.map(tag => ({ id: `tag:${tag}`, label: `#${tag}`, isTag: true }));
+
+    mainFilterBar.innerHTML = [...fixedBtns, ...sectionBtns, ...tagBtns].map(b => {
       const active = currentFilter === b.id;
-      return `<button onclick="setFilter('${b.id}')" data-filter="${b.id}" class="filter-btn px-2.5 py-1 rounded-full text-xs ${active ? 'font-bold bg-warm-900 dark:bg-brand-500 text-white' : 'font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300'}">${b.label}</button>`;
+      const baseInactive = b.isTag
+        ? 'font-semibold bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200/70 dark:border-brand-800/70'
+        : 'font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300';
+      return `<button onclick="setFilter('${escapeAttr(b.id)}')" data-filter="${escapeAttr(b.id)}" class="filter-btn px-2.5 py-1 rounded-full text-xs ${active ? 'font-bold bg-warm-900 dark:bg-brand-500 text-white' : baseInactive}">${b.label}</button>`;
     }).join('');
   }
 
-  // 3. Pasek filtrów w konfiguratorze bazy
   const cfgFilterBar = document.getElementById('config-filters-bar');
   if (cfgFilterBar) {
     const allBtn = { id: 'all', label: 'Wszystkie sekcje' };
     const secBtns = taskSections.map(s => ({ id: s.id, label: `${s.icon || '📌'} ${s.name}` }));
     cfgFilterBar.innerHTML = [allBtn, ...secBtns].map(b => {
       const active = configFilter === b.id;
-      return `<button onclick="setConfigFilter('${b.id}')" data-cfilter="${b.id}" class="cfilter-btn px-3 py-1 rounded-full text-xs ${active ? 'font-bold bg-warm-900 dark:bg-brand-500 text-white' : 'font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300'}">${b.label}</button>`;
+      return `<button onclick="setConfigFilter('${escapeAttr(b.id)}')" data-cfilter="${escapeAttr(b.id)}" class="cfilter-btn px-3 py-1 rounded-full text-xs ${active ? 'font-bold bg-warm-900 dark:bg-brand-500 text-white' : 'font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300'}">${b.label}</button>`;
     }).join('');
   }
 
-  // 4. Panel zarządzania sekcjami (dodawanie / edycja nazwy i ikony / usuwanie)
   const secManager = document.getElementById('sections-manager-list');
   if (secManager) {
     secManager.innerHTML = taskSections.map(s => `
       <div class="inline-flex items-center gap-1.5 bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-xl px-2.5 py-1.5 shadow-2xs">
-        <input type="text" value="${s.icon || '📌'}" maxlength="4" onchange="updateSectionField('${s.id}', 'icon', this.value)"
+        <input type="text" value="${escapeAttr(s.icon || '📌')}" maxlength="4" onchange="updateSectionField('${s.id}', 'icon', this.value)"
           title="Zmień ikonkę sekcji" class="w-7 text-center bg-transparent text-sm focus:outline-none" />
-        <input type="text" value="${s.name.replace(/"/g, '&quot;')}" onchange="updateSectionField('${s.id}', 'name', this.value)"
+        <input type="text" value="${escapeAttr(s.name)}" onchange="updateSectionField('${s.id}', 'name', this.value)"
           title="Edytuj nazwę sekcji" class="w-36 sm:w-44 text-xs font-bold text-warm-900 dark:text-white bg-transparent border-b border-transparent focus:border-brand-400 focus:outline-none" />
         ${taskSections.length > 1 ? `<button onclick="deleteSection('${s.id}')" title="Usuń sekcję" class="text-stone-400 hover:text-red-500 text-xs font-bold px-1">✕</button>` : ''}
       </div>
@@ -243,7 +269,6 @@ function syncDateInputs(dateStr) {
   if (eDate) eDate.value = dateStr;
 }
 
-// WYBÓR CZASU "NA TERAZ"
 window.selectNowTime = (timeLabel) => {
   selectedNowTime = timeLabel;
   document.querySelectorAll('.now-time-btn').forEach(btn => {
@@ -253,7 +278,6 @@ window.selectNowTime = (timeLabel) => {
   });
 };
 
-// PRZEŁĄCZANIE AKTYWNEGO PROFILU
 window.switchActiveUser = (user) => {
   activeUser = user;
   localStorage.setItem('home_planner_active_user', user);
@@ -275,7 +299,6 @@ function updateUserProfileUI() {
   }
 }
 
-// SPERSONALIZOWANA KARTA SUGESTII "NA TERAZ"
 function renderPersonalFocusCard() {
   const card = document.getElementById('personal-focus-card');
   const iconEl = document.getElementById('personal-focus-icon');
@@ -363,7 +386,6 @@ function renderPersonalFocusCard() {
   `).join('');
 }
 
-// SZYBKIE AI "NA TERAZ"
 window.generatePersonalAiTips = async () => {
   const apiKey = localStorage.getItem('gemini_api_key');
   if (!apiKey) return openSettingsModal();
@@ -374,9 +396,10 @@ window.generatePersonalAiTips = async () => {
   btn.disabled = true;
 
   const todayStr = formatDate(new Date());
-  const openTasks = allTasks.filter(t => !t.completed).slice(0, 22).map(t =>
-    `${t.title} (${getSectionMeta(t.category).name}, ${t.coop === 'together' ? 'RAZEM' : 'SOLO'}, ${t.assignee || '?'}${t.remoteOk ? ', poza domem' : ''})`
-  ).join('; ') || 'brak';
+  const openTasks = allTasks.filter(t => !t.completed).slice(0, 22).map(t => {
+    const tagsStr = Array.isArray(t.tags) && t.tags.length > 0 ? `, tagi: #${t.tags.join(' #')}` : '';
+    return `${t.title} (${getSectionMeta(t.category).name}, ${t.coop === 'together' ? 'RAZEM' : 'SOLO'}, ${t.assignee || '?'}${t.remoteOk ? ', poza domem' : ''}${tagsStr})`;
+  }).join('; ') || 'brak';
 
   const myProfile = activeUser === 'Przemo' ? userProfiles.przemo : userProfiles.roza;
   const myBlocks = getBlocksForDate(todayStr).map(b => `${b.who}:${b.mode} ${b.startTime}-${b.endTime}`).join(', ') || 'brak';
@@ -445,6 +468,7 @@ async function insertTemplateInstancesIntoMonth(tpl, year, month) {
   const isDailyHabit = freq >= 30;
   const dates = getTargetDatesForFreq(year, month, freq);
   const resolvedCat = resolveSectionId(tpl.category);
+  const tags = Array.isArray(tpl.tags) ? tpl.tags : [];
 
   for (let idx = 0; idx < dates.length; idx++) {
     await addDoc(collection(db, "tasks"), {
@@ -454,6 +478,7 @@ async function insertTemplateInstancesIntoMonth(tpl, year, month) {
       assignee,
       coop: tpl.coop || 'solo',
       category: resolvedCat,
+      tags,
       date: dates[idx],
       recurrence: isDailyHabit ? 'daily' : (freq > 1 ? 'recurring' : 'monthly'),
       isDailyHabit,
@@ -477,7 +502,6 @@ function subscribeFirestore() {
   const testBadge = document.getElementById('test-month-badge');
   if (testBadge) testBadge.classList.toggle('hidden', !isTestMonth(currentYear, currentMonth));
 
-  // 1. Sekcje zadań (dynamiczne z Firebase)
   const qSec = query(collection(db, "taskSections"), where("secret", "==", homeSecret));
   unsubSections = onSnapshot(qSec, async (snapshot) => {
     if (snapshot.empty && !seededSectionsOnce) {
@@ -502,7 +526,6 @@ function subscribeFirestore() {
     renderTasks();
   });
 
-  // 2. Profile osób
   const profileDocRef = doc(db, "homeSettings", `profiles_${homeSecret}`);
   unsubProfiles = onSnapshot(profileDocRef, async (snap) => {
     if (snap.exists()) {
@@ -518,10 +541,10 @@ function subscribeFirestore() {
     }
   });
 
-  // 3. Zadania w miesiącu
   const qTasks = query(collection(db, "tasks"), where("secret", "==", homeSecret), where("monthKey", "==", monthKey));
   unsubTasks = onSnapshot(qTasks, (snapshot) => {
     allTasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderDynamicSectionControls();
     renderTasks();
     renderStats();
     renderCalendar();
@@ -533,7 +556,6 @@ function subscribeFirestore() {
     appContainer?.classList.add('hidden');
   });
 
-  // 4. Blokady N/A
   const qNa = query(collection(db, "naBlocks"), where("secret", "==", homeSecret));
   unsubNa = onSnapshot(qNa, (snapshot) => {
     naBlocks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -545,13 +567,12 @@ function subscribeFirestore() {
     renderPersonalFocusCard();
   });
 
-  // 5. Wzorce zadań w bazie
   const qTpl = query(collection(db, "taskTemplates"), where("secret", "==", homeSecret));
   unsubTemplates = onSnapshot(qTpl, async (snapshot) => {
     if (snapshot.empty && !seededTemplatesOnce) {
       seededTemplatesOnce = true;
       for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
-        const tplData = { secret: homeSecret, order: i, ...DEFAULT_MONTHLY_TASKS[i] };
+        const tplData = { secret: homeSecret, order: i, ...DEFAULT_MONTHLY_TASKS[i], tags: [] };
         await addDoc(collection(db, "taskTemplates"), tplData);
         await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
       }
@@ -560,6 +581,7 @@ function subscribeFirestore() {
     taskTemplates = snapshot.docs
       .map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+    renderDynamicSectionControls();
     renderConfigTemplates();
   });
 }
@@ -659,14 +681,14 @@ function renderNaManagerList() {
           <input type="time" value="${b.startTime}" onchange="updateNaBlockField('${b.id}', 'startTime', this.value)" class="px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
           ${repeat === 'once' ? `<input type="date" value="${b.endDate || b.startDate}" onchange="updateNaBlockField('${b.id}', 'endDate', this.value)" class="px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />` : `<span class="text-[11px] text-emerald-600 font-semibold">Co ${repeat === 'weekly' ? '7' : '14'} dni</span>`}
           <input type="time" value="${b.endTime}" onchange="updateNaBlockField('${b.id}', 'endTime', this.value)" class="px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
-          <input type="text" value="${(b.note || '').replace(/"/g, '&quot;')}" placeholder="Opis" onchange="updateNaBlockField('${b.id}', 'note', this.value)" class="col-span-2 sm:col-span-1 px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
+          <input type="text" value="${escapeAttr(b.note)}" placeholder="Opis" onchange="updateNaBlockField('${b.id}', 'note', this.value)" class="col-span-2 sm:col-span-1 px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
         </div>
       </div>
     `;
   }).join('');
 }
 
-// KONFIGURACJA BAZY ZADAŃ (DYNAMICZNE SEKCJE)
+// KONFIGURACJA BAZY ZADAŃ (BEZPOŚREDNIA EDYCJA SEKCJI + WŁASNE TAGI)
 window.openConfigScreen = () => {
   document.getElementById('dashboard-view').classList.add('hidden');
   document.getElementById('config-view').classList.remove('hidden');
@@ -685,6 +707,44 @@ window.setConfigFilter = (f) => {
   renderConfigTemplates();
 };
 
+function renderTagsPillsHtml(collectionName, itemId, tags) {
+  const safeTags = Array.isArray(tags) ? tags : [];
+  const pills = safeTags.map(tag => `
+    <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-100/80 dark:bg-brand-950 text-brand-800 dark:text-brand-300 border border-brand-200/70 dark:border-brand-800/70">
+      #${tag}
+      <button type="button" onclick="removeItemTag('${collectionName}', '${itemId}', '${escapeAttr(tag)}')" class="hover:text-red-500 font-extrabold">×</button>
+    </span>
+  `).join('');
+
+  return `
+    <div class="flex flex-wrap items-center gap-1 mt-1.5">
+      ${pills}
+      <input type="text" placeholder="+ tag (Enter)"
+        onkeydown="if(event.key==='Enter'){event.preventDefault(); addItemTag('${collectionName}', '${itemId}', this.value); this.value='';}"
+        onblur="if(this.value.trim()){addItemTag('${collectionName}', '${itemId}', this.value); this.value='';}"
+        class="w-24 text-[10px] px-2 py-0.5 rounded-full border border-dashed border-warm-300 dark:border-warm-700 bg-transparent text-stone-600 dark:text-stone-300 focus:outline-none focus:border-brand-400" />
+    </div>
+  `;
+}
+
+window.addItemTag = async (collectionName, id, rawInput) => {
+  const newTags = parseTagsInput(rawInput);
+  if (newTags.length === 0) return;
+  const list = collectionName === 'taskTemplates' ? taskTemplates : allTasks;
+  const item = list.find(x => x.id === id);
+  const existing = Array.isArray(item?.tags) ? item.tags : [];
+  const merged = [...new Set([...existing, ...newTags])];
+  await updateDoc(doc(db, collectionName, id), { tags: merged });
+};
+
+window.removeItemTag = async (collectionName, id, tagToRemove) => {
+  const list = collectionName === 'taskTemplates' ? taskTemplates : allTasks;
+  const item = list.find(x => x.id === id);
+  const existing = Array.isArray(item?.tags) ? item.tags : [];
+  const filtered = existing.filter(t => t !== tagToRemove);
+  await updateDoc(doc(db, collectionName, id), { tags: filtered });
+};
+
 function renderTemplateRow(t) {
   const isEnabled = t.enabled !== false;
   const freqVal = Number(t.freq || 1);
@@ -695,10 +755,11 @@ function renderTemplateRow(t) {
         <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="updateTemplateField('${t.id}', 'enabled', this.checked)"
           class="mt-1 w-4 h-4 accent-brand-500 rounded cursor-pointer" />
         <div class="flex-1 min-w-0">
-          <input type="text" value="${t.title.replace(/"/g, '&quot;')}" onchange="updateTemplateField('${t.id}', 'title', this.value)"
+          <input type="text" value="${escapeAttr(t.title)}" onchange="updateTemplateField('${t.id}', 'title', this.value)"
             class="w-full font-bold text-sm text-warm-900 dark:text-white bg-transparent border-b border-transparent focus:border-brand-400 focus:outline-none" />
-          <input type="text" value="${(t.desc || '').replace(/"/g, '&quot;')}" placeholder="Opis..." onchange="updateTemplateField('${t.id}', 'desc', this.value)"
+          <input type="text" value="${escapeAttr(t.desc)}" placeholder="Opis..." onchange="updateTemplateField('${t.id}', 'desc', this.value)"
             class="w-full text-xs text-stone-500 dark:text-stone-400 bg-transparent border-b border-transparent focus:border-brand-400 focus:outline-none" />
+          ${renderTagsPillsHtml('taskTemplates', t.id, t.tags)}
         </div>
       </div>
 
@@ -761,13 +822,23 @@ function renderConfigTemplates() {
   const htmlBlocks = sectionsToRender.map((sec, idx) => {
     const items = taskTemplates.filter(t => resolveSectionId(t.category) === sec.id);
     return `
-      <div class="space-y-2 pt-3">
-        <div class="flex items-center justify-between px-1">
-          <h3 class="text-sm font-extrabold text-brand-700 dark:text-brand-400">${sec.icon || '📌'} Sekcja ${idx + 1}: ${sec.name}</h3>
-          <span class="text-xs font-semibold text-stone-400">${items.length} zadań</span>
+      <div class="space-y-2 pt-4">
+        <!-- BEZPOŚREDNIO EDYTOWALNY NAGŁÓWEK SEKCJI -->
+        <div class="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5 rounded-2xl bg-brand-50/70 dark:bg-brand-950/30 border border-brand-200/70 dark:border-brand-900/60">
+          <div class="flex items-center gap-1.5 flex-1 min-w-[220px]">
+            <input type="text" value="${escapeAttr(sec.icon || '📌')}" maxlength="4" onchange="updateSectionField('${sec.id}', 'icon', this.value)"
+              title="Kliknij, aby zmienić ikonę sekcji" class="w-8 text-center bg-white dark:bg-warm-800 rounded-lg py-0.5 text-sm border border-warm-200 dark:border-warm-700" />
+            <span class="text-xs font-extrabold text-brand-700 dark:text-brand-400">Sekcja ${idx + 1}:</span>
+            <input type="text" value="${escapeAttr(sec.name)}" onchange="updateSectionField('${sec.id}', 'name', this.value)"
+              title="Kliknij, aby zmienić nazwę sekcji" class="flex-1 text-sm font-extrabold text-brand-800 dark:text-brand-300 bg-transparent border-b border-transparent focus:border-brand-500 focus:outline-none px-1" />
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-stone-500 dark:text-stone-400">${items.length} zadań</span>
+            ${taskSections.length > 1 ? `<button onclick="deleteSection('${sec.id}')" title="Usuń tę sekcję" class="text-xs text-stone-400 hover:text-red-500 font-bold px-1.5 py-0.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40">🗑️ Usuń sekcję</button>` : ''}
+          </div>
         </div>
         <div class="space-y-2">
-          ${items.length > 0 ? items.map(renderTemplateRow).join('') : '<div class="text-xs text-stone-400 px-2 py-2 rounded-xl border border-dashed border-warm-200 dark:border-warm-800">Brak zadań w tej sekcji — dodaj powyżej lub zmień sekcję istniejącego zadania.</div>'}
+          ${items.length > 0 ? items.map(renderTemplateRow).join('') : '<div class="text-xs text-stone-400 px-3 py-2.5 rounded-xl border border-dashed border-warm-200 dark:border-warm-800">Brak zadań w tej sekcji — dodaj powyżej lub zmień sekcję istniejącego zadania.</div>'}
         </div>
       </div>
     `;
@@ -790,6 +861,7 @@ document.getElementById('new-template-form')?.addEventListener('submit', async (
     freq: Number(document.getElementById('tpl-freq').value),
     coop: document.getElementById('tpl-coop').value,
     assignee: document.getElementById('tpl-assignee').value,
+    tags: parseTagsInput(document.getElementById('tpl-tags')?.value || ''),
     remoteOk: document.getElementById('tpl-remote').checked,
     starred: document.getElementById('tpl-starred').checked,
     enabled: true
@@ -806,7 +878,7 @@ window.replaceWithFull39Tasks = async () => {
   for (const d of oldTpls.docs) await deleteDoc(doc(db, "taskTemplates", d.id));
   for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
     const raw = DEFAULT_MONTHLY_TASKS[i];
-    const tplData = { secret: homeSecret, order: i, ...raw, category: resolveSectionId(raw.category) };
+    const tplData = { secret: homeSecret, order: i, ...raw, category: resolveSectionId(raw.category), tags: [] };
     await addDoc(collection(db, "taskTemplates"), tplData);
     await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
   }
@@ -993,9 +1065,14 @@ function renderTasks() {
   let filtered = [...allTasks];
 
   if (currentFilter !== 'all') {
-    filtered = currentFilter === 'together'
-      ? filtered.filter(t => t.coop === 'together')
-      : filtered.filter(t => (t.assignee || 'Nieprzypisane') === currentFilter || resolveSectionId(t.category) === currentFilter);
+    if (currentFilter === 'together') {
+      filtered = filtered.filter(t => t.coop === 'together');
+    } else if (currentFilter.startsWith('tag:')) {
+      const targetTag = currentFilter.slice(4);
+      filtered = filtered.filter(t => Array.isArray(t.tags) && t.tags.includes(targetTag));
+    } else {
+      filtered = filtered.filter(t => (t.assignee || 'Nieprzypisane') === currentFilter || resolveSectionId(t.category) === currentFilter);
+    }
   }
 
   filtered.sort((a, b) => {
@@ -1008,7 +1085,7 @@ function renderTasks() {
 
   if (filtered.length === 0) {
     list.innerHTML = `<div class="text-center text-stone-400 text-sm py-10 bg-warm-50 dark:bg-warm-800/40 rounded-2xl border border-dashed border-warm-200 dark:border-warm-700">
-      Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań”</strong> na górze.
+      Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań i sekcji”</strong> na górze.
     </div>`;
     return;
   }
@@ -1035,6 +1112,7 @@ function renderTasks() {
             ${overdue ? `<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-red-600 text-white">⚠️ Zaległe</span>` : ''}
           </div>
           ${task.desc ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${task.desc}</p>` : ''}
+          ${renderTagsPillsHtml('tasks', task.id, task.tags)}
           <div class="flex items-center gap-1.5 mt-2 flex-wrap">
             <select onchange="changeTaskCategory('${task.id}', this.value)" title="Zmień sekcję zadania"
               class="text-[11px] font-bold px-2 py-0.5 rounded-md border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 cursor-pointer">
@@ -1102,6 +1180,7 @@ document.getElementById('add-task-form')?.addEventListener('submit', async (e) =
   const category = document.getElementById('task-category').value;
   const date = document.getElementById('task-date').value;
   const count = Number(document.getElementById('task-recurrence').value);
+  const tags = parseTagsInput(document.getElementById('task-tags')?.value || '');
   const remoteOk = document.getElementById('task-remote-ok').checked;
   const starred = document.getElementById('task-starred').checked;
   const monthKey = getMonthKey(currentYear, currentMonth);
@@ -1114,7 +1193,7 @@ document.getElementById('add-task-form')?.addEventListener('submit', async (e) =
       await addDoc(collection(db, "tasks"), {
         secret: homeSecret,
         title: count > 1 ? `${title} (${i + 1}/${count})` : title,
-        desc, assignee, coop, category,
+        desc, assignee, coop, category, tags,
         date: formatDate(baseDate),
         recurrence: count > 1 ? 'recurring' : 'once',
         isDailyHabit: false,
