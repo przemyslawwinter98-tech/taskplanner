@@ -81,8 +81,8 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick="openTemplateModal()" class="px-3.5 py-2 rounded-xl bg-brand-50 dark:bg-brand-950/80 hover:bg-brand-100 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 font-semibold text-xs sm:text-sm transition flex items-center gap-1.5">
-            <span>📋</span> Szablon startowy
+          <button onclick="openConfigScreen()" class="px-3.5 py-2 rounded-xl bg-brand-50 dark:bg-brand-950/80 hover:bg-brand-100 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 font-bold text-xs sm:text-sm transition flex items-center gap-1.5 border border-brand-200/70 dark:border-brand-800">
+            <span>🛠️</span> Konfiguracja bazy zadań
           </button>
           <button onclick="openAiModal()" class="px-3.5 py-2 rounded-xl bg-warm-900 dark:bg-brand-500 hover:bg-stone-800 dark:hover:bg-brand-600 text-white font-semibold text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm">
             <span>✨</span> Sugestie AI
@@ -129,7 +129,7 @@
 
         <div class="col-span-2 md:col-span-1 bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
           <div>
-            <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Wspólne</div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Wspólne / Nieprzypisane</div>
             <div id="stat-shared" class="text-xl sm:text-2xl font-extrabold text-warm-900 dark:text-white mt-0.5">0</div>
             <div class="text-[11px] text-stone-400">Do podziału</div>
           </div>
@@ -138,8 +138,8 @@
       </div>
     </header>
 
-    <!-- GŁÓWNY UKŁAD: KALENDARZ (LEWA) + LISTA ZADAŃ (PRAWA) -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+    <!-- WIDOK GŁÓWNY: KALENDARZ + LISTA ZADAŃ -->
+    <div id="dashboard-view" class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
 
       <!-- LEWA KOLUMNA: KALENDARZ + GODZINOWE / WYJAZDOWE N/A -->
       <section class="lg:col-span-7 bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-3.5 sm:p-6 shadow-sm flex flex-col">
@@ -180,7 +180,7 @@
           <!-- AKTYWNE BLOKADY W WYBRANYM DNIU -->
           <div id="selected-day-na-list" class="space-y-1.5"></div>
 
-          <!-- FORMULARZ DODAWANIA N/A (GODZINY LUB ZAKRES DNI NP. PT-ND) -->
+          <!-- FORMULARZ DODAWANIA N/A -->
           <form id="na-form" class="hidden bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-700 rounded-2xl p-3.5 space-y-3">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
@@ -236,24 +236,25 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-extrabold text-warm-900 dark:text-white">Obowiązki w tym miesiącu</h2>
           <button onclick="toggleAddForm()" class="bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-sm">
-            + Dodaj zadanie
+            + Jednorazowe
           </button>
         </div>
 
         <!-- FORMULARZ DODAWANIA ZADANIA -->
         <form id="add-task-form" class="hidden mb-5 bg-brand-50/60 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-900 rounded-2xl p-4 space-y-3">
-          <input id="task-title" type="text" required placeholder="Co trzeba zrobić? (np. Tabletka na kleszcze dla psa)"
+          <input id="task-title" type="text" required placeholder="Co trzeba zrobić? (np. Wizyta u weterynarza)"
             class="w-full px-3.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
           <input id="task-desc" type="text" placeholder="Krótki opis / wskazówka (opcjonalnie)"
             class="w-full px-3.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
 
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Kto robi?</label>
+              <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Kto robi? (opcjonalnie)</label>
               <select id="task-assignee" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm">
+                <option value="Nieprzypisane">❓ Do ustalenia</option>
                 <option value="Przemo">🧔 Przemo</option>
                 <option value="Róża">👩 Róża</option>
-                <option value="Wspólne">👫 Wspólne / Do ustalenia</option>
+                <option value="Wspólne">👫 Wspólne</option>
               </select>
             </div>
             <div>
@@ -262,6 +263,7 @@
                 <option value="Berneńczyk">🐕 Berneńczyk</option>
                 <option value="Dom">🏠 Dom</option>
                 <option value="Auto">🚗 Auto</option>
+                <option value="Rachunki">💳 Rachunki</option>
                 <option value="Inne">📌 Inne</option>
               </select>
             </div>
@@ -273,18 +275,18 @@
               <input id="task-date" type="date" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
             </div>
             <div>
-              <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Typ zadania</label>
+              <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Powtarzalność</label>
               <select id="task-recurrence" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm">
-                <option value="once">Jednorazowe</option>
-                <option value="weekly">Cykliczne (co tydzień w tym mies.)</option>
-                <option value="monthly">Cykliczne (stałe co miesiąc)</option>
+                <option value="1">1x (jednorazowe)</option>
+                <option value="2">2x w tym miesiącu</option>
+                <option value="4">4x w tym miesiącu (co tydz.)</option>
               </select>
             </div>
           </div>
 
           <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer pt-1">
             <input id="task-remote-ok" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
-            <span>Można zrobić będąc <strong>poza domem</strong> (np. online / na wyjeździe)</span>
+            <span>Można zrobić będąc <strong>poza domem</strong> (zdalnie / wyjazd)</span>
           </label>
 
           <div class="flex justify-end gap-2 pt-1">
@@ -298,6 +300,7 @@
           <button onclick="setFilter('all')" data-filter="all" class="filter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white">Wszystkie</button>
           <button onclick="setFilter('Przemo')" data-filter="Przemo" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🧔 Przemo</button>
           <button onclick="setFilter('Róża')" data-filter="Róża" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">👩 Róża</button>
+          <button onclick="setFilter('Nieprzypisane')" data-filter="Nieprzypisane" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">❓ Nieprzypisane</button>
           <button onclick="setFilter('Berneńczyk')" data-filter="Berneńczyk" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Pies</button>
           <button onclick="setFilter('Auto')" data-filter="Auto" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🚗 Auto</button>
           <button onclick="setFilter('Dom')" data-filter="Dom" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🏠 Dom</button>
@@ -309,24 +312,84 @@
         </div>
       </section>
     </div>
-  </div>
 
-  <!-- MODAL: SZABLON STARTOWY -->
-  <div id="template-modal" class="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs hidden items-center justify-center p-4">
-    <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl max-h-[85vh] flex flex-col">
-      <div class="flex justify-between items-center pb-4 border-b border-warm-100 dark:border-warm-800">
-        <div>
-          <h3 class="text-xl font-extrabold text-warm-900 dark:text-white">📋 Baza startowa obowiązków</h3>
-          <p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">Dopasowana pod berneńczyka, auto i dom. Zaznacz, co wrzucić na ten miesiąc.</p>
+    <!-- EKRAN KONFIGURACJI BAZY ZADAŃ (PEŁNY WIDOK ZARZĄDZANIA SZABLONEM) -->
+    <div id="config-view" class="hidden space-y-5">
+      <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-4 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-warm-100 dark:border-warm-800">
+          <div>
+            <div class="flex items-center gap-2">
+              <button onclick="closeConfigScreen()" class="px-3 py-1.5 rounded-xl bg-warm-100 dark:bg-warm-800 hover:bg-warm-200 dark:hover:bg-warm-700 text-xs font-bold transition">
+                ← Wróć do kalendarza
+              </button>
+              <h2 class="text-xl font-extrabold text-warm-900 dark:text-white">🛠️ Konfiguracja stałej bazy zadań</h2>
+            </div>
+            <p class="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1.5">
+              Tutaj ustalacie stałe obowiązki w skali miesiąca. Kto wykonuje jest <strong>opcjonalne</strong> — możecie zostawić „Do ustalenia” i przypisać później albo oddać do rozpisania AI.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="resetDefaultTemplates()" class="px-3.5 py-2.5 rounded-xl border border-warm-200 dark:border-warm-700 hover:bg-warm-100 dark:hover:bg-warm-800 text-xs font-semibold text-stone-600 dark:text-stone-300 transition">
+              Przywróć bazę startową (25)
+            </button>
+            <button onclick="generateMonthFromConfig()" class="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-500/20 transition">
+              🚀 Wrzuć aktywne na wybrany miesiąc
+            </button>
+          </div>
         </div>
-        <button onclick="closeModal('template-modal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-white text-xl font-bold">✕</button>
-      </div>
-      <div id="template-items" class="py-4 overflow-y-auto space-y-2 custom-scroll flex-1"></div>
-      <div class="pt-4 border-t border-warm-100 dark:border-warm-800 flex justify-between items-center">
-        <span class="text-xs text-stone-500 dark:text-stone-400">Zadania zostaną przypisane do bieżącego miesiąca.</span>
-        <button onclick="applyStarterTemplate()" class="bg-brand-500 hover:bg-brand-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition">
-          Wrzuć wybrane do kalendarza
-        </button>
+
+        <!-- DODAWANIE NOWEGO STAŁEGO ZADANIA DO BAZY -->
+        <form id="new-template-form" class="mt-5 bg-warm-50 dark:bg-warm-800/50 border border-warm-200 dark:border-warm-700 rounded-2xl p-4 space-y-3">
+          <div class="text-xs font-extrabold uppercase tracking-wider text-brand-600 dark:text-brand-400">+ Dodaj nowy stały obowiązek do bazy</div>
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+            <input id="tpl-title" type="text" required placeholder="Nazwa zadania (np. Mycie okien)"
+              class="md:col-span-4 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
+            <input id="tpl-desc" type="text" placeholder="Krótki opis / wskazówka (opcjonalnie)"
+              class="md:col-span-3 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
+            <select id="tpl-category" class="md:col-span-2 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
+              <option value="Berneńczyk">🐕 Berneńczyk</option>
+              <option value="Auto">🚗 Auto</option>
+              <option value="Dom">🏠 Dom</option>
+              <option value="Rachunki">💳 Rachunki</option>
+              <option value="Inne">📌 Inne</option>
+            </select>
+            <select id="tpl-freq" class="md:col-span-1 px-2.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
+              <option value="1">1x / mies.</option>
+              <option value="2">2x / mies.</option>
+              <option value="4">4x / mies.</option>
+            </select>
+            <select id="tpl-assignee" class="md:col-span-2 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
+              <option value="Nieprzypisane">❓ Do ustalenia</option>
+              <option value="Przemo">🧔 Przemo</option>
+              <option value="Róża">👩 Róża</option>
+              <option value="Wspólne">👫 Wspólne</option>
+            </select>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
+              <input id="tpl-remote" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
+              <span>🌍 Można wykonać poza domem (zdalnie / na wyjeździe)</span>
+            </label>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-warm-900 dark:bg-brand-500 hover:bg-stone-800 dark:hover:bg-brand-600 text-white text-xs font-bold transition">
+              Dodaj do bazy zadań
+            </button>
+          </div>
+        </form>
+
+        <!-- FILTR KATEGORII W KONFIGURATORZE -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mt-5 mb-3">
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="setConfigFilter('all')" data-cfilter="all" class="cfilter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white">Wszystkie</button>
+            <button onclick="setConfigFilter('Berneńczyk')" data-cfilter="Berneńczyk" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Berneńczyk</button>
+            <button onclick="setConfigFilter('Auto')" data-cfilter="Auto" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🚗 Samochód</button>
+            <button onclick="setConfigFilter('Dom')" data-cfilter="Dom" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🏠 Dom</button>
+            <button onclick="setConfigFilter('Rachunki')" data-cfilter="Rachunki" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">💳 Rachunki</button>
+          </div>
+          <div id="config-summary-count" class="text-xs font-semibold text-stone-500 dark:text-stone-400"></div>
+        </div>
+
+        <!-- LISTA EDYTOWALNYCH WZORCÓW -->
+        <div id="config-templates-list" class="space-y-2.5"></div>
       </div>
     </div>
   </div>
@@ -339,7 +402,7 @@
         <button onclick="closeModal('ai-modal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-white text-xl font-bold">✕</button>
       </div>
       <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
-        AI przeanalizuje otwarte zadania, uwzględni <strong>8h pracy stacjonarnej Przema</strong>, Wasze <strong>wolne środy</strong>, godzinowe bloki <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong> (gdzie wpadają tylko rzeczy zdalne/wyjazdowe).
+        AI przeanalizuje otwarte i nieprzypisane zadania, uwzględni <strong>8h pracy stacjonarnej Przema</strong>, Wasze <strong>wolne środy</strong>, godzinowe bloki <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong>.
       </p>
       <div id="ai-output" class="bg-warm-50 dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-2xl p-4 text-sm text-stone-700 dark:text-stone-200 whitespace-pre-line min-h-[120px] max-h-[300px] overflow-y-auto custom-scroll">
         Kliknij przycisk poniżej, aby wygenerować propozycję rozkładu zadań.
@@ -378,7 +441,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
       getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
-      onSnapshot, query, where
+      onSnapshot, query, where, getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -393,13 +456,46 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // IKONKI OSÓB W KALENDARZU I LISTACH
     const PERSON_ICON = {
       'Przemo': '🧔',
       'Róża': '👩',
       'Oboje': '👫',
-      'Wspólne': '👫'
+      'Wspólne': '👫',
+      'Nieprzypisane': '❓'
     };
+
+    // DOMYŚLNA BAZA 25 ZADAŃ (BEZ NARZUCONEGO PODZIAŁU NA OSOBĘ)
+    const DEFAULT_MONTHLY_TASKS = [
+      // Berneńczyk
+      { title: "Tabletka na kleszcze i pasożyty", desc: "Podanie dawki + wpis w książeczce", category: "Berneńczyk", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
+      { title: "Wyczesywanie podszerstka", desc: "Szczotka pudlówka + zgrzebło (za uszami, kryza, portki)", category: "Berneńczyk", freq: 4, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Mycie i wyparzanie misek oraz maty", desc: "Miska na wodę i karmę + przetarcie podłogi", category: "Berneńczyk", freq: 4, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Pranie posłania / kocyków + czyszczenie filtra pralki", desc: "Pranie w 60°C i usunięcie sierści z filtra", category: "Berneńczyk", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Kontrola zapasu karmy i smaczków + zamówienie", desc: "Zamówić worek z wyprzedzeniem", category: "Berneńczyk", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
+      { title: "Kontrola uszu, opuszek łap i długości pazurów", desc: "Przetarcie uszu, kontrola łap", category: "Berneńczyk", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Pranie materiałowych zabawek i szarpaków", desc: "Odświeżenie zabawek", category: "Berneńczyk", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      // Samochód
+      { title: "Odkurzanie sierści z bagażnika i tylnej kanapy", desc: "Gumowa szczotka / rolka + odkurzacz", category: "Auto", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Myjnia + mycie szyb od środka", desc: "Zmycie brudu i odtłuszczenie przedniej szyby", category: "Auto", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Kontrola ciśnienia w oponach, oleju i płynu do spryskiwaczy", desc: "Sprawdzenie na zimnych oponach", category: "Auto", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Wytrzepanie / przetarcie maty ochronnej dla psa", desc: "Oczyszczenie maty w bagażniku", category: "Auto", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Sprawdzenie ważności OC, przeglądu i wyposażenia", desc: "Szybka kontrola w mObywatel", category: "Auto", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
+      // Dom i porządki
+      { title: "Gruntowne odkurzanie i mycie podłóg", desc: "Zebranie sierści spod kanapy i z kątów", category: "Dom", freq: 4, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Opróżnienie i wyczyszczenie filtrów/szczotek odkurzacza", desc: "Wyczesanie szczotki głównej", category: "Dom", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Zmiana pościeli i pranie ręczników", desc: "Świeża pościel i komplet ręczników", category: "Dom", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Gruntowne mycie łazienki", desc: "Prysznic, umywalka, WC, baterie", category: "Dom", freq: 4, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Przegląd lodówki i przetarcie półek", desc: "Wyrzucenie przeterminowanych rzeczy", category: "Dom", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Odkamienianie ekspresu do kawy", desc: "Pełny cykl odkamieniania", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Czyszczenie zmywarki (program + filtr) i pralki", desc: "Pusty cykl czyszczący", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Mycie koszy na śmieci i wycieraczki wejściowej", desc: "Odświeżenie koszy i wejścia", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Pranie narzut, poszewek z kanapy / tekstyliów", desc: "Odświeżenie tekstyliów, na których leży pies", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      { title: "Przetarcie kurzy na wysokościach, listew i drzwi", desc: "Szafki, parapety, listwy przypodłogowe", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
+      // Rachunki i organizacja
+      { title: "Opłacenie rachunków stałych", desc: "Czynsz, prąd, gaz, internet, abonamenty", category: "Rachunki", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
+      { title: "Przegląd budżetu i subskrypcji", desc: "Kontrola stałych wydatków", category: "Rachunki", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
+      { title: "Wpisanie wyjazdów, blokad N/A i planu kolejnego miesiąca", desc: "Przygotowanie kalendarza na nowy miesiąc", category: "Rachunki", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true }
+    ];
 
     // TRYB JASNY / CIEMNY
     function applyTheme(theme) {
@@ -414,9 +510,7 @@
       }
       localStorage.setItem('home_planner_theme', theme);
     }
-
-    const savedTheme = localStorage.getItem('home_planner_theme') || 'light';
-    applyTheme(savedTheme);
+    applyTheme(localStorage.getItem('home_planner_theme') || 'light');
 
     window.toggleTheme = () => {
       const isDark = document.documentElement.classList.contains('dark');
@@ -429,26 +523,15 @@
     let currentMonth = new Date().getMonth();
     let selectedDateStr = formatDate(new Date());
     let currentFilter = 'all';
+    let configFilter = 'all';
     let allTasks = [];
     let naBlocks = [];
+    let taskTemplates = [];
     let unsubTasks = null;
     let unsubNa = null;
+    let unsubTemplates = null;
+    let seededTemplatesOnce = false;
 
-    // BAZA STARTOWA OBOWIĄZKÓW (BERNEŃCZYK + AUTO + DOM)
-    const STARTER_TEMPLATES = [
-      { title: "Tabletka na kleszcze i pasożyty", desc: "Podać z jedzeniem, zanotować w książeczce", category: "Berneńczyk", assignee: "Róża", tip: "1. dzień miesiąca", remoteOk: true },
-      { title: "Gruntowne wyczesanie podszerstka", desc: "Furminator + szczotka pudlówka (szczególnie za uszami i portki)", category: "Berneńczyk", assignee: "Przemo", tip: "Wolna środa", remoteOk: false },
-      { title: "Pranie posłania i mycie misek", desc: "Wyprać pokrowiec legowiska w 60°C, wyparzyć miski", category: "Berneńczyk", assignee: "Róża", tip: "Środek miesiąca", remoteOk: false },
-      { title: "Kontrola zapasu karmy i smaczków", desc: "Zamówić worek 12-15 kg z wyprzedzeniem", category: "Berneńczyk", assignee: "Przemo", tip: "20. dzień miesiąca", remoteOk: true },
-      { title: "Sprawdzenie ciśnienia w oponach i oleju", desc: "Na zimnych oponach + dolanie płynu do spryskiwaczy", category: "Auto", assignee: "Przemo", tip: "Wolna środa", remoteOk: false },
-      { title: "Myjnia + odkurzanie sierści z bagażnika", desc: "Rolka/szczotka gumowa do sierści po berneńczyku", category: "Auto", assignee: "Przemo", tip: "Weekend / Środa", remoteOk: false },
-      { title: "Odkamienianie ekspresu i czyszczenie zmywarki", desc: "Program czyszczący + filtr", category: "Dom", assignee: "Róża", tip: "10. dzień miesiąca", remoteOk: false },
-      { title: "Opłaty, rachunki i przegląd budżetu", desc: "Czynsz, prąd, internet, subskrypcje", category: "Dom", assignee: "Wspólne", tip: "Do 10. dnia miesiąca", remoteOk: true },
-      { title: "Zmiana pościeli i wietrzenie materaca", desc: "Pranie pościeli i ręczników", category: "Dom", assignee: "Róża", tip: "Co 2 tygodnie", remoteOk: false },
-      { title: "Gruntowne odkurzanie i mycie podłóg", desc: "Zebranie sierści z kątów i pod meblami", category: "Dom", assignee: "Wspólne", tip: "Wolna środa", remoteOk: false }
-    ];
-
-    // HELPERY DAT
     function formatDate(d) {
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -464,9 +547,7 @@
     const authScreen = document.getElementById('auth-screen');
     const appContainer = document.getElementById('app-container');
 
-    if (homeSecret) {
-      startApp();
-    }
+    if (homeSecret) startApp();
 
     document.getElementById('auth-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -486,7 +567,7 @@
       authScreen.classList.add('hidden');
       appContainer.classList.remove('hidden');
       syncDateInputs(selectedDateStr);
-      renderAll();
+      renderCalendar();
       subscribeFirestore();
     }
 
@@ -496,19 +577,20 @@
       document.getElementById('na-end-date').value = dateStr;
     }
 
-    // SUBSKRYPCJA FIREBASE NA ŻYWO
+    // SUBSKRYPCJE FIREBASE
     function subscribeFirestore() {
       if (unsubTasks) unsubTasks();
       if (unsubNa) unsubNa();
+      if (unsubTemplates) unsubTemplates();
 
       const monthKey = getMonthKey(currentYear, currentMonth);
 
+      // 1. Zadania w miesiącu
       const qTasks = query(
         collection(db, "tasks"),
         where("secret", "==", homeSecret),
         where("monthKey", "==", monthKey)
       );
-
       unsubTasks = onSnapshot(qTasks, (snapshot) => {
         allTasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         renderTasks();
@@ -521,24 +603,257 @@
         appContainer.classList.add('hidden');
       });
 
-      const qNa = query(
-        collection(db, "naBlocks"),
-        where("secret", "==", homeSecret)
-      );
-
+      // 2. Blokady N/A i wyjazdy
+      const qNa = query(collection(db, "naBlocks"), where("secret", "==", homeSecret));
       unsubNa = onSnapshot(qNa, (snapshot) => {
         naBlocks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         renderCalendar();
         updateSelectedDayPanel();
       });
+
+      // 3. Konfigurowalna baza wzorców zadań
+      const qTpl = query(collection(db, "taskTemplates"), where("secret", "==", homeSecret));
+      unsubTemplates = onSnapshot(qTpl, async (snapshot) => {
+        if (snapshot.empty && !seededTemplatesOnce) {
+          seededTemplatesOnce = true;
+          for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
+            await addDoc(collection(db, "taskTemplates"), {
+              secret: homeSecret,
+              order: i,
+              ...DEFAULT_MONTHLY_TASKS[i]
+            });
+          }
+          return;
+        }
+        taskTemplates = snapshot.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+        renderConfigTemplates();
+      });
     }
+
+    // PRZEŁĄCZANIE EKRANU KONFIGURACJI BAZY ZADAŃ
+    window.openConfigScreen = () => {
+      document.getElementById('dashboard-view').classList.add('hidden');
+      document.getElementById('config-view').classList.remove('hidden');
+      renderConfigTemplates();
+    };
+
+    window.closeConfigScreen = () => {
+      document.getElementById('config-view').classList.add('hidden');
+      document.getElementById('dashboard-view').classList.remove('hidden');
+    };
+
+    window.setConfigFilter = (f) => {
+      configFilter = f;
+      document.querySelectorAll('.cfilter-btn').forEach(btn => {
+        btn.className = btn.dataset.cfilter === f
+          ? 'cfilter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white'
+          : 'cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300';
+      });
+      renderConfigTemplates();
+    };
+
+    function renderConfigTemplates() {
+      const container = document.getElementById('config-templates-list');
+      const summaryEl = document.getElementById('config-summary-count');
+      if (!container) return;
+
+      const activeTemplates = taskTemplates.filter(t => t.enabled !== false);
+      const totalMonthlyInstances = activeTemplates.reduce((sum, t) => sum + Number(t.freq || 1), 0);
+      summaryEl.textContent = `Aktywnych wzorców: ${activeTemplates.length} (${totalMonthlyInstances} zadań miesięcznie)`;
+
+      let list = [...taskTemplates];
+      if (configFilter !== 'all') {
+        list = list.filter(t => t.category === configFilter);
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="text-center text-stone-400 text-sm py-8">Brak zadań w tej kategorii. Dodaj nowe powyżej.</div>`;
+        return;
+      }
+
+      container.innerHTML = list.map(t => {
+        const isEnabled = t.enabled !== false;
+        return `
+          <div class="p-3.5 rounded-2xl border transition flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${isEnabled ? 'bg-white dark:bg-warm-800/60 border-warm-200 dark:border-warm-700' : 'bg-warm-50 dark:bg-warm-900/40 border-warm-100 dark:border-warm-800 opacity-55'}">
+            <div class="flex items-start gap-3 flex-1 min-w-0">
+              <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="updateTemplateField('${t.id}', 'enabled', this.checked)"
+                title="Włącz/wyłącz w szablonie miesięcznym" class="mt-1 w-4 h-4 accent-brand-500 rounded cursor-pointer" />
+              <div class="flex-1 min-w-0 space-y-1">
+                <input type="text" value="${t.title.replace(/"/g, '&quot;')}" onchange="updateTemplateField('${t.id}', 'title', this.value)"
+                  class="w-full font-bold text-sm text-warm-900 dark:text-white bg-transparent border-b border-transparent focus:border-brand-400 focus:outline-none" />
+                <input type="text" value="${(t.desc || '').replace(/"/g, '&quot;')}" placeholder="Dodaj krótki opis..." onchange="updateTemplateField('${t.id}', 'desc', this.value)"
+                  class="w-full text-xs text-stone-500 dark:text-stone-400 bg-transparent border-b border-transparent focus:border-brand-400 focus:outline-none" />
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <select onchange="updateTemplateField('${t.id}', 'category', this.value)"
+                class="px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-xs font-semibold">
+                <option value="Berneńczyk" ${t.category === 'Berneńczyk' ? 'selected' : ''}>🐕 Berneńczyk</option>
+                <option value="Auto" ${t.category === 'Auto' ? 'selected' : ''}>🚗 Auto</option>
+                <option value="Dom" ${t.category === 'Dom' ? 'selected' : ''}>🏠 Dom</option>
+                <option value="Rachunki" ${t.category === 'Rachunki' ? 'selected' : ''}>💳 Rachunki</option>
+                <option value="Inne" ${t.category === 'Inne' ? 'selected' : ''}>📌 Inne</option>
+              </select>
+
+              <select onchange="updateTemplateField('${t.id}', 'freq', Number(this.value))"
+                class="px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-xs font-bold text-brand-700 dark:text-brand-300">
+                <option value="1" ${Number(t.freq) === 1 ? 'selected' : ''}>1x / mies.</option>
+                <option value="2" ${Number(t.freq) === 2 ? 'selected' : ''}>2x / mies.</option>
+                <option value="4" ${Number(t.freq) === 4 ? 'selected' : ''}>4x / mies. (co tydz.)</option>
+              </select>
+
+              <select onchange="updateTemplateField('${t.id}', 'assignee', this.value)"
+                class="px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-xs font-semibold">
+                <option value="Nieprzypisane" ${!t.assignee || t.assignee === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
+                <option value="Przemo" ${t.assignee === 'Przemo' ? 'selected' : ''}>🧔 Przemo</option>
+                <option value="Róża" ${t.assignee === 'Róża' ? 'selected' : ''}>👩 Róża</option>
+                <option value="Wspólne" ${t.assignee === 'Wspólne' ? 'selected' : ''}>👫 Wspólne</option>
+              </select>
+
+              <label class="flex items-center gap-1 text-[11px] px-2 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 cursor-pointer" title="Można wykonać poza domem / zdalnie">
+                <input type="checkbox" ${t.remoteOk ? 'checked' : ''} onchange="updateTemplateField('${t.id}', 'remoteOk', this.checked)" class="accent-brand-500" />
+                <span>🌍</span>
+              </label>
+
+              <button onclick="deleteTemplateItem('${t.id}')" title="Usuń z bazy" class="p-1.5 rounded-xl text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition text-xs font-bold">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.updateTemplateField = async (id, field, value) => {
+      await updateDoc(doc(db, "taskTemplates", id), { [field]: value });
+    };
+
+    window.deleteTemplateItem = async (id) => {
+      await deleteDoc(doc(db, "taskTemplates", id));
+    };
+
+    document.getElementById('new-template-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('tpl-title').value.trim();
+      const desc = document.getElementById('tpl-desc').value.trim();
+      const category = document.getElementById('tpl-category').value;
+      const freq = Number(document.getElementById('tpl-freq').value);
+      const assignee = document.getElementById('tpl-assignee').value;
+      const remoteOk = document.getElementById('tpl-remote').checked;
+
+      await addDoc(collection(db, "taskTemplates"), {
+        secret: homeSecret,
+        order: taskTemplates.length,
+        title,
+        desc,
+        category,
+        freq,
+        assignee,
+        remoteOk,
+        enabled: true
+      });
+
+      e.target.reset();
+    });
+
+    window.resetDefaultTemplates = async () => {
+      if (!confirm("Czy dodać domyślny zestaw 25 zadań do bazy?")) return;
+      for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
+        await addDoc(collection(db, "taskTemplates"), {
+          secret: homeSecret,
+          order: taskTemplates.length + i,
+          ...DEFAULT_MONTHLY_TASKS[i]
+        });
+      }
+    };
+
+    // GENEROWANIE ZADAŃ NA WYBRANY MIESIĄC Z KONFIGURACJI
+    window.generateMonthFromConfig = async () => {
+      const active = taskTemplates.filter(t => t.enabled !== false);
+      if (active.length === 0) {
+        alert("Zaznacz przynajmniej jedno zadanie w konfiguracji.");
+        return;
+      }
+
+      const monthKey = getMonthKey(currentYear, currentMonth);
+      // Zbierz wszystkie środy w tym miesiącu (idealne na zadania 4x i 2x)
+      const wednesdays = [];
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dt = new Date(currentYear, currentMonth, d);
+        if (dt.getDay() === 3) wednesdays.push(formatDate(dt));
+      }
+      const firstWed = wednesdays[0] || `${monthKey}-01`;
+
+      for (const tpl of active) {
+        const freq = Number(tpl.freq || 1);
+        const assignee = tpl.assignee || 'Nieprzypisane';
+
+        if (freq === 4) {
+          // Na każdą wolną środę w miesiącu
+          const targetDates = wednesdays.length > 0 ? wednesdays : [`${monthKey}-01`, `${monthKey}-08`, `${monthKey}-15`, `${monthKey}-22`];
+          for (let idx = 0; idx < targetDates.length; idx++) {
+            await addDoc(collection(db, "tasks"), {
+              secret: homeSecret,
+              title: `${tpl.title} (${idx + 1}/${targetDates.length})`,
+              desc: tpl.desc || '',
+              assignee,
+              category: tpl.category,
+              date: targetDates[idx],
+              recurrence: 'weekly',
+              remoteOk: !!tpl.remoteOk,
+              monthKey,
+              completed: false
+            });
+          }
+        } else if (freq === 2) {
+          // Co 2 tygodnie (1. i 3. środa lub 1. i 15. dzień)
+          const d1 = wednesdays[0] || `${monthKey}-01`;
+          const d2 = wednesdays[2] || wednesdays[1] || `${monthKey}-15`;
+          for (let idx = 0; idx < 2; idx++) {
+            await addDoc(collection(db, "tasks"), {
+              secret: homeSecret,
+              title: `${tpl.title} (${idx + 1}/2)`,
+              desc: tpl.desc || '',
+              assignee,
+              category: tpl.category,
+              date: idx === 0 ? d1 : d2,
+              recurrence: 'biweekly',
+              remoteOk: !!tpl.remoteOk,
+              monthKey,
+              completed: false
+            });
+          }
+        } else {
+          // 1x w miesiącu
+          const targetDate = tpl.remoteOk ? `${monthKey}-05` : firstWed;
+          await addDoc(collection(db, "tasks"), {
+            secret: homeSecret,
+            title: tpl.title,
+            desc: tpl.desc || '',
+            assignee,
+            category: tpl.category,
+            date: targetDate,
+            recurrence: 'monthly',
+            remoteOk: !!tpl.remoteOk,
+            monthKey,
+            completed: false
+          });
+        }
+      }
+
+      closeConfigScreen();
+    };
 
     // BLOKADY N/A DLA DANEGO DNIA
     function getBlocksForDate(dateStr) {
       return naBlocks.filter(b => b.startDate <= dateStr && b.endDate >= dateStr);
     }
 
-    // RENDEROWANIE STATYSTYK
+    // STATYSTYKI
     function renderStats() {
       const total = allTasks.length;
       const done = allTasks.filter(t => t.completed).length;
@@ -551,10 +866,10 @@
 
       document.getElementById('stat-przemo').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Przemo').length;
       document.getElementById('stat-roza').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Róża').length;
-      document.getElementById('stat-shared').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Wspólne').length;
+      document.getElementById('stat-shared').textContent = allTasks.filter(t => !t.completed && (t.assignee === 'Wspólne' || t.assignee === 'Nieprzypisane' || !t.assignee)).length;
     }
 
-    // RENDEROWANIE KALENDARZA Z OSOBNYMI IKONKAMI PRZEMO / RÓŻA
+    // KALENDARZ
     function renderCalendar() {
       const dateObj = new Date(currentYear, currentMonth, 1);
       const monthName = dateObj.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
@@ -586,6 +901,7 @@
         const przemoOpen = openTasks.filter(t => t.assignee === 'Przemo').length;
         const rozaOpen = openTasks.filter(t => t.assignee === 'Róża').length;
         const sharedOpen = openTasks.filter(t => t.assignee === 'Wspólne').length;
+        const unassignedOpen = openTasks.filter(t => !t.assignee || t.assignee === 'Nieprzypisane').length;
 
         let bgClass = 'bg-white dark:bg-warm-800/70 border-warm-200 dark:border-warm-700 hover:border-brand-400';
         if (hasBusy) bgClass = 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-900';
@@ -594,7 +910,6 @@
 
         if (isSelected) bgClass += ' ring-2 ring-brand-500';
 
-        // Plakietki N/A z osobnymi ikonkami 🧔 Przemo / 👩 Róża / 👫 Oboje
         const naBadgesHtml = blocks.slice(0, 2).map(b => {
           const isAway = b.mode === 'away';
           const whoIcon = PERSON_ICON[b.who] || '👤';
@@ -609,13 +924,13 @@
           return `<div class="text-[9px] font-bold px-1 py-0.5 rounded ${color} truncate">${whoIcon}${isAway ? '🏠' : '⛔'} ${timeHint}</div>`;
         }).join('');
 
-        // Plakietki otwartych zadań w dniu rozbite na ikonki 🧔 / 👩 / 👫
         let taskPills = '';
         if (openTasks.length > 0) {
           const parts = [];
           if (przemoOpen > 0) parts.push(`<span class="bg-sky-100 dark:bg-sky-900/80 text-sky-800 dark:text-sky-200 px-1 rounded">🧔${przemoOpen}</span>`);
           if (rozaOpen > 0) parts.push(`<span class="bg-rose-100 dark:bg-rose-900/80 text-rose-800 dark:text-rose-200 px-1 rounded">👩${rozaOpen}</span>`);
           if (sharedOpen > 0) parts.push(`<span class="bg-amber-100 dark:bg-amber-900/80 text-amber-800 dark:text-amber-200 px-1 rounded">👫${sharedOpen}</span>`);
+          if (unassignedOpen > 0) parts.push(`<span class="bg-stone-200 dark:bg-stone-700 text-stone-800 dark:text-stone-200 px-1 rounded">❓${unassignedOpen}</span>`);
           taskPills = `<div class="flex flex-wrap gap-0.5 text-[9px] font-extrabold">${parts.join('')}</div>`;
         }
 
@@ -695,14 +1010,7 @@
       }
 
       await addDoc(collection(db, "naBlocks"), {
-        secret: homeSecret,
-        who,
-        mode,
-        startDate,
-        startTime,
-        endDate,
-        endTime,
-        note
+        secret: homeSecret, who, mode, startDate, startTime, endDate, endTime, note
       });
 
       document.getElementById('na-note').value = '';
@@ -720,32 +1028,29 @@
       subscribeFirestore();
     };
 
-    // RENDEROWANIE LISTY ZADAŃ
+    // LISTA ZADAŃ W MIESIĄCU (Z SZYBKIM PRZYPISANIEM OSOBY)
     function renderTasks() {
       const list = document.getElementById('tasks-list');
       let filtered = [...allTasks];
 
       if (currentFilter !== 'all') {
-        filtered = filtered.filter(t => t.assignee === currentFilter || t.category === currentFilter);
+        filtered = filtered.filter(t => (t.assignee || 'Nieprzypisane') === currentFilter || t.category === currentFilter);
       }
 
       filtered.sort((a, b) => Number(a.completed) - Number(b.completed) || (a.date || '').localeCompare(b.date || ''));
 
       if (filtered.length === 0) {
         list.innerHTML = `<div class="text-center text-stone-400 text-sm py-10 bg-warm-50 dark:bg-warm-800/40 rounded-2xl border border-dashed border-warm-200 dark:border-warm-700">
-          Brak zadań w tym widoku.<br>Kliknij <strong>„Szablon startowy”</strong> lub <strong>„+ Dodaj zadanie”</strong>.
+          Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Konfiguracja bazy zadań”</strong> na górze i wrzuć plan na ten miesiąc.
         </div>`;
         return;
       }
 
-      const catIcons = { 'Berneńczyk': '🐕', 'Auto': '🚗', 'Dom': '🏠', 'Inne': '📌' };
-      const personBadge = {
-        'Przemo': 'bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300',
-        'Róża': 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300',
-        'Wspólne': 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'
-      };
+      const catIcons = { 'Berneńczyk': '🐕', 'Auto': '🚗', 'Dom': '🏠', 'Rachunki': '💳', 'Inne': '📌' };
 
-      list.innerHTML = filtered.map(task => `
+      list.innerHTML = filtered.map(task => {
+        const who = task.assignee || 'Nieprzypisane';
+        return `
         <div class="p-3.5 rounded-2xl border transition flex items-start gap-3 ${task.completed ? 'bg-warm-50 dark:bg-warm-800/30 border-warm-100 dark:border-warm-800 opacity-60' : 'bg-white dark:bg-warm-800/60 border-warm-200 dark:border-warm-700 hover:border-brand-300'}">
           <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}', ${!task.completed})"
             class="mt-1 w-5 h-5 accent-brand-500 rounded cursor-pointer" />
@@ -756,25 +1061,32 @@
             </div>
             ${task.desc ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${task.desc}</p>` : ''}
             <div class="flex items-center gap-2 mt-2 flex-wrap">
-              <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${personBadge[task.assignee] || 'bg-stone-100'}">${PERSON_ICON[task.assignee] || ''} ${task.assignee}</span>
+              <select onchange="reassignTask('${task.id}', this.value)"
+                class="text-[11px] font-bold px-2 py-0.5 rounded-md border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 cursor-pointer">
+                <option value="Nieprzypisane" ${who === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
+                <option value="Przemo" ${who === 'Przemo' ? 'selected' : ''}>🧔 Przemo</option>
+                <option value="Róża" ${who === 'Róża' ? 'selected' : ''}>👩 Róża</option>
+                <option value="Wspólne" ${who === 'Wspólne' ? 'selected' : ''}>👫 Wspólne</option>
+              </select>
               ${task.date ? `<span class="text-[11px] text-stone-500 dark:text-stone-400 font-medium">📅 ${task.date}</span>` : ''}
               ${task.remoteOk ? `<span class="text-[10px] bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-semibold">🌍 Zdalnie/wyjazd</span>` : ''}
-              ${task.recurrence && task.recurrence !== 'once' ? `<span class="text-[10px] bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 px-1.5 py-0.5 rounded font-semibold">↻ ${task.recurrence === 'weekly' ? 'Co tydzień' : 'Co miesiąc'}</span>` : ''}
             </div>
           </div>
           <button onclick="deleteTask('${task.id}')" class="text-stone-300 hover:text-red-500 text-sm px-1">✕</button>
         </div>
-      `).join('');
+      `}).join('');
     }
+
+    window.reassignTask = async (id, assignee) => {
+      await updateDoc(doc(db, "tasks", id), { assignee });
+    };
 
     window.setFilter = (f) => {
       currentFilter = f;
       document.querySelectorAll('.filter-btn').forEach(btn => {
-        if (btn.dataset.filter === f) {
-          btn.className = 'filter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white';
-        } else {
-          btn.className = 'filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300';
-        }
+        btn.className = btn.dataset.filter === f
+          ? 'filter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white'
+          : 'filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300';
       });
       renderTasks();
     };
@@ -790,25 +1102,29 @@
       const assignee = document.getElementById('task-assignee').value;
       const category = document.getElementById('task-category').value;
       const date = document.getElementById('task-date').value;
-      const recurrence = document.getElementById('task-recurrence').value;
+      const count = Number(document.getElementById('task-recurrence').value);
       const remoteOk = document.getElementById('task-remote-ok').checked;
       const monthKey = getMonthKey(currentYear, currentMonth);
 
-      if (recurrence === 'weekly' && date) {
-        let baseDate = new Date(date);
-        for (let i = 0; i < 4; i++) {
-          if (baseDate.getMonth() === currentMonth) {
-            await addDoc(collection(db, "tasks"), {
-              secret: homeSecret, title, desc, assignee, category,
-              date: formatDate(baseDate), recurrence, remoteOk, monthKey, completed: false
-            });
-          }
-          baseDate.setDate(baseDate.getDate() + 7);
+      let baseDate = date ? new Date(date) : new Date(currentYear, currentMonth, 1);
+      const stepDays = count === 2 ? 14 : 7;
+
+      for (let i = 0; i < count; i++) {
+        if (baseDate.getMonth() === currentMonth || i === 0) {
+          await addDoc(collection(db, "tasks"), {
+            secret: homeSecret,
+            title: count > 1 ? `${title} (${i + 1}/${count})` : title,
+            desc,
+            assignee,
+            category,
+            date: formatDate(baseDate),
+            recurrence: count > 1 ? 'recurring' : 'once',
+            remoteOk,
+            monthKey,
+            completed: false
+          });
         }
-      } else {
-        await addDoc(collection(db, "tasks"), {
-          secret: homeSecret, title, desc, assignee, category, date, recurrence, remoteOk, monthKey, completed: false
-        });
+        baseDate.setDate(baseDate.getDate() + stepDays);
       }
 
       e.target.reset();
@@ -822,48 +1138,6 @@
 
     window.deleteTask = async (id) => {
       await deleteDoc(doc(db, "tasks", id));
-    };
-
-    // SZABLON STARTOWY
-    window.openTemplateModal = () => {
-      const container = document.getElementById('template-items');
-      container.innerHTML = STARTER_TEMPLATES.map((item, idx) => `
-        <label class="flex items-start gap-3 p-3 rounded-2xl border border-warm-200 dark:border-warm-700 hover:bg-warm-50 dark:hover:bg-warm-800 cursor-pointer">
-          <input type="checkbox" checked data-tpl-idx="${idx}" class="mt-1 w-4 h-4 accent-brand-500" />
-          <div class="flex-1">
-            <div class="font-bold text-sm text-warm-900 dark:text-white">${item.title} <span class="text-xs font-normal text-brand-600 dark:text-brand-400">(${item.category})</span></div>
-            <div class="text-xs text-stone-500 dark:text-stone-400">${item.desc}</div>
-            <div class="text-[11px] text-stone-400 mt-1">Sugestia: ${PERSON_ICON[item.assignee] || ''} ${item.assignee} • ${item.tip} ${item.remoteOk ? '• 🌍 Zdalnie/wyjazd' : ''}</div>
-          </div>
-        </label>
-      `).join('');
-      document.getElementById('template-modal').classList.remove('hidden');
-      document.getElementById('template-modal').classList.add('flex');
-    };
-
-    window.applyStarterTemplate = async () => {
-      const checkboxes = document.querySelectorAll('#template-items input[type="checkbox"]:checked');
-      const monthKey = getMonthKey(currentYear, currentMonth);
-      let wednesday = new Date(currentYear, currentMonth, 1);
-      while (wednesday.getDay() !== 3) wednesday.setDate(wednesday.getDate() + 1);
-      const wedStr = formatDate(wednesday);
-
-      for (const cb of checkboxes) {
-        const item = STARTER_TEMPLATES[cb.dataset.tplIdx];
-        await addDoc(collection(db, "tasks"), {
-          secret: homeSecret,
-          title: item.title,
-          desc: item.desc,
-          assignee: item.assignee,
-          category: item.category,
-          date: item.tip.includes('środa') ? wedStr : `${monthKey}-01`,
-          recurrence: 'monthly',
-          remoteOk: item.remoteOk,
-          monthKey,
-          completed: false
-        });
-      }
-      closeModal('template-modal');
     };
 
     // ASYSTENT AI
@@ -896,7 +1170,7 @@
       }).join('\n') || 'brak wpisanych blokad';
 
       const tasksSummary = openTasks.map(t =>
-        `- ${t.title} [${t.category}, obecnie: ${t.assignee}, data: ${t.date || 'brak'}, zdalne/wyjazdowe: ${t.remoteOk ? 'TAK' : 'NIE'}]`
+        `- ${t.title} [${t.category}, obecnie: ${t.assignee || 'Nieprzypisane'}, data: ${t.date || 'brak'}, zdalne/wyjazdowe: ${t.remoteOk ? 'TAK' : 'NIE'}]`
       ).join('\n');
 
       const prompt = `Jesteś domowym asystentem planowania dla małżeństwa: Przemo i Róża.
@@ -909,7 +1183,7 @@ Kontekst:
 Blokady N/A i wyjazdy poza dom:
 ${naSummary}
 
-Lista otwartych zadań:
+Lista otwartych zadań (część jest nieprzypisana):
 ${tasksSummary}
 
 Zaproponuj konkretny i sprawiedliwy plan po polsku: kiedy (daty i pory dnia) i kto (Przemo czy Róża) powinien wykonać te zadania.
@@ -948,12 +1222,6 @@ Zasady:
       document.getElementById(id).classList.add('hidden');
       document.getElementById(id).classList.remove('flex');
     };
-
-    function renderAll() {
-      renderCalendar();
-      renderTasks();
-      renderStats();
-    }
   </script>
 </body>
 </html>
