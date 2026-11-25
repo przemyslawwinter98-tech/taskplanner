@@ -69,35 +69,62 @@
   <!-- GŁÓWNA APLIKACJA -->
   <div id="app-container" class="hidden max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6">
 
-    <!-- NAGŁÓWEK I LICZNIK MIESIĄCA -->
-    <header class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-4 sm:p-6 shadow-sm">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-5 border-b border-warm-100 dark:border-warm-800">
+    <!-- NAGŁÓWEK, PRZEŁĄCZNIK OSOBY I LICZNIK MIESIĄCA -->
+    <header class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-4 sm:p-6 shadow-sm space-y-5">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-5 border-b border-warm-100 dark:border-warm-800">
         <div>
           <div class="flex items-center gap-2.5">
             <span class="text-2xl">🏡</span>
             <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-warm-900 dark:text-white">Domowe Centrum Dowodzenia</h1>
           </div>
-          <p class="text-stone-500 dark:text-stone-400 text-xs sm:text-sm mt-1">🧔 Przemo • 👩 Róża • 🐕 Berneńczyk • 🚗 Auto — <span id="current-month-label" class="font-semibold text-brand-600 dark:text-brand-400 capitalize"></span></p>
+          <p class="text-stone-500 dark:text-stone-400 text-xs sm:text-sm mt-1">🐕 Berneńczyk • 🚗 Auto • 🏠 Dom — <span id="current-month-label" class="font-semibold text-brand-600 dark:text-brand-400 capitalize"></span></p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+          <!-- PRZEŁĄCZNIK AKTYWNEGO PROFILU NA TYM URZĄDZENIU -->
+          <div class="inline-flex p-1 rounded-2xl bg-warm-100 dark:bg-warm-800 border border-warm-200 dark:border-warm-700" title="Wybierz swój profil na tym urządzeniu">
+            <button onclick="switchActiveUser('Przemo')" id="user-pill-Przemo" class="px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1">
+              <span>🧔</span> Przemo
+            </button>
+            <button onclick="switchActiveUser('Róża')" id="user-pill-Róża" class="px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1">
+              <span>👩</span> Róża
+            </button>
+          </div>
+
           <button onclick="openConfigScreen()" class="px-3.5 py-2 rounded-xl bg-brand-50 dark:bg-brand-950/80 hover:bg-brand-100 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 font-bold text-xs sm:text-sm transition flex items-center gap-1.5 border border-brand-200/70 dark:border-brand-800">
-            <span>🛠️</span> Konfiguracja bazy zadań
+            <span>🛠️</span> Baza zadań
           </button>
           <button onclick="openAiModal()" class="px-3.5 py-2 rounded-xl bg-warm-900 dark:bg-brand-500 hover:bg-stone-800 dark:hover:bg-brand-600 text-white font-semibold text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm">
-            <span>✨</span> Sugestie AI
+            <span>✨</span> Plan AI
           </button>
           <button onclick="toggleTheme()" id="theme-toggle-btn" title="Przełącz tryb jasny/ciemny" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 hover:bg-warm-100 dark:hover:bg-warm-700 text-sm font-semibold transition">
             🌙
           </button>
           <button onclick="openSettingsModal()" title="Ustawienia i profile osób dla AI" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 hover:bg-warm-100 dark:hover:bg-warm-700 text-xs sm:text-sm font-semibold text-stone-700 dark:text-stone-200 transition flex items-center gap-1">
-            <span>⚙️</span> <span class="hidden sm:inline">Profile & AI</span>
+            <span>⚙️</span> <span class="hidden sm:inline">Profile</span>
           </button>
         </div>
       </div>
 
+      <!-- SPERSONALIZOWANA KARTA SUGESTII DLA AKTYWNEGO PROFILU -->
+      <div id="personal-focus-card" class="rounded-2xl border p-4 transition-all bg-sky-50/70 dark:bg-sky-950/30 border-sky-200/80 dark:border-sky-900/60">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+          <div class="flex items-center gap-2">
+            <span id="personal-focus-icon" class="text-xl">🧔</span>
+            <div>
+              <h2 id="personal-focus-title" class="text-sm font-extrabold text-warm-900 dark:text-white">Na czym warto dziś popracować — Przemo</h2>
+              <p id="personal-focus-subtitle" class="text-[11px] text-stone-500 dark:text-stone-400">Dopasowane do Twojego grafiku i wolnych okienek</p>
+            </div>
+          </div>
+          <button id="personal-ai-refresh-btn" onclick="generatePersonalAiTips()" class="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 hover:border-brand-400 text-xs font-bold text-warm-900 dark:text-white transition shadow-2xs flex items-center gap-1.5">
+            <span>✨</span> Podpowiedź AI dla mnie
+          </button>
+        </div>
+        <div id="personal-focus-list" class="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs"></div>
+      </div>
+
       <!-- STATYSTYKI POSTĘPU -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 pt-5">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div class="col-span-2 md:col-span-1 bg-brand-50/70 dark:bg-brand-950/50 border border-brand-100 dark:border-brand-900/60 rounded-2xl p-3.5 sm:p-4">
           <div class="text-[11px] font-bold uppercase tracking-wider text-brand-700 dark:text-brand-400">Do końca miesiąca</div>
           <div class="mt-1 flex items-baseline gap-2">
@@ -109,27 +136,27 @@
           </div>
         </div>
 
-        <div class="bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
+        <div onclick="switchActiveUser('Przemo')" class="cursor-pointer bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 hover:border-sky-400 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between transition">
           <div class="min-w-0 pr-2">
             <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Przemo</div>
             <div id="stat-przemo" class="text-xl sm:text-2xl font-extrabold text-warm-900 dark:text-white mt-0.5">0</div>
-            <div id="card-przemo-sub" class="text-[11px] text-stone-400 truncate">Stacjonarnie • Wolne śr.</div>
+            <div class="text-[11px] text-stone-400 truncate">Pon-Pt • Śr po pracy wolna</div>
           </div>
           <div class="w-10 h-10 shrink-0 rounded-2xl bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 flex items-center justify-center text-xl">🧔</div>
         </div>
 
-        <div class="bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
+        <div onclick="switchActiveUser('Róża')" class="cursor-pointer bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 hover:border-rose-400 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between transition">
           <div class="min-w-0 pr-2">
             <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Róża</div>
             <div id="stat-roza" class="text-xl sm:text-2xl font-extrabold text-warm-900 dark:text-white mt-0.5">0</div>
-            <div id="card-roza-sub" class="text-[11px] text-stone-400 truncate">Wt & Pt wolne/zdalne</div>
+            <div class="text-[11px] text-stone-400 truncate">Wt/Pt wolne • E-book ✍️</div>
           </div>
           <div class="w-10 h-10 shrink-0 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 flex items-center justify-center text-xl">👩</div>
         </div>
 
         <div class="col-span-2 md:col-span-1 bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
           <div>
-            <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Wspólne / Nieprzypisane</div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Wspólne / Do ustalenia</div>
             <div id="stat-shared" class="text-xl sm:text-2xl font-extrabold text-warm-900 dark:text-white mt-0.5">0</div>
             <div class="text-[11px] text-stone-400">Do podziału</div>
           </div>
@@ -150,7 +177,7 @@
             <button onclick="changeMonth(1)" class="p-2 rounded-xl hover:bg-warm-100 dark:hover:bg-warm-800 text-stone-600 dark:text-stone-300 font-bold">→</button>
           </div>
           <div class="flex flex-wrap items-center gap-2.5 text-[11px] text-stone-500 dark:text-stone-400">
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Wolna śr.</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Śr (wolne po pracy)</span>
             <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Poza domem</span>
             <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span> N/A</span>
             <span>🧔 Przemo • 👩 Róża • 👫 Oboje</span>
@@ -423,15 +450,15 @@
     </div>
   </div>
 
-  <!-- MODAL: AI PLANER -->
+  <!-- MODAL: AI PLANER MIESIĘCZNY -->
   <div id="ai-modal" class="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-warm-100 dark:border-warm-800 pb-3">
-        <h3 class="text-xl font-extrabold text-warm-900 dark:text-white">✨ Asystent Planowania</h3>
+        <h3 class="text-xl font-extrabold text-warm-900 dark:text-white">✨ Asystent Planowania Miesiąca</h3>
         <button onclick="closeModal('ai-modal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-white text-xl font-bold">✕</button>
       </div>
       <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
-        AI uwzględnia aktualne <strong>profile pracy Przema i Róży</strong>, cykliczne <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong>.
+        AI uwzględnia aktualne <strong>profile Przema i Róży</strong> (wolne środy po pracy, wtorki i piątki Róży, pisanie e-booka o panieńskich), cykliczne <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong>.
       </p>
       <div id="ai-output" class="bg-warm-50 dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-2xl p-4 text-sm text-stone-700 dark:text-stone-200 whitespace-pre-line min-h-[120px] max-h-[300px] overflow-y-auto custom-scroll">
         Kliknij przycisk poniżej, aby wygenerować propozycję rozkładu zadań.
@@ -449,7 +476,7 @@
   <div id="settings-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scroll">
       <div class="flex justify-between items-center border-b border-warm-100 dark:border-warm-800 pb-3">
-        <h3 class="text-lg font-extrabold text-warm-900 dark:text-white">⚙️ Profile domowników (dla AI) & Ustawienia</h3>
+        <h3 class="text-lg font-extrabold text-warm-900 dark:text-white">⚙️ Profile domowników & Ustawienia AI</h3>
         <button onclick="closeModal('settings-modal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-white text-xl font-bold">✕</button>
       </div>
 
@@ -464,9 +491,9 @@
 
         <div class="bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 rounded-2xl p-3.5 space-y-1.5">
           <label class="text-xs font-extrabold text-rose-900 dark:text-rose-300 flex items-center gap-1.5">
-            <span>👩</span> Róża — grafik pracy, dni wolne/zdalne i preferencje (dla AI)
+            <span>👩</span> Róża — grafik pracy, dni wolne/zdalne i projekty (dla AI)
           </label>
-          <textarea id="profile-roza-input" rows="2"
+          <textarea id="profile-roza-input" rows="3"
             class="w-full px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
         </div>
 
@@ -521,9 +548,9 @@
     };
 
     const DEFAULT_PROFILES = {
-      przemo: "Pracuje stacjonarnie 8h dziennie w poniedziałki, wtorki, czwartki i piątki. Ma WOLNE ŚRODY oraz wolne weekendy.",
-      roza: "Pracuje tylko w poniedziałki, środy i czwartki. We WTORKI i PIĄTKI ma dni wolne oraz pracę zdalną (jest w domu i może wtedy ogarnąć drobne domowe zadania). Ma też wolne weekendy.",
-      home: "Mamy psa rasy berneńczyk oraz samochód. Rozkładaj zadania sprawiedliwie, wykorzystując wolne środy Przema oraz wolne/zdalne wtorki i piątki Róży."
+      przemo: "Pracuje stacjonarnie 8h dziennie od poniedziałku do piątku (w tym w środy). W ŚRODY PO PRACY ma wolne od domowych obowiązków (czas na odpoczynek). Wolne ma też weekendy.",
+      roza: "Pracuje w poniedziałki, środy i czwartki (w ŚRODY PO PRACY ma wolne od domowych obowiązków). We WTORKI i PIĄTKI ma wolne i pracę zdalną (jest w domu). Wolne weekendy. Dodatkowo Róża pisze teraz e-booka o wieczorach panieńskich — czasem podsuń jej lekko i wspierająco sugestię, że w spokojniejszy dzień (np. we wtorek lub piątek) mogłaby nad nim popracować.",
+      home: "Mamy psa rasy berneńczyk oraz samochód. Środy po pracy są dla nas obojga wolne od obowiązków domowych — nie planuj wtedy sprzątania ani spraw przy aucie. Rozkładaj zadania sprawiedliwie na pozostałe dni (np. wtorki/piątki Róży, inne popołudnia i weekendy)."
     };
 
     const DEFAULT_MONTHLY_TASKS = [
@@ -574,8 +601,9 @@
       applyTheme(isDark ? 'light' : 'dark');
     };
 
-    // STAN APLIKACJI
+    // STAN APLIKACJI + OSOBNY PROFIL NA URZĄDZENIU (PRZEMO / RÓŻA)
     let homeSecret = localStorage.getItem('home_planner_secret') || '';
+    let activeUser = localStorage.getItem('home_planner_active_user') || 'Przemo';
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
     let selectedDateStr = formatDate(new Date());
@@ -585,6 +613,7 @@
     let naBlocks = [];
     let taskTemplates = [];
     let userProfiles = { ...DEFAULT_PROFILES };
+    let personalAiCache = { Przemo: null, Róża: null };
     let unsubTasks = null;
     let unsubNa = null;
     let unsubTemplates = null;
@@ -606,6 +635,198 @@
     function getMonthKey(year, month) {
       return `${year}-${String(month + 1).padStart(2, '0')}`;
     }
+
+    // PRZEŁĄCZANIE AKTYWNEGO PROFILU (PRZEMO / RÓŻA)
+    window.switchActiveUser = (user) => {
+      activeUser = user;
+      localStorage.setItem('home_planner_active_user', user);
+      updateUserProfileUI();
+      renderPersonalFocusCard();
+    };
+
+    function updateUserProfileUI() {
+      const pBtn = document.getElementById('user-pill-Przemo');
+      const rBtn = document.getElementById('user-pill-Róża');
+      if (!pBtn || !rBtn) return;
+
+      if (activeUser === 'Przemo') {
+        pBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1 bg-sky-600 text-white shadow-xs';
+        rBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1 text-stone-600 dark:text-stone-300 hover:bg-white/60 dark:hover:bg-warm-700';
+      } else {
+        rBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1 bg-rose-600 text-white shadow-xs';
+        pBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1 text-stone-600 dark:text-stone-300 hover:bg-white/60 dark:hover:bg-warm-700';
+      }
+    }
+
+    // SPERSONALIZOWANA KARTA SUGESTII DLA PRZEMA LUB RÓŻY
+    function renderPersonalFocusCard() {
+      const card = document.getElementById('personal-focus-card');
+      const iconEl = document.getElementById('personal-focus-icon');
+      const titleEl = document.getElementById('personal-focus-title');
+      const subEl = document.getElementById('personal-focus-subtitle');
+      const listEl = document.getElementById('personal-focus-list');
+      if (!card || !listEl) return;
+
+      const isPrzemo = activeUser === 'Przemo';
+      const today = new Date();
+      const todayStr = formatDate(today);
+      const dayOfWeek = today.getDay(); // 0=Nd, 1=Pn, 2=Wt, 3=Śr, 4=Czw, 5=Pt, 6=Sob
+      const todayBlocks = getBlocksForDate(todayStr).filter(b => b.who === activeUser || b.who === 'Oboje');
+
+      if (isPrzemo) {
+        card.className = 'rounded-2xl border p-4 transition-all bg-sky-50/70 dark:bg-sky-950/30 border-sky-200/80 dark:border-sky-900/60';
+        iconEl.textContent = '🧔';
+        titleEl.textContent = 'Na czym warto dziś popracować — Przemo';
+      } else {
+        card.className = 'rounded-2xl border p-4 transition-all bg-rose-50/70 dark:bg-rose-950/30 border-rose-200/80 dark:border-rose-900/60';
+        iconEl.textContent = '👩';
+        titleEl.textContent = 'Na czym warto dziś popracować — Róża';
+      }
+
+      // Kontekst dnia dla danej osoby
+      if (dayOfWeek === 3) {
+        subEl.textContent = 'Dziś środa — po pracy macie wolne od domowych obowiązków!';
+      } else if (!isPrzemo && (dayOfWeek === 2 || dayOfWeek === 5)) {
+        subEl.textContent = 'Dziś masz wolny / zdalny dzień — dobry moment na lekkie domowe rzeczy lub e-booka o panieńskich.';
+      } else if (dayOfWeek === 0 || dayOfWeek === 6) {
+        subEl.textContent = 'Weekend — dobry czas na większe sprawy domowe lub przy aucie i berneńczyku.';
+      } else {
+        subEl.textContent = isPrzemo
+          ? 'Dzień roboczy stacjonarnie — skup się tylko na drobnych tematach lub odpocznij.'
+          : 'Dzień pracy — nie przeładowuj wieczoru.';
+      }
+
+      // Jeśli użytkownik kliknął „Podpowiedź AI dla mnie”, pokaż wygenerowane 3 karty AI
+      if (personalAiCache[activeUser]) {
+        listEl.innerHTML = personalAiCache[activeUser].map(tip => `
+          <div class="bg-white/90 dark:bg-warm-900/80 border border-warm-200/80 dark:border-warm-700 rounded-xl p-3 space-y-1">
+            <div class="font-bold text-warm-900 dark:text-white">${tip.title}</div>
+            <div class="text-[11px] text-stone-500 dark:text-stone-400 leading-relaxed">${tip.desc}</div>
+          </div>
+        `).join('');
+        return;
+      }
+
+      // Domyślne inteligentne sugestie na żywo z bazy zadań
+      const openTasks = allTasks.filter(t => !t.completed);
+      const myTasks = openTasks
+        .filter(t => t.assignee === activeUser || t.assignee === 'Wspólne' || !t.assignee || t.assignee === 'Nieprzypisane')
+        .sort((a, b) => (a.assignee === activeUser ? -1 : 1) || (a.date || '9999').localeCompare(b.date || '9999'));
+
+      const suggestions = [];
+
+      // 1. Sprawdź czy dziś jest środa po pracy lub blokada N/A
+      if (todayBlocks.length > 0) {
+        const b = todayBlocks[0];
+        suggestions.push({
+          badge: b.mode === 'away' ? '🏠 Poza domem' : '⛔ Blokada N/A',
+          title: b.note || (b.mode === 'away' ? 'Jesteś dziś poza domem' : 'Masz dziś wpisane N/A'),
+          desc: b.mode === 'away'
+            ? 'Wchodzą w grę tylko zadania zdalne/online (np. opłaty, zamówienie karmy).'
+            : `Zablokowane w godz. ${b.startTime}–${b.endTime}. Nie planuj na siłę innych rzeczy.`
+        });
+      } else if (dayOfWeek === 3) {
+        suggestions.push({
+          badge: '🌿 Środa po pracy',
+          title: 'Wieczór wolny od obowiązków',
+          desc: 'Po pracy odpoczywacie — domowe porządki przerzuć na wtorek/piątek Róży albo weekend.'
+        });
+      }
+
+      // 2. Dla Róży: delikatna sugestia e-booka w spokojniejsze dni
+      if (!isPrzemo) {
+        suggestions.push({
+          badge: '✍️ Projekt własny',
+          title: 'E-book o wieczorach panieńskich',
+          desc: (dayOfWeek === 2 || dayOfWeek === 5)
+            ? 'Masz dziś wolny/zdalny dzień — może 30–45 minut na kolejny rozdział albo spis treści?'
+            : 'Gdy złapiesz luźniejszą chwilę we wtorek lub piątek, warto dopisać choć kawałek e-booka.'
+        });
+      }
+
+      // 3. Konkretne zadania z listy na ten miesiąc
+      for (const task of myTasks) {
+        if (suggestions.length >= 3) break;
+        const isAssignedToMe = task.assignee === activeUser;
+        suggestions.push({
+          badge: isAssignedToMe ? '📌 Twoje zadanie' : '❓ Do przejęcia',
+          title: task.title,
+          desc: `${task.category}${task.date ? ` • termin: ${task.date}` : ''}${task.desc ? ` — ${task.desc}` : ''}`
+        });
+      }
+
+      if (suggestions.length === 0) {
+        suggestions.push({
+          badge: '✅ Luz',
+          title: 'Brak pilnych zadań na ten moment',
+          desc: 'Wszystko pod kontrolą — możesz wrzucić zadania z „🛠️ Baza zadań” lub dodać coś jednorazowego.'
+        });
+      }
+
+      listEl.innerHTML = suggestions.slice(0, 3).map(s => `
+        <div class="bg-white/90 dark:bg-warm-900/80 border border-warm-200/80 dark:border-warm-700 rounded-xl p-3 space-y-1">
+          <div class="text-[10px] font-extrabold uppercase tracking-wider text-brand-600 dark:text-brand-400">${s.badge}</div>
+          <div class="font-bold text-warm-900 dark:text-white truncate">${s.title}</div>
+          <div class="text-[11px] text-stone-500 dark:text-stone-400 line-clamp-2">${s.desc}</div>
+        </div>
+      `).join('');
+    }
+
+    // GENEROWANIE SPERSONALIZOWANYCH SUGESTII AI DLA AKTYWNEJ OSOBY
+    window.generatePersonalAiTips = async () => {
+      const apiKey = localStorage.getItem('gemini_api_key');
+      if (!apiKey) {
+        openSettingsModal();
+        return;
+      }
+
+      const btn = document.getElementById('personal-ai-refresh-btn');
+      const origText = btn.innerHTML;
+      btn.innerHTML = '⏳ Myślę...';
+      btn.disabled = true;
+
+      const todayStr = formatDate(new Date());
+      const openTasks = allTasks.filter(t => !t.completed).slice(0, 20).map(t =>
+        `- ${t.title} [${t.category}, przypisane: ${t.assignee || 'Nieprzypisane'}, data: ${t.date || 'brak'}, zdalne: ${t.remoteOk ? 'TAK' : 'NIE'}]`
+      ).join('\n') || 'Brak otwartych zadań w kalendarzu.';
+
+      const myProfile = activeUser === 'Przemo' ? userProfiles.przemo : userProfiles.roza;
+      const myBlocks = getBlocksForDate(todayStr).map(b => `${b.who}: ${b.mode} (${b.startTime}-${b.endTime}, ${b.note || ''})`).join('; ') || 'brak';
+
+      const prompt = `Jesteś osobistym asystentem dla: ${activeUser}.
+Dzisiejsza data: ${todayStr}.
+Profil i grafik ${activeUser}: ${myProfile}
+Kontekst domu: ${userProfiles.home}
+Dzisiejsze blokady N/A/wyjazdy: ${myBlocks}
+Otwarte zadania w tym miesiącu:
+${openTasks}
+
+Podaj dokładnie 3 krótkie, spersonalizowane sugestie „na czym warto dziś/w najbliższych dniach popracować” dla ${activeUser}.
+Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
+[{"title": "krótki nagłówek z emoji", "desc": "1-2 zdania konkretnej, życzliwej wskazówki"}]`;
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await res.json();
+        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+        const cleaned = raw.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          personalAiCache[activeUser] = parsed.slice(0, 3);
+          renderPersonalFocusCard();
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Nie udało się pobrać podpowiedzi AI. Sprawdź klucz API w ⚙️ Profile.");
+      } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }
+    };
 
     // AUTORYZACJA
     const authScreen = document.getElementById('auth-screen');
@@ -630,8 +851,10 @@
     function startApp() {
       authScreen.classList.add('hidden');
       appContainer.classList.remove('hidden');
+      updateUserProfileUI();
       syncDateInputs(selectedDateStr);
       renderCalendar();
+      renderPersonalFocusCard();
       subscribeFirestore();
     }
 
@@ -650,7 +873,6 @@
 
       const monthKey = getMonthKey(currentYear, currentMonth);
 
-      // 1. Profile osób (synchronizowane w chmurze)
       const profileDocRef = doc(db, "homeSettings", `profiles_${homeSecret}`);
       unsubProfiles = onSnapshot(profileDocRef, async (snap) => {
         if (snap.exists()) {
@@ -660,12 +882,12 @@
             roza: data.roza ?? DEFAULT_PROFILES.roza,
             home: data.home ?? DEFAULT_PROFILES.home
           };
+          renderPersonalFocusCard();
         } else {
           await setDoc(profileDocRef, { secret: homeSecret, ...DEFAULT_PROFILES });
         }
       });
 
-      // 2. Zadania w miesiącu
       const qTasks = query(
         collection(db, "tasks"),
         where("secret", "==", homeSecret),
@@ -676,6 +898,7 @@
         renderTasks();
         renderStats();
         renderCalendar();
+        renderPersonalFocusCard();
       }, (err) => {
         console.error(err);
         document.getElementById('auth-error').classList.remove('hidden');
@@ -683,7 +906,6 @@
         appContainer.classList.add('hidden');
       });
 
-      // 3. Blokady N/A i wyjazdy
       const qNa = query(collection(db, "naBlocks"), where("secret", "==", homeSecret));
       unsubNa = onSnapshot(qNa, (snapshot) => {
         naBlocks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -691,9 +913,9 @@
         renderCalendar();
         updateSelectedDayPanel();
         renderNaManagerList();
+        renderPersonalFocusCard();
       });
 
-      // 4. Konfigurowalna baza wzorców zadań
       const qTpl = query(collection(db, "taskTemplates"), where("secret", "==", homeSecret));
       unsubTemplates = onSnapshot(qTpl, async (snapshot) => {
         if (snapshot.empty && !seededTemplatesOnce) {
@@ -1003,6 +1225,7 @@
       }
     };
 
+    // GENEROWANIE ZADAŃ NA WYBRANY MIESIĄC (Z POMINIĘCIEM ŚRÓD JAKO DNI PORZĄDKOWYCH)
     window.generateMonthFromConfig = async () => {
       const active = taskTemplates.filter(t => t.enabled !== false);
       if (active.length === 0) {
@@ -1011,28 +1234,29 @@
       }
 
       const monthKey = getMonthKey(currentYear, currentMonth);
-      const wednesdays = [];
+      const fridaysAndWeekends = [];
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       for (let d = 1; d <= daysInMonth; d++) {
         const dt = new Date(currentYear, currentMonth, d);
-        if (dt.getDay() === 3) wednesdays.push(formatDate(dt));
+        if (dt.getDay() === 5 || dt.getDay() === 6) fridaysAndWeekends.push(formatDate(dt));
       }
-      const firstWed = wednesdays[0] || `${monthKey}-01`;
+      const firstGoodDay = fridaysAndWeekends[0] || `${monthKey}-02`;
 
       for (const tpl of active) {
         const freq = Number(tpl.freq || 1);
         const assignee = tpl.assignee || 'Nieprzypisane';
 
         if (freq === 4) {
-          const targetDates = wednesdays.length > 0 ? wednesdays : [`${monthKey}-01`, `${monthKey}-08`, `${monthKey}-15`, `${monthKey}-22`];
-          for (let idx = 0; idx < targetDates.length; idx++) {
+          const targetDates = fridaysAndWeekends.filter((_, idx) => idx % 2 === 0).slice(0, 4);
+          const dates = targetDates.length >= 4 ? targetDates : [`${monthKey}-02`, `${monthKey}-09`, `${monthKey}-16`, `${monthKey}-23`];
+          for (let idx = 0; idx < dates.length; idx++) {
             await addDoc(collection(db, "tasks"), {
               secret: homeSecret,
-              title: `${tpl.title} (${idx + 1}/${targetDates.length})`,
+              title: `${tpl.title} (${idx + 1}/${dates.length})`,
               desc: tpl.desc || '',
               assignee,
               category: tpl.category,
-              date: targetDates[idx],
+              date: dates[idx],
               recurrence: 'weekly',
               remoteOk: !!tpl.remoteOk,
               monthKey,
@@ -1040,8 +1264,8 @@
             });
           }
         } else if (freq === 2) {
-          const d1 = wednesdays[0] || `${monthKey}-01`;
-          const d2 = wednesdays[2] || wednesdays[1] || `${monthKey}-15`;
+          const d1 = fridaysAndWeekends[0] || `${monthKey}-04`;
+          const d2 = fridaysAndWeekends[4] || fridaysAndWeekends[2] || `${monthKey}-18`;
           for (let idx = 0; idx < 2; idx++) {
             await addDoc(collection(db, "tasks"), {
               secret: homeSecret,
@@ -1057,7 +1281,7 @@
             });
           }
         } else {
-          const targetDate = tpl.remoteOk ? `${monthKey}-05` : firstWed;
+          const targetDate = tpl.remoteOk ? `${monthKey}-05` : firstGoodDay;
           await addDoc(collection(db, "tasks"), {
             secret: homeSecret,
             title: tpl.title,
@@ -1187,7 +1411,8 @@
       if (!selectedDateStr) return;
 
       const d = parseLocalDate(selectedDateStr);
-      label.textContent = d.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
+      const isWed = d.getDay() === 3;
+      label.textContent = d.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) + (isWed ? ' (🌿 wolne po pracy)' : '');
 
       const blocks = getBlocksForDate(selectedDateStr);
       if (blocks.length === 0) {
@@ -1238,7 +1463,7 @@
 
       if (filtered.length === 0) {
         list.innerHTML = `<div class="text-center text-stone-400 text-sm py-10 bg-warm-50 dark:bg-warm-800/40 rounded-2xl border border-dashed border-warm-200 dark:border-warm-700">
-          Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Konfiguracja bazy zadań”</strong> na górze i wrzuć plan na ten miesiąc.
+          Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań”</strong> na górze i wrzuć plan na ten miesiąc.
         </div>`;
         return;
       }
@@ -1337,7 +1562,7 @@
       await deleteDoc(doc(db, "tasks", id));
     };
 
-    // ASYSTENT AI (KORZYSTA Z EDYTOWALNYCH PROFILI PRZEMA I RÓŻY)
+    // ASYSTENT AI MIESIĘCZNY
     window.openAiModal = () => {
       document.getElementById('ai-modal').classList.remove('hidden');
       document.getElementById('ai-modal').classList.add('flex');
@@ -1352,7 +1577,7 @@
       }
 
       if (allTasks.length === 0) {
-        out.textContent = "W tym miesiącu nie ma jeszcze żadnych zadań w kalendarzu.\n\nKliknij „🛠️ Konfiguracja bazy zadań” na górnym pasku -> „🚀 Wrzuć aktywne na wybrany miesiąc” (lub dodaj zadanie jednorazowe), a potem wróć tutaj!";
+        out.textContent = "W tym miesiącu nie ma jeszcze żadnych zadań w kalendarzu.\n\nKliknij „🛠️ Baza zadań” na górnym pasku -> „🚀 Wrzuć aktywne na wybrany miesiąc” (lub dodaj zadanie jednorazowe), a potem wróć tutaj!";
         return;
       }
 
@@ -1396,9 +1621,10 @@ ${tasksSummary}
 
 Zaproponuj konkretny, realistyczny i sprawiedliwy plan po polsku: kiedy (konkretne daty i pory dnia) oraz kto (Przemo czy Róża) powinien wykonać te zadania.
 Zasady:
-1. Ściśle trzymaj się grafików z profili powyżej (np. wykorzystuj wolne/zdalne wtorki i piątki Róży oraz wolne środy Przema, a w dni gdy Przemo pracuje stacjonarnie 8h nie wrzucaj mu ciężkich obowiązków domowych).
-2. W okresach "N/A BRAK CZASU" nie planuj nic dla danej osoby.
-3. W okresach "POZA DOMEM" nie planuj zadań stacjonarnych w domu, ale możesz zaplanować zadania oznaczone jako zdalne/wyjazdowe.`;
+1. Ściśle trzymaj się grafików z profili powyżej (np. wykorzystuj wolne/zdalne wtorki i piątki Róży oraz weekendy, a w środy po pracy nie planuj obowiązków domowych, bo wtedy odpoczywają).
+2. Czasem podsuń Róży lekką, wspierającą sugestię okienka na pisanie e-booka o wieczorach panieńskich.
+3. W okresach "N/A BRAK CZASU" nie planuj nic dla danej osoby.
+4. W okresach "POZA DOMEM" nie planuj zadań stacjonarnych w domu, ale możesz zaplanować zadania oznaczone jako zdalne/wyjazdowe.`;
 
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -1432,6 +1658,7 @@ Zasady:
       const home = document.getElementById('profile-home-input').value.trim() || DEFAULT_PROFILES.home;
 
       userProfiles = { przemo, roza, home };
+      personalAiCache = { Przemo: null, Róża: null };
       await setDoc(doc(db, "homeSettings", `profiles_${homeSecret}`), {
         secret: homeSecret,
         przemo,
@@ -1439,6 +1666,7 @@ Zasady:
         home
       });
 
+      renderPersonalFocusCard();
       closeModal('settings-modal');
     };
 
