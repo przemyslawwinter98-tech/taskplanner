@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Domowy Planer — Przemo & Róża</title>
+  <title>Domowy Planer — Przemo, Róża & Gosiek</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -53,7 +53,7 @@
         🐾
       </div>
       <h1 class="text-2xl font-extrabold text-warm-900 dark:text-white mb-2">Domowy Planer</h1>
-      <p class="text-stone-500 dark:text-stone-400 text-sm mb-6">Przemo, Róża, Berneńczyk & Auto.<br>Wpisz hasło domowe, aby zsynchronizować listę.</p>
+      <p class="text-stone-500 dark:text-stone-400 text-sm mb-6">Przemo, Róża, Gosiek & Auto.<br>Wpisz hasło domowe, aby zsynchronizować listę.</p>
       <form id="auth-form" class="space-y-4">
         <input id="secret-input" type="password" required placeholder="Twoje hasło z reguł Firestore..."
           class="w-full px-4 py-3 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-center font-medium" />
@@ -73,11 +73,14 @@
     <header class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-4 sm:p-6 shadow-sm space-y-5">
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-5 border-b border-warm-100 dark:border-warm-800">
         <div>
-          <div class="flex items-center gap-2.5">
+          <div class="flex flex-wrap items-center gap-2.5">
             <span class="text-2xl">🏡</span>
             <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-warm-900 dark:text-white">Domowe Centrum Dowodzenia</h1>
+            <span id="test-month-badge" class="hidden text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/70 dark:border-amber-800">
+              🧪 Miesiąc testowy (bez czerwonych alertów)
+            </span>
           </div>
-          <p class="text-stone-500 dark:text-stone-400 text-xs sm:text-sm mt-1">🐕 Berneńczyk • 🚗 Auto • 🏠 Dom — <span id="current-month-label" class="font-semibold text-brand-600 dark:text-brand-400 capitalize"></span></p>
+          <p class="text-stone-500 dark:text-stone-400 text-xs sm:text-sm mt-1">🐕 Gosiek • 🛁 Łazienka • 🧹 Mieszkanie • 🍳 Kuchnia • 🚗 Auto — <span id="current-month-label" class="font-semibold text-brand-600 dark:text-brand-400 capitalize"></span></p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -158,7 +161,7 @@
           <div>
             <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Wspólne / Do ustalenia</div>
             <div id="stat-shared" class="text-xl sm:text-2xl font-extrabold text-warm-900 dark:text-white mt-0.5">0</div>
-            <div class="text-[11px] text-stone-400">Do podziału</div>
+            <div id="stat-overdue-hint" class="text-[11px] text-stone-400">Do podziału</div>
           </div>
           <div class="w-10 h-10 shrink-0 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center text-xl">👫</div>
         </div>
@@ -298,13 +301,13 @@
               </select>
             </div>
             <div>
-              <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Kategoria</label>
+              <label class="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase">Sekcja / Kategoria</label>
               <select id="task-category" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm">
-                <option value="Berneńczyk">🐕 Berneńczyk</option>
-                <option value="Dom">🏠 Dom</option>
-                <option value="Auto">🚗 Auto</option>
-                <option value="Rachunki">💳 Rachunki</option>
-                <option value="Inne">📌 Inne</option>
+                <option value="Łazienka">🛁 Łazienka i pranie</option>
+                <option value="Gosiek">🐕 Opieka nad Gośkiem</option>
+                <option value="Mieszkanie">🧹 Sprzątanie mieszkania</option>
+                <option value="Rachunki i auto">🚗 Rachunki, auto i zakupy</option>
+                <option value="Kuchnia">🍳 Kuchnia</option>
               </select>
             </div>
           </div>
@@ -324,10 +327,16 @@
             </div>
           </div>
 
-          <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer pt-1">
-            <input id="task-remote-ok" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
-            <span>Można zrobić będąc <strong>poza domem</strong> (zdalnie / wyjazd)</span>
-          </label>
+          <div class="flex flex-wrap gap-4 pt-1">
+            <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
+              <input id="task-remote-ok" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
+              <span>🌍 Poza domem / zakupy</span>
+            </label>
+            <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
+              <input id="task-starred" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
+              <span>⭐ Wyróżnij gwiazdką</span>
+            </label>
+          </div>
 
           <div class="flex justify-end gap-2 pt-1">
             <button type="button" onclick="toggleAddForm()" class="px-3 py-1.5 text-xs font-semibold text-stone-500">Anuluj</button>
@@ -335,19 +344,21 @@
           </div>
         </form>
 
-        <!-- FILTRY -->
+        <!-- FILTRY OSÓB I 5 SEKCJI -->
         <div class="flex flex-wrap gap-1.5 mb-4">
-          <button onclick="setFilter('all')" data-filter="all" class="filter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white">Wszystkie</button>
-          <button onclick="setFilter('Przemo')" data-filter="Przemo" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🧔 Przemo</button>
-          <button onclick="setFilter('Róża')" data-filter="Róża" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">👩 Róża</button>
-          <button onclick="setFilter('Nieprzypisane')" data-filter="Nieprzypisane" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">❓ Nieprzypisane</button>
-          <button onclick="setFilter('Berneńczyk')" data-filter="Berneńczyk" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Pies</button>
-          <button onclick="setFilter('Auto')" data-filter="Auto" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🚗 Auto</button>
-          <button onclick="setFilter('Dom')" data-filter="Dom" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🏠 Dom</button>
+          <button onclick="setFilter('all')" data-filter="all" class="filter-btn px-2.5 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white">Wszystkie</button>
+          <button onclick="setFilter('Przemo')" data-filter="Przemo" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🧔 Przemo</button>
+          <button onclick="setFilter('Róża')" data-filter="Róża" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">👩 Róża</button>
+          <button onclick="setFilter('Nieprzypisane')" data-filter="Nieprzypisane" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">❓ Nieprzypisane</button>
+          <button onclick="setFilter('Łazienka')" data-filter="Łazienka" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🛁 Łazienka</button>
+          <button onclick="setFilter('Gosiek')" data-filter="Gosiek" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Gosiek</button>
+          <button onclick="setFilter('Mieszkanie')" data-filter="Mieszkanie" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🧹 Mieszkanie</button>
+          <button onclick="setFilter('Rachunki i auto')" data-filter="Rachunki i auto" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🚗 Auto/Zakupy</button>
+          <button onclick="setFilter('Kuchnia')" data-filter="Kuchnia" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🍳 Kuchnia</button>
         </div>
 
         <!-- LISTA ZADAŃ -->
-        <div id="tasks-list" class="space-y-2.5 overflow-y-auto max-h-[540px] pr-1 custom-scroll flex-1">
+        <div id="tasks-list" class="space-y-2.5 overflow-y-auto max-h-[560px] pr-1 custom-scroll flex-1">
           <div class="text-center text-stone-400 text-sm py-10">Ładowanie zadań...</div>
         </div>
       </section>
@@ -362,15 +373,15 @@
               <button onclick="closeConfigScreen()" class="px-3 py-1.5 rounded-xl bg-warm-100 dark:bg-warm-800 hover:bg-warm-200 dark:hover:bg-warm-700 text-xs font-bold transition">
                 ← Wróć do kalendarza
               </button>
-              <h2 class="text-xl font-extrabold text-warm-900 dark:text-white">🛠️ Konfiguracja stałej bazy zadań</h2>
+              <h2 class="text-xl font-extrabold text-warm-900 dark:text-white">🛠️ Konfiguracja stałej bazy zadań (5 sekcji)</h2>
             </div>
             <p class="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1.5">
-              Ustalcie stałe obowiązki w skali miesiąca. Kto wykonuje jest <strong>opcjonalne</strong> — możecie zostawić „Do ustalenia”.
+              Każde nowe zadanie dodane tutaj <strong>automatycznie wpada</strong> też do bieżącego miesiąca. Możesz też przeładować pełną listę na wybrany miesiąc.
             </p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="resetDefaultTemplates()" class="px-3.5 py-2.5 rounded-xl border border-warm-200 dark:border-warm-700 hover:bg-warm-100 dark:hover:bg-warm-800 text-xs font-semibold text-stone-600 dark:text-stone-300 transition">
-              Przywróć bazę startową (25)
+            <button onclick="replaceWithFull39Tasks()" class="px-3.5 py-2.5 rounded-xl border border-warm-200 dark:border-warm-700 hover:bg-warm-100 dark:hover:bg-warm-800 text-xs font-semibold text-stone-600 dark:text-stone-300 transition">
+              Załaduj listę 39 obowiązków
             </button>
             <button onclick="generateMonthFromConfig()" class="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-brand-500/20 transition">
               🚀 Wrzuć aktywne na wybrany miesiąc
@@ -378,20 +389,20 @@
           </div>
         </div>
 
-        <!-- DODAWANIE NOWEGO STAŁEGO ZADANIA DO BAZY -->
+        <!-- DODAWANIE NOWEGO STAŁEGO ZADANIA DO BAZY (OD RAZU WPADA TEŻ DO BIEŻĄCEGO MIESIĄCA) -->
         <form id="new-template-form" class="mt-5 bg-warm-50 dark:bg-warm-800/50 border border-warm-200 dark:border-warm-700 rounded-2xl p-4 space-y-3">
-          <div class="text-xs font-extrabold uppercase tracking-wider text-brand-600 dark:text-brand-400">+ Dodaj nowy stały obowiązek do bazy</div>
+          <div class="text-xs font-extrabold uppercase tracking-wider text-brand-600 dark:text-brand-400">+ Dodaj nowy stały obowiązek (od razu trafi na ten miesiąc)</div>
           <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5">
             <input id="tpl-title" type="text" required placeholder="Nazwa zadania (np. Mycie okien)"
               class="md:col-span-4 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
             <input id="tpl-desc" type="text" placeholder="Krótki opis / wskazówka (opcjonalnie)"
               class="md:col-span-3 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
             <select id="tpl-category" class="md:col-span-2 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
-              <option value="Berneńczyk">🐕 Berneńczyk</option>
-              <option value="Auto">🚗 Auto</option>
-              <option value="Dom">🏠 Dom</option>
-              <option value="Rachunki">💳 Rachunki</option>
-              <option value="Inne">📌 Inne</option>
+              <option value="Łazienka">🛁 Łazienka i pranie</option>
+              <option value="Gosiek">🐕 Opieka nad Gośkiem</option>
+              <option value="Mieszkanie">🧹 Sprzątanie mieszkania</option>
+              <option value="Rachunki i auto">🚗 Rachunki, auto i zakupy</option>
+              <option value="Kuchnia">🍳 Kuchnia</option>
             </select>
             <select id="tpl-freq" class="md:col-span-1 px-2.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
               <option value="1">1x / mies.</option>
@@ -406,12 +417,18 @@
             </select>
           </div>
           <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
-              <input id="tpl-remote" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
-              <span>🌍 Można wykonać poza domem (zdalnie / na wyjeździe)</span>
-            </label>
+            <div class="flex flex-wrap gap-4">
+              <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
+                <input id="tpl-remote" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
+                <span>🌍 Poza domem / zakupy</span>
+              </label>
+              <label class="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
+                <input id="tpl-starred" type="checkbox" class="w-4 h-4 accent-brand-500 rounded" />
+                <span>⭐ Wyróżnij gwiazdką</span>
+              </label>
+            </div>
             <button type="submit" class="px-4 py-2 rounded-xl bg-warm-900 dark:bg-brand-500 hover:bg-stone-800 dark:hover:bg-brand-600 text-white text-xs font-bold transition">
-              Dodaj do bazy zadań
+              Dodaj do bazy i bieżącego miesiąca
             </button>
           </div>
         </form>
@@ -419,10 +436,11 @@
         <div class="flex flex-wrap items-center justify-between gap-2 mt-5 mb-3">
           <div class="flex flex-wrap gap-1.5">
             <button onclick="setConfigFilter('all')" data-cfilter="all" class="cfilter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white">Wszystkie</button>
-            <button onclick="setConfigFilter('Berneńczyk')" data-cfilter="Berneńczyk" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Berneńczyk</button>
-            <button onclick="setConfigFilter('Auto')" data-cfilter="Auto" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🚗 Samochód</button>
-            <button onclick="setConfigFilter('Dom')" data-cfilter="Dom" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🏠 Dom</button>
-            <button onclick="setConfigFilter('Rachunki')" data-cfilter="Rachunki" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">💳 Rachunki</button>
+            <button onclick="setConfigFilter('Łazienka')" data-cfilter="Łazienka" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🛁 Łazienka i pranie</button>
+            <button onclick="setConfigFilter('Gosiek')" data-cfilter="Gosiek" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Opieka nad Gośkiem</button>
+            <button onclick="setConfigFilter('Mieszkanie')" data-cfilter="Mieszkanie" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🧹 Mieszkanie</button>
+            <button onclick="setConfigFilter('Rachunki i auto')" data-cfilter="Rachunki i auto" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🚗 Rachunki, auto, zakupy</button>
+            <button onclick="setConfigFilter('Kuchnia')" data-cfilter="Kuchnia" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🍳 Kuchnia</button>
           </div>
           <div id="config-summary-count" class="text-xs font-semibold text-stone-500 dark:text-stone-400"></div>
         </div>
@@ -458,7 +476,7 @@
         <button onclick="closeModal('ai-modal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-white text-xl font-bold">✕</button>
       </div>
       <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
-        AI uwzględnia aktualne <strong>profile Przema i Róży</strong> (wolne środy po pracy, wtorki i piątki Róży, pisanie e-booka o panieńskich), cykliczne <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong>.
+        AI uwzględnia <strong>profile Przema i Róży</strong> (wolne środy po pracy, wtorki i piątki Róży, pisanie e-booka o panieńskich), cykliczne <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong>.
       </p>
       <div id="ai-output" class="bg-warm-50 dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-2xl p-4 text-sm text-stone-700 dark:text-stone-200 whitespace-pre-line min-h-[120px] max-h-[300px] overflow-y-auto custom-scroll">
         Kliknij przycisk poniżej, aby wygenerować propozycję rozkładu zadań.
@@ -499,7 +517,7 @@
 
         <div class="bg-warm-50 dark:bg-warm-800/50 border border-warm-200 dark:border-warm-700 rounded-2xl p-3.5 space-y-1.5">
           <label class="text-xs font-extrabold text-warm-900 dark:text-stone-200 flex items-center gap-1.5">
-            <span>🐾</span> Dodatkowe wskazówki o domu (berneńczyk, auto, zasady podziału)
+            <span>🐾</span> Dodatkowe wskazówki o domu (Gosiek, auto, zasady podziału)
           </label>
           <textarea id="profile-home-input" rows="2"
             class="w-full px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
@@ -524,7 +542,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
       getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
-      onSnapshot, query, where, setDoc
+      onSnapshot, query, where, setDoc, getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -547,38 +565,71 @@
       'Nieprzypisane': '❓'
     };
 
+    const CAT_ICON = {
+      'Łazienka': '🛁',
+      'Gosiek': '🐕',
+      'Mieszkanie': '🧹',
+      'Rachunki i auto': '🚗',
+      'Kuchnia': '🍳',
+      'Inne': '📌'
+    };
+
     const DEFAULT_PROFILES = {
       przemo: "Pracuje stacjonarnie 8h dziennie od poniedziałku do piątku (w tym w środy). W ŚRODY PO PRACY ma wolne od domowych obowiązków (czas na odpoczynek). Wolne ma też weekendy.",
       roza: "Pracuje w poniedziałki, środy i czwartki (w ŚRODY PO PRACY ma wolne od domowych obowiązków). We WTORKI i PIĄTKI ma wolne i pracę zdalną (jest w domu). Wolne weekendy. Dodatkowo Róża pisze teraz e-booka o wieczorach panieńskich — czasem podsuń jej lekko i wspierająco sugestię, że w spokojniejszy dzień (np. we wtorek lub piątek) mogłaby nad nim popracować.",
-      home: "Mamy psa rasy berneńczyk oraz samochód. Środy po pracy są dla nas obojga wolne od obowiązków domowych — nie planuj wtedy sprzątania ani spraw przy aucie. Rozkładaj zadania sprawiedliwie na pozostałe dni (np. wtorki/piątki Róży, inne popołudnia i weekendy)."
+      home: "Mamy psa Gośka (berneńczyk) oraz samochód. Środy po pracy są dla nas obojga wolne od obowiązków domowych — nie planuj wtedy sprzątania ani spraw przy aucie. Rozkładaj zadania sprawiedliwie na pozostałe dni (np. wtorki/piątki Róży, inne popołudnia i weekendy)."
     };
 
+    // PEŁNA LISTA 39 OBOWIĄZKÓW W 5 SEKCJACH
     const DEFAULT_MONTHLY_TASKS = [
-      { title: "Tabletka na kleszcze i pasożyty", desc: "Podanie dawki + wpis w książeczce", category: "Berneńczyk", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
-      { title: "Wyczesywanie podszerstka", desc: "Szczotka pudlówka + zgrzebło (za uszami, kryza, portki)", category: "Berneńczyk", freq: 4, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Mycie i wyparzanie misek oraz maty", desc: "Miska na wodę i karmę + przetarcie podłogi", category: "Berneńczyk", freq: 4, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Pranie posłania / kocyków + czyszczenie filtra pralki", desc: "Pranie w 60°C i usunięcie sierści z filtra", category: "Berneńczyk", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Kontrola zapasu karmy i smaczków + zamówienie", desc: "Zamówić worek z wyprzedzeniem", category: "Berneńczyk", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
-      { title: "Kontrola uszu, opuszek łap i długości pazurów", desc: "Przetarcie uszu, kontrola łap", category: "Berneńczyk", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Pranie materiałowych zabawek i szarpaków", desc: "Odświeżenie zabawek", category: "Berneńczyk", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Odkurzanie sierści z bagażnika i tylnej kanapy", desc: "Gumowa szczotka / rolka + odkurzacz", category: "Auto", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Myjnia + mycie szyb od środka", desc: "Zmycie brudu i odtłuszczenie przedniej szyby", category: "Auto", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Kontrola ciśnienia w oponach, oleju i płynu do spryskiwaczy", desc: "Sprawdzenie na zimnych oponach", category: "Auto", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Wytrzepanie / przetarcie maty ochronnej dla psa", desc: "Oczyszczenie maty w bagażniku", category: "Auto", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Sprawdzenie ważności OC, przeglądu i wyposażenia", desc: "Szybka kontrola w mObywatel", category: "Auto", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
-      { title: "Gruntowne odkurzanie i mycie podłóg", desc: "Zebranie sierści spod kanapy i z kątów", category: "Dom", freq: 4, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Opróżnienie i wyczyszczenie filtrów/szczotek odkurzacza", desc: "Wyczesanie szczotki głównej", category: "Dom", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Zmiana pościeli i pranie ręczników", desc: "Świeża pościel i komplet ręczników", category: "Dom", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Gruntowne mycie łazienki", desc: "Prysznic, umywalka, WC, baterie", category: "Dom", freq: 4, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Przegląd lodówki i przetarcie półek", desc: "Wyrzucenie przeterminowanych rzeczy", category: "Dom", freq: 2, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Odkamienianie ekspresu do kawy", desc: "Pełny cykl odkamieniania", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Czyszczenie zmywarki (program + filtr) i pralki", desc: "Pusty cykl czyszczący", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Mycie koszy na śmieci i wycieraczki wejściowej", desc: "Odświeżenie koszy i wejścia", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Pranie narzut, poszewek z kanapy / tekstyliów", desc: "Odświeżenie tekstyliów, na których leży pies", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Przetarcie kurzy na wysokościach, listew i drzwi", desc: "Szafki, parapety, listwy przypodłogowe", category: "Dom", freq: 1, assignee: "Nieprzypisane", remoteOk: false, enabled: true },
-      { title: "Opłacenie rachunków stałych", desc: "Czynsz, prąd, gaz, internet, abonamenty", category: "Rachunki", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
-      { title: "Przegląd budżetu i subskrypcji", desc: "Kontrola stałych wydatków", category: "Rachunki", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true },
-      { title: "Wpisanie wyjazdów, blokad N/A i planu kolejnego miesiąca", desc: "Przygotowanie kalendarza na nowy miesiąc", category: "Rachunki", freq: 1, assignee: "Nieprzypisane", remoteOk: true, enabled: true }
+      // Sekcja 1: Łazienka i pranie
+      { title: "Pranie (plus dbanie o pralkę)", desc: "Segregacja, pranie i czyszczenie filtra/szuflady pralki", category: "Łazienka", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie lustra, kibla, zlewu, prysznica, mydelniczki", desc: "Kompleksowe mycie łazienki", category: "Łazienka", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Uzupełnianie mydła i patyczków do uszu", desc: "Kontrola zapasów w łazience", category: "Łazienka", freq: 2, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Suszenie i rozkładanie prania", desc: "Rozwieszenie i schowanie do szaf", category: "Łazienka", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Pranie rzeczy Gośka", desc: "Posłanie, kocyki, ręczniki i zabawki", category: "Łazienka", freq: 2, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Odtykanie odpływów", desc: "Profilaktyczne czyszczenie syfonu pod prysznicem i w zlewie", category: "Łazienka", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+
+      // Sekcja 2: Opieka nad psem / Gośkiem
+      { title: "Kupowanie karmy i smaczków", desc: "Kontrola zapasu i zamówienie z wyprzedzeniem", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Spacery z Gośkiem", desc: "Codzienne wyjścia i dłuższy spacer", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Karmienie + suple", desc: "Porcje karmy oraz suplementy dla Gośka", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Dawanie leków", desc: "Pilnowanie dawkowania leków Gośka", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Umawianie do weta", desc: "Kontrola terminów szczepień/badań i rejestracja", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Czesanie Gośka", desc: "Wyczesywanie podszerstka (szczególnie za uszami i portki)", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie Gośka", desc: "Kąpiel / mycie łap i brzucha po błocie", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Obcinanie pazurów", desc: "Kontrola długości i przycięcie", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie zębów Gośka ⭐", desc: "Regularne szczotkowanie zębów psa", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: true, enabled: true },
+      { title: "Krople na kleszcze", desc: "Aplikacja ochrony przeciwkleszczowej", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Odrobaczanie", desc: "Podanie tabletki na odrobaczanie", category: "Gosiek", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Mycie misek", desc: "Umycie i wyparzenie misek na wodę i karmę", category: "Gosiek", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+
+      // Sekcja 3: Sprzątanie mieszkania
+      { title: "Odkurzanie", desc: "Dokładne odkurzenie sierści z całego mieszkania", category: "Mieszkanie", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie podłóg", desc: "Umycie podłóg po odkurzaniu", category: "Mieszkanie", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Wynoszenie śmieci", desc: "Segregacja i wyniesienie odpadów", category: "Mieszkanie", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Podlewanie roślin", desc: "Sprawdzenie wilgotności ziemi i podlanie kwiatów", category: "Mieszkanie", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Zmiana pościeli + obracanie materaca", desc: "Świeża pościel oraz obrócenie materaca co miesiąc", category: "Mieszkanie", freq: 2, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie ścian w łazience, przy wejściu i obok Gośka", desc: "Przetarcie zabrudzeń w strategicznych miejscach", category: "Mieszkanie", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+
+      // Sekcja 4: Rachunki, auto i zakupy
+      { title: "Płacenie rachunków", desc: "Czynsz, prąd, gaz, internet i abonamenty", category: "Rachunki i auto", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Tankowanie auta", desc: "Zatankowanie do pełna + sprawdzenie płynu do spryskiwaczy", category: "Rachunki i auto", freq: 2, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Mycie i sprzątanie auta", desc: "Myjnia + odkurzanie sierści Gośka z bagażnika i kanapy", category: "Rachunki i auto", freq: 2, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Kupowanie tytoniu", desc: "Uzupełnienie zapasu", category: "Rachunki i auto", freq: 2, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Kupowanie kawy", desc: "Zamówienie lub zakup ziaren kawy", category: "Rachunki i auto", freq: 1, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+
+      // Sekcja 5: Kuchnia
+      { title: "Zmywanie", desc: "Ręczne mycie garnków, patelni i noży", category: "Kuchnia", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Wstawianie zmywarki i rozładowywanie", desc: "Bieżące ogarnianie zmywarki", category: "Kuchnia", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Zakupy + planowanie + dbanie o zjedzenie resztek", desc: "Lista zakupów i zero marnowania jedzenia", category: "Kuchnia", freq: 4, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Gotowanie", desc: "Przygotowanie posiłków na kolejne dni", category: "Kuchnia", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Ogólne sprzątanie z wierzchu", desc: "Blaty, stół, płyta indukcyjna i zlew", category: "Kuchnia", freq: 4, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie piekarnika", desc: "Wyczyszczenie wnętrza i szyby piekarnika", category: "Kuchnia", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Oddawanie butelek kaucyjnych", desc: "Zebranie i zwrot butelek w sklepie", category: "Kuchnia", freq: 2, assignee: "Nieprzypisane", remoteOk: true, starred: false, enabled: true },
+      { title: "Mycie lodówki", desc: "Przegląd zawartości i umycie półek", category: "Kuchnia", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Odkamienianie czajnika", desc: "Odkamienienie czajnika elektrycznego", category: "Kuchnia", freq: 1, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true },
+      { title: "Mycie ekspresu i odkamienianie + pojemnika na fusy", desc: "Czyszczenie zaparzacza, odkamienianie i tacki na fusy", category: "Kuchnia", freq: 2, assignee: "Nieprzypisane", remoteOk: false, starred: false, enabled: true }
     ];
 
     // TRYB JASNY / CIEMNY
@@ -601,7 +652,7 @@
       applyTheme(isDark ? 'light' : 'dark');
     };
 
-    // STAN APLIKACJI + OSOBNY PROFIL NA URZĄDZENIU (PRZEMO / RÓŻA)
+    // STAN APLIKACJI
     let homeSecret = localStorage.getItem('home_planner_secret') || '';
     let activeUser = localStorage.getItem('home_planner_active_user') || 'Przemo';
     let currentYear = new Date().getFullYear();
@@ -636,7 +687,19 @@
       return `${year}-${String(month + 1).padStart(2, '0')}`;
     }
 
-    // PRZEŁĄCZANIE AKTYWNEGO PROFILU (PRZEMO / RÓŻA)
+    // CZY MIESIĄC JEST TESTOWY (LISTOPAD 2026 -> BRAK CZERWONYCH PODŚWIETLEŃ ZALEGŁOŚCI)
+    function isTestMonth(year, month) {
+      return year === 2026 && month === 10; // miesiąc 10 = listopad (0-indexed)
+    }
+
+    function isTaskOverdue(task) {
+      if (task.completed || !task.date) return false;
+      if (isTestMonth(currentYear, currentMonth)) return false;
+      const todayStr = formatDate(new Date());
+      return task.date < todayStr;
+    }
+
+    // PRZEŁĄCZANIE AKTYWNEGO PROFILU
     window.switchActiveUser = (user) => {
       activeUser = user;
       localStorage.setItem('home_planner_active_user', user);
@@ -658,7 +721,7 @@
       }
     }
 
-    // SPERSONALIZOWANA KARTA SUGESTII DLA PRZEMA LUB RÓŻY
+    // SPERSONALIZOWANA KARTA SUGESTII
     function renderPersonalFocusCard() {
       const card = document.getElementById('personal-focus-card');
       const iconEl = document.getElementById('personal-focus-icon');
@@ -670,7 +733,7 @@
       const isPrzemo = activeUser === 'Przemo';
       const today = new Date();
       const todayStr = formatDate(today);
-      const dayOfWeek = today.getDay(); // 0=Nd, 1=Pn, 2=Wt, 3=Śr, 4=Czw, 5=Pt, 6=Sob
+      const dayOfWeek = today.getDay();
       const todayBlocks = getBlocksForDate(todayStr).filter(b => b.who === activeUser || b.who === 'Oboje');
 
       if (isPrzemo) {
@@ -683,20 +746,18 @@
         titleEl.textContent = 'Na czym warto dziś popracować — Róża';
       }
 
-      // Kontekst dnia dla danej osoby
       if (dayOfWeek === 3) {
         subEl.textContent = 'Dziś środa — po pracy macie wolne od domowych obowiązków!';
       } else if (!isPrzemo && (dayOfWeek === 2 || dayOfWeek === 5)) {
         subEl.textContent = 'Dziś masz wolny / zdalny dzień — dobry moment na lekkie domowe rzeczy lub e-booka o panieńskich.';
       } else if (dayOfWeek === 0 || dayOfWeek === 6) {
-        subEl.textContent = 'Weekend — dobry czas na większe sprawy domowe lub przy aucie i berneńczyku.';
+        subEl.textContent = 'Weekend — dobry czas na większe sprawy domowe lub przy aucie i Gośku.';
       } else {
         subEl.textContent = isPrzemo
           ? 'Dzień roboczy stacjonarnie — skup się tylko na drobnych tematach lub odpocznij.'
           : 'Dzień pracy — nie przeładowuj wieczoru.';
       }
 
-      // Jeśli użytkownik kliknął „Podpowiedź AI dla mnie”, pokaż wygenerowane 3 karty AI
       if (personalAiCache[activeUser]) {
         listEl.innerHTML = personalAiCache[activeUser].map(tip => `
           <div class="bg-white/90 dark:bg-warm-900/80 border border-warm-200/80 dark:border-warm-700 rounded-xl p-3 space-y-1">
@@ -707,22 +768,20 @@
         return;
       }
 
-      // Domyślne inteligentne sugestie na żywo z bazy zadań
       const openTasks = allTasks.filter(t => !t.completed);
       const myTasks = openTasks
         .filter(t => t.assignee === activeUser || t.assignee === 'Wspólne' || !t.assignee || t.assignee === 'Nieprzypisane')
-        .sort((a, b) => (a.assignee === activeUser ? -1 : 1) || (a.date || '9999').localeCompare(b.date || '9999'));
+        .sort((a, b) => (b.starred ? 1 : 0) - (a.starred ? 1 : 0) || (a.assignee === activeUser ? -1 : 1) || (a.date || '9999').localeCompare(b.date || '9999'));
 
       const suggestions = [];
 
-      // 1. Sprawdź czy dziś jest środa po pracy lub blokada N/A
       if (todayBlocks.length > 0) {
         const b = todayBlocks[0];
         suggestions.push({
           badge: b.mode === 'away' ? '🏠 Poza domem' : '⛔ Blokada N/A',
           title: b.note || (b.mode === 'away' ? 'Jesteś dziś poza domem' : 'Masz dziś wpisane N/A'),
           desc: b.mode === 'away'
-            ? 'Wchodzą w grę tylko zadania zdalne/online (np. opłaty, zamówienie karmy).'
+            ? 'Wchodzą w grę tylko zadania zdalne/zakupowe (np. opłaty, zamówienie karmy).'
             : `Zablokowane w godz. ${b.startTime}–${b.endTime}. Nie planuj na siłę innych rzeczy.`
         });
       } else if (dayOfWeek === 3) {
@@ -733,7 +792,6 @@
         });
       }
 
-      // 2. Dla Róży: delikatna sugestia e-booka w spokojniejsze dni
       if (!isPrzemo) {
         suggestions.push({
           badge: '✍️ Projekt własny',
@@ -744,12 +802,11 @@
         });
       }
 
-      // 3. Konkretne zadania z listy na ten miesiąc
       for (const task of myTasks) {
         if (suggestions.length >= 3) break;
         const isAssignedToMe = task.assignee === activeUser;
         suggestions.push({
-          badge: isAssignedToMe ? '📌 Twoje zadanie' : '❓ Do przejęcia',
+          badge: task.starred ? '⭐ Ważne zadanie' : (isAssignedToMe ? '📌 Twoje zadanie' : '❓ Do przejęcia'),
           title: task.title,
           desc: `${task.category}${task.date ? ` • termin: ${task.date}` : ''}${task.desc ? ` — ${task.desc}` : ''}`
         });
@@ -772,7 +829,6 @@
       `).join('');
     }
 
-    // GENEROWANIE SPERSONALIZOWANYCH SUGESTII AI DLA AKTYWNEJ OSOBY
     window.generatePersonalAiTips = async () => {
       const apiKey = localStorage.getItem('gemini_api_key');
       if (!apiKey) {
@@ -786,8 +842,8 @@
       btn.disabled = true;
 
       const todayStr = formatDate(new Date());
-      const openTasks = allTasks.filter(t => !t.completed).slice(0, 20).map(t =>
-        `- ${t.title} [${t.category}, przypisane: ${t.assignee || 'Nieprzypisane'}, data: ${t.date || 'brak'}, zdalne: ${t.remoteOk ? 'TAK' : 'NIE'}]`
+      const openTasks = allTasks.filter(t => !t.completed).slice(0, 25).map(t =>
+        `- ${t.title} [sekcja: ${t.category}, przypisane: ${t.assignee || 'Nieprzypisane'}, data: ${t.date || 'brak'}, gwiazdka: ${t.starred ? 'TAK' : 'NIE'}]`
       ).join('\n') || 'Brak otwartych zadań w kalendarzu.';
 
       const myProfile = activeUser === 'Przemo' ? userProfiles.przemo : userProfiles.roza;
@@ -864,6 +920,54 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       document.getElementById('na-end-date').value = dateStr;
     }
 
+    // POMOCNICZE GENEROWANIE DAT W MIESIĄCU DLA WZORCA
+    function getTargetDatesForFreq(year, month, freq) {
+      const monthKey = getMonthKey(year, month);
+      const goodDays = [];
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dt = new Date(year, month, d);
+        // Preferuj piątki, soboty i wtorki (pomijając środy po pracy)
+        if (dt.getDay() === 2 || dt.getDay() === 5 || dt.getDay() === 6) {
+          goodDays.push(formatDate(dt));
+        }
+      }
+
+      if (freq === 4) {
+        const picked = goodDays.filter((_, i) => i % 3 === 0).slice(0, 4);
+        return picked.length >= 4 ? picked : [`${monthKey}-03`, `${monthKey}-10`, `${monthKey}-17`, `${monthKey}-24`];
+      }
+      if (freq === 2) {
+        const d1 = goodDays[1] || `${monthKey}-06`;
+        const d2 = goodDays[Math.min(goodDays.length - 2, 7)] || `${monthKey}-20`;
+        return [d1, d2];
+      }
+      return [goodDays[2] || `${monthKey}-12`];
+    }
+
+    async function insertTemplateInstancesIntoMonth(tpl, year, month) {
+      const monthKey = getMonthKey(year, month);
+      const freq = Number(tpl.freq || 1);
+      const assignee = tpl.assignee || 'Nieprzypisane';
+      const dates = getTargetDatesForFreq(year, month, freq);
+
+      for (let idx = 0; idx < dates.length; idx++) {
+        await addDoc(collection(db, "tasks"), {
+          secret: homeSecret,
+          title: dates.length > 1 ? `${tpl.title} (${idx + 1}/${dates.length})` : tpl.title,
+          desc: tpl.desc || '',
+          assignee,
+          category: tpl.category,
+          date: dates[idx],
+          recurrence: freq > 1 ? 'recurring' : 'monthly',
+          remoteOk: !!tpl.remoteOk,
+          starred: !!tpl.starred,
+          monthKey,
+          completed: false
+        });
+      }
+    }
+
     // SUBSKRYPCJE FIREBASE
     function subscribeFirestore() {
       if (unsubTasks) unsubTasks();
@@ -872,6 +976,11 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       if (unsubProfiles) unsubProfiles();
 
       const monthKey = getMonthKey(currentYear, currentMonth);
+      const testBadge = document.getElementById('test-month-badge');
+      if (testBadge) {
+        if (isTestMonth(currentYear, currentMonth)) testBadge.classList.remove('hidden');
+        else testBadge.classList.add('hidden');
+      }
 
       const profileDocRef = doc(db, "homeSettings", `profiles_${homeSecret}`);
       unsubProfiles = onSnapshot(profileDocRef, async (snap) => {
@@ -921,11 +1030,10 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
         if (snapshot.empty && !seededTemplatesOnce) {
           seededTemplatesOnce = true;
           for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
-            await addDoc(collection(db, "taskTemplates"), {
-              secret: homeSecret,
-              order: i,
-              ...DEFAULT_MONTHLY_TASKS[i]
-            });
+            const tplData = { secret: homeSecret, order: i, ...DEFAULT_MONTHLY_TASKS[i] };
+            await addDoc(collection(db, "taskTemplates"), tplData);
+            // Od razu wrzuć startowy zestaw do bieżącego miesiąca
+            await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
           }
           return;
         }
@@ -1146,11 +1254,11 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
             <div class="flex flex-wrap items-center gap-2 shrink-0">
               <select onchange="updateTemplateField('${t.id}', 'category', this.value)"
                 class="px-2.5 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-xs font-semibold">
-                <option value="Berneńczyk" ${t.category === 'Berneńczyk' ? 'selected' : ''}>🐕 Berneńczyk</option>
-                <option value="Auto" ${t.category === 'Auto' ? 'selected' : ''}>🚗 Auto</option>
-                <option value="Dom" ${t.category === 'Dom' ? 'selected' : ''}>🏠 Dom</option>
-                <option value="Rachunki" ${t.category === 'Rachunki' ? 'selected' : ''}>💳 Rachunki</option>
-                <option value="Inne" ${t.category === 'Inne' ? 'selected' : ''}>📌 Inne</option>
+                <option value="Łazienka" ${t.category === 'Łazienka' ? 'selected' : ''}>🛁 Łazienka</option>
+                <option value="Gosiek" ${t.category === 'Gosiek' ? 'selected' : ''}>🐕 Gosiek</option>
+                <option value="Mieszkanie" ${t.category === 'Mieszkanie' ? 'selected' : ''}>🧹 Mieszkanie</option>
+                <option value="Rachunki i auto" ${t.category === 'Rachunki i auto' ? 'selected' : ''}>🚗 Auto/Zakupy</option>
+                <option value="Kuchnia" ${t.category === 'Kuchnia' ? 'selected' : ''}>🍳 Kuchnia</option>
               </select>
 
               <select onchange="updateTemplateField('${t.id}', 'freq', Number(this.value))"
@@ -1168,7 +1276,12 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
                 <option value="Wspólne" ${t.assignee === 'Wspólne' ? 'selected' : ''}>👫 Wspólne</option>
               </select>
 
-              <label class="flex items-center gap-1 text-[11px] px-2 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 cursor-pointer" title="Można wykonać poza domem / zdalnie">
+              <label class="flex items-center gap-1 text-[11px] px-2 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 cursor-pointer" title="Wyróżnij gwiazdką">
+                <input type="checkbox" ${t.starred ? 'checked' : ''} onchange="updateTemplateField('${t.id}', 'starred', this.checked)" class="accent-brand-500" />
+                <span>⭐</span>
+              </label>
+
+              <label class="flex items-center gap-1 text-[11px] px-2 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 cursor-pointer" title="Poza domem / zakupy">
                 <input type="checkbox" ${t.remoteOk ? 'checked' : ''} onchange="updateTemplateField('${t.id}', 'remoteOk', this.checked)" class="accent-brand-500" />
                 <span>🌍</span>
               </label>
@@ -1190,6 +1303,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       await deleteDoc(doc(db, "taskTemplates", id));
     };
 
+    // DODAWANIE NOWEGO WZORCA -> AUTOMATYCZNIE WPADA TEŻ DO BIEŻĄCEGO MIESIĄCA
     document.getElementById('new-template-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = document.getElementById('tpl-title').value.trim();
@@ -1198,8 +1312,9 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       const freq = Number(document.getElementById('tpl-freq').value);
       const assignee = document.getElementById('tpl-assignee').value;
       const remoteOk = document.getElementById('tpl-remote').checked;
+      const starred = document.getElementById('tpl-starred').checked;
 
-      await addDoc(collection(db, "taskTemplates"), {
+      const newTpl = {
         secret: homeSecret,
         order: taskTemplates.length,
         title,
@@ -1208,24 +1323,33 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
         freq,
         assignee,
         remoteOk,
+        starred,
         enabled: true
-      });
+      };
+
+      await addDoc(collection(db, "taskTemplates"), newTpl);
+      await insertTemplateInstancesIntoMonth(newTpl, currentYear, currentMonth);
 
       e.target.reset();
     });
 
-    window.resetDefaultTemplates = async () => {
-      if (!confirm("Czy dodać domyślny zestaw 25 zadań do bazy?")) return;
-      for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
-        await addDoc(collection(db, "taskTemplates"), {
-          secret: homeSecret,
-          order: taskTemplates.length + i,
-          ...DEFAULT_MONTHLY_TASKS[i]
-        });
+    // ZASTĄPIENIE STAREJ BAZY NOWĄ LISTĄ 39 ZADAŃ I WRZUCENIE NA BIEŻĄCY MIESIĄC
+    window.replaceWithFull39Tasks = async () => {
+      if (!confirm("Czy podmienić bazę na pełną listę 39 obowiązków (5 sekcji) i od razu wrzucić ją do bieżącego miesiąca?")) return;
+
+      const oldTpls = await getDocs(query(collection(db, "taskTemplates"), where("secret", "==", homeSecret)));
+      for (const d of oldTpls.docs) {
+        await deleteDoc(doc(db, "taskTemplates", d.id));
       }
+
+      for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
+        const tplData = { secret: homeSecret, order: i, ...DEFAULT_MONTHLY_TASKS[i] };
+        await addDoc(collection(db, "taskTemplates"), tplData);
+        await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
+      }
+      closeConfigScreen();
     };
 
-    // GENEROWANIE ZADAŃ NA WYBRANY MIESIĄC (Z POMINIĘCIEM ŚRÓD JAKO DNI PORZĄDKOWYCH)
     window.generateMonthFromConfig = async () => {
       const active = taskTemplates.filter(t => t.enabled !== false);
       if (active.length === 0) {
@@ -1233,70 +1357,9 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
         return;
       }
 
-      const monthKey = getMonthKey(currentYear, currentMonth);
-      const fridaysAndWeekends = [];
-      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dt = new Date(currentYear, currentMonth, d);
-        if (dt.getDay() === 5 || dt.getDay() === 6) fridaysAndWeekends.push(formatDate(dt));
-      }
-      const firstGoodDay = fridaysAndWeekends[0] || `${monthKey}-02`;
-
       for (const tpl of active) {
-        const freq = Number(tpl.freq || 1);
-        const assignee = tpl.assignee || 'Nieprzypisane';
-
-        if (freq === 4) {
-          const targetDates = fridaysAndWeekends.filter((_, idx) => idx % 2 === 0).slice(0, 4);
-          const dates = targetDates.length >= 4 ? targetDates : [`${monthKey}-02`, `${monthKey}-09`, `${monthKey}-16`, `${monthKey}-23`];
-          for (let idx = 0; idx < dates.length; idx++) {
-            await addDoc(collection(db, "tasks"), {
-              secret: homeSecret,
-              title: `${tpl.title} (${idx + 1}/${dates.length})`,
-              desc: tpl.desc || '',
-              assignee,
-              category: tpl.category,
-              date: dates[idx],
-              recurrence: 'weekly',
-              remoteOk: !!tpl.remoteOk,
-              monthKey,
-              completed: false
-            });
-          }
-        } else if (freq === 2) {
-          const d1 = fridaysAndWeekends[0] || `${monthKey}-04`;
-          const d2 = fridaysAndWeekends[4] || fridaysAndWeekends[2] || `${monthKey}-18`;
-          for (let idx = 0; idx < 2; idx++) {
-            await addDoc(collection(db, "tasks"), {
-              secret: homeSecret,
-              title: `${tpl.title} (${idx + 1}/2)`,
-              desc: tpl.desc || '',
-              assignee,
-              category: tpl.category,
-              date: idx === 0 ? d1 : d2,
-              recurrence: 'biweekly',
-              remoteOk: !!tpl.remoteOk,
-              monthKey,
-              completed: false
-            });
-          }
-        } else {
-          const targetDate = tpl.remoteOk ? `${monthKey}-05` : firstGoodDay;
-          await addDoc(collection(db, "tasks"), {
-            secret: homeSecret,
-            title: tpl.title,
-            desc: tpl.desc || '',
-            assignee,
-            category: tpl.category,
-            date: targetDate,
-            recurrence: 'monthly',
-            remoteOk: !!tpl.remoteOk,
-            monthKey,
-            completed: false
-          });
-        }
+        await insertTemplateInstancesIntoMonth(tpl, currentYear, currentMonth);
       }
-
       closeConfigScreen();
     };
 
@@ -1314,6 +1377,21 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       document.getElementById('stat-przemo').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Przemo').length;
       document.getElementById('stat-roza').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Róża').length;
       document.getElementById('stat-shared').textContent = allTasks.filter(t => !t.completed && (t.assignee === 'Wspólne' || t.assignee === 'Nieprzypisane' || !t.assignee)).length;
+
+      const overdueCount = allTasks.filter(t => isTaskOverdue(t)).length;
+      const overdueHint = document.getElementById('stat-overdue-hint');
+      if (overdueHint) {
+        if (isTestMonth(currentYear, currentMonth)) {
+          overdueHint.textContent = 'Listopad: tryb testowy';
+          overdueHint.className = 'text-[11px] text-amber-600 dark:text-amber-400 font-semibold';
+        } else if (overdueCount > 0) {
+          overdueHint.textContent = `⚠️ Zaległe po terminie: ${overdueCount}`;
+          overdueHint.className = 'text-[11px] text-red-600 dark:text-red-400 font-bold';
+        } else {
+          overdueHint.textContent = 'Wszystko w terminie';
+          overdueHint.className = 'text-[11px] text-stone-400';
+        }
+      }
     }
 
     // KALENDARZ
@@ -1345,6 +1423,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
 
         const dayTasks = allTasks.filter(t => t.date === dateStr);
         const openTasks = dayTasks.filter(t => !t.completed);
+        const hasOverdueDay = openTasks.some(t => isTaskOverdue(t));
         const przemoOpen = openTasks.filter(t => t.assignee === 'Przemo').length;
         const rozaOpen = openTasks.filter(t => t.assignee === 'Róża').length;
         const sharedOpen = openTasks.filter(t => t.assignee === 'Wspólne').length;
@@ -1353,6 +1432,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
         let bgClass = 'bg-white dark:bg-warm-800/70 border-warm-200 dark:border-warm-700 hover:border-brand-400';
         if (hasBusy) bgClass = 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-900';
         else if (hasAway) bgClass = 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900';
+        else if (hasOverdueDay) bgClass = 'bg-red-50/60 dark:bg-red-950/30 border-red-300 dark:border-red-800';
         else if (isWednesday) bgClass = 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/70';
 
         if (isSelected) bgClass += ' ring-2 ring-brand-500';
@@ -1385,7 +1465,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
         grid.innerHTML += `
           <button onclick="selectDay('${dateStr}')" class="p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border text-left flex flex-col justify-between min-h-[72px] sm:min-h-[82px] transition ${bgClass}">
             <div class="flex justify-between items-center w-full">
-              <span class="text-xs font-extrabold ${isWednesday ? 'text-emerald-700 dark:text-emerald-400' : 'text-warm-800 dark:text-stone-200'}">${day}</span>
+              <span class="text-xs font-extrabold ${hasOverdueDay ? 'text-red-600 dark:text-red-400' : (isWednesday ? 'text-emerald-700 dark:text-emerald-400' : 'text-warm-800 dark:text-stone-200')}">${day}</span>
               ${blocks.length > 2 ? `<span class="text-[9px] font-bold text-stone-400">+${blocks.length - 2}</span>` : ''}
             </div>
             <div class="mt-1 space-y-0.5 w-full">
@@ -1450,7 +1530,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       subscribeFirestore();
     };
 
-    // LISTA ZADAŃ W MIESIĄCU
+    // LISTA ZADAŃ W MIESIĄCU (Z GWIAZDKAMI I CZERWONYM ALERTEM PO LISTOPADZIE 2026)
     function renderTasks() {
       const list = document.getElementById('tasks-list');
       let filtered = [...allTasks];
@@ -1459,27 +1539,41 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
         filtered = filtered.filter(t => (t.assignee || 'Nieprzypisane') === currentFilter || t.category === currentFilter);
       }
 
-      filtered.sort((a, b) => Number(a.completed) - Number(b.completed) || (a.date || '').localeCompare(b.date || ''));
+      filtered.sort((a, b) =>
+        Number(a.completed) - Number(b.completed) ||
+        (b.starred ? 1 : 0) - (a.starred ? 1 : 0) ||
+        (a.date || '').localeCompare(b.date || '')
+      );
 
       if (filtered.length === 0) {
         list.innerHTML = `<div class="text-center text-stone-400 text-sm py-10 bg-warm-50 dark:bg-warm-800/40 rounded-2xl border border-dashed border-warm-200 dark:border-warm-700">
-          Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań”</strong> na górze i wrzuć plan na ten miesiąc.
+          Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań”</strong> na górze, aby zarządzać obowiązkami.
         </div>`;
         return;
       }
 
-      const catIcons = { 'Berneńczyk': '🐕', 'Auto': '🚗', 'Dom': '🏠', 'Rachunki': '💳', 'Inne': '📌' };
-
       list.innerHTML = filtered.map(task => {
         const who = task.assignee || 'Nieprzypisane';
+        const overdue = isTaskOverdue(task);
+
+        let cardStyle = 'bg-white dark:bg-warm-800/60 border-warm-200 dark:border-warm-700 hover:border-brand-300';
+        if (task.completed) {
+          cardStyle = 'bg-warm-50 dark:bg-warm-800/30 border-warm-100 dark:border-warm-800 opacity-60';
+        } else if (overdue) {
+          cardStyle = 'bg-red-50/90 dark:bg-red-950/50 border-red-400 dark:border-red-700 ring-1 ring-red-400/40';
+        } else if (task.starred) {
+          cardStyle = 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-300/80 dark:border-amber-800/70';
+        }
+
         return `
-        <div class="p-3.5 rounded-2xl border transition flex items-start gap-3 ${task.completed ? 'bg-warm-50 dark:bg-warm-800/30 border-warm-100 dark:border-warm-800 opacity-60' : 'bg-white dark:bg-warm-800/60 border-warm-200 dark:border-warm-700 hover:border-brand-300'}">
+        <div class="p-3.5 rounded-2xl border transition flex items-start gap-3 ${cardStyle}">
           <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}', ${!task.completed})"
             class="mt-1 w-5 h-5 accent-brand-500 rounded cursor-pointer" />
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-xs">${catIcons[task.category] || '📌'}</span>
-              <span class="font-bold text-sm text-warm-900 dark:text-white ${task.completed ? 'line-through text-stone-400' : ''}">${task.title}</span>
+              <span class="text-xs">${CAT_ICON[task.category] || '📌'}</span>
+              <span class="font-bold text-sm ${overdue ? 'text-red-900 dark:text-red-200' : 'text-warm-900 dark:text-white'} ${task.completed ? 'line-through text-stone-400' : ''}">${task.title}</span>
+              ${overdue ? `<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-red-600 text-white">⚠️ Zaległe</span>` : ''}
             </div>
             ${task.desc ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${task.desc}</p>` : ''}
             <div class="flex items-center gap-2 mt-2 flex-wrap">
@@ -1490,8 +1584,8 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
                 <option value="Róża" ${who === 'Róża' ? 'selected' : ''}>👩 Róża</option>
                 <option value="Wspólne" ${who === 'Wspólne' ? 'selected' : ''}>👫 Wspólne</option>
               </select>
-              ${task.date ? `<span class="text-[11px] text-stone-500 dark:text-stone-400 font-medium">📅 ${task.date}</span>` : ''}
-              ${task.remoteOk ? `<span class="text-[10px] bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-semibold">🌍 Zdalnie/wyjazd</span>` : ''}
+              ${task.date ? `<span class="text-[11px] ${overdue ? 'text-red-700 dark:text-red-300 font-bold' : 'text-stone-500 dark:text-stone-400 font-medium'}">📅 ${task.date}</span>` : ''}
+              ${task.remoteOk ? `<span class="text-[10px] bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-semibold">🌍 Poza domem</span>` : ''}
             </div>
           </div>
           <button onclick="deleteTask('${task.id}')" class="text-stone-300 hover:text-red-500 text-sm px-1">✕</button>
@@ -1507,8 +1601,8 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       currentFilter = f;
       document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.className = btn.dataset.filter === f
-          ? 'filter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white'
-          : 'filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300';
+          ? 'filter-btn px-2.5 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white'
+          : 'filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300';
       });
       renderTasks();
     };
@@ -1526,6 +1620,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       const date = document.getElementById('task-date').value;
       const count = Number(document.getElementById('task-recurrence').value);
       const remoteOk = document.getElementById('task-remote-ok').checked;
+      const starred = document.getElementById('task-starred').checked;
       const monthKey = getMonthKey(currentYear, currentMonth);
 
       let baseDate = date ? parseLocalDate(date) : new Date(currentYear, currentMonth, 1);
@@ -1542,6 +1637,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
             date: formatDate(baseDate),
             recurrence: count > 1 ? 'recurring' : 'once',
             remoteOk,
+            starred,
             monthKey,
             completed: false
           });
@@ -1577,7 +1673,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
       }
 
       if (allTasks.length === 0) {
-        out.textContent = "W tym miesiącu nie ma jeszcze żadnych zadań w kalendarzu.\n\nKliknij „🛠️ Baza zadań” na górnym pasku -> „🚀 Wrzuć aktywne na wybrany miesiąc” (lub dodaj zadanie jednorazowe), a potem wróć tutaj!";
+        out.textContent = "W tym miesiącu nie ma jeszcze żadnych zadań w kalendarzu.\n\nKliknij „🛠️ Baza zadań” -> „🚀 Wrzuć aktywne na wybrany miesiąc”, a potem wróć tutaj!";
         return;
       }
 
@@ -1602,7 +1698,7 @@ Zwróć wynik WYŁĄCZNIE jako czysty JSON (tablica 3 obiektów bez markdowna):
 
       const naSummary = monthNaOccurrences.join('\n') || 'brak wpisanych blokad w tym miesiącu';
       const tasksSummary = openTasks.map(t =>
-        `- ${t.title} [${t.category}, obecnie: ${t.assignee || 'Nieprzypisane'}, obecna data: ${t.date || 'brak'}, zdalne/wyjazdowe: ${t.remoteOk ? 'TAK' : 'NIE'}]`
+        `- ${t.title} [sekcja: ${t.category}, obecnie: ${t.assignee || 'Nieprzypisane'}, data: ${t.date || 'brak'}, poza domem: ${t.remoteOk ? 'TAK' : 'NIE'}]`
       ).join('\n');
 
       const prompt = `Jesteś domowym asystentem planowania dla małżeństwa: Przemo i Róża.
@@ -1624,7 +1720,7 @@ Zasady:
 1. Ściśle trzymaj się grafików z profili powyżej (np. wykorzystuj wolne/zdalne wtorki i piątki Róży oraz weekendy, a w środy po pracy nie planuj obowiązków domowych, bo wtedy odpoczywają).
 2. Czasem podsuń Róży lekką, wspierającą sugestię okienka na pisanie e-booka o wieczorach panieńskich.
 3. W okresach "N/A BRAK CZASU" nie planuj nic dla danej osoby.
-4. W okresach "POZA DOMEM" nie planuj zadań stacjonarnych w domu, ale możesz zaplanować zadania oznaczone jako zdalne/wyjazdowe.`;
+4. W okresach "POZA DOMEM" nie planuj zadań stacjonarnych w domu, ale możesz zaplanować zadania oznaczone jako poza domem/zakupowe.`;
 
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
