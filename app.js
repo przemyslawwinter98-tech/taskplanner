@@ -130,7 +130,9 @@ function renderPersonalFocusCard() {
   iconEl.textContent = isPrzemo ? '🧔' : '👩';
   titleEl.textContent = `Mam chwilę teraz — co wybrać? (${activeUser})`;
 
-  if (dayOfWeek === 3) subEl.textContent = 'Dziś środa — po pracy macie wolne od domowych obowiązków!';
+  if (dayOfWeek === 3) subEl.textContent = isPrzemo
+    ? 'Dziś środa — po pracy tylko coś lekkiego i szybkiego z głowy (bez ciężkich robót)!'
+    : 'Dziś środa — po pracy luźniejszy wieczór (tylko drobiazgi albo odpoczynek).';
   else if (!isPrzemo && (dayOfWeek === 2 || dayOfWeek === 5)) subEl.textContent = 'Dziś masz wolny/zdalny dzień — dobry moment na lekkie rzeczy lub e-booka.';
   else subEl.textContent = 'Wybierz ile masz teraz minut i kliknij „✨ Dobierz na teraz”';
 
@@ -160,9 +162,11 @@ function renderPersonalFocusCard() {
     });
   } else if (dayOfWeek === 3) {
     suggestions.push({
-      badge: '🌿 Środa po pracy',
-      title: 'Wieczór wolny od obowiązków',
-      desc: 'Po pracy odpoczywacie — sprzątanie zostaw na inne dni.'
+      badge: '🌿 Środa po pracy • Lekki tryb',
+      title: isPrzemo ? 'Tylko szybki drobiazg z głowy (10–15 min)' : 'Luźny wieczór po pracy',
+      desc: isPrzemo
+        ? 'Bez wielkiego sprzątania i auta — wybierz 1 szybką rzecz (np. śmieci, rośliny, zęby Czosnka) i masz wolne.'
+        : 'Odpocznij po pracy — grubsze rzeczy zostaw na wolniejszy dzień.'
     });
   }
 
@@ -210,8 +214,14 @@ window.generatePersonalAiTips = async () => {
   const myProfile = activeUser === 'Przemo' ? userProfiles.przemo : userProfiles.roza;
   const myBlocks = getBlocksForDate(todayStr).map(b => `${b.who}:${b.mode} ${b.startTime}-${b.endTime}`).join(', ') || 'brak';
 
+  const isWedNow = new Date().getDay() === 3;
+  const wedRule = isWedNow
+    ? `WAŻNE: Dziś jest ŚRODA po pracy — ${activeUser} chce mieć luźny wieczór! Proponuj WYŁĄCZNIE lekkie, szybkie zadania "z głowy" (max 10-20 min, ZERO ciężkiego sprzątania, podłóg, auta czy piekarnika).`
+    : `W dni inne niż środa po pracy możesz normalnie dobierać zadania pasujące do ${selectedNowTime}.`;
+
   const prompt = `Osoba: ${activeUser}. Czas teraz: ${selectedNowTime}. Dziś: ${todayStr} (${new Date().toLocaleDateString('pl-PL', { weekday: 'long' })}).
 Grafik: ${myProfile}. Blokady dziś: ${myBlocks}.
+${wedRule}
 Zadania: ${openTasks}.
 Dobierz 3 zadania na ${selectedNowTime}. Zwróć TYLKO JSON bez markdowna:
 [{"badge":"⏱️ ${selectedNowTime} • 👤 Solo/👫 Razem","title":"krótka nazwa","desc":"1 zdanie dlaczego teraz"}]`;
@@ -947,7 +957,7 @@ Róża: ${userProfiles.roza}
 Dom: ${userProfiles.home}
 N/A: ${naSummary}
 Zadania: ${tasksSummary}
-Zasady: rozdziel zadania SOLO po równo, zadania RAZEM zaplanuj wspólnie (np. weekend), uszanuj wolne środy po pracy i N/A, podsuń Róży okienko na e-booka.`;
+Zasady: rozdziel zadania SOLO po równo, zadania RAZEM zaplanuj wspólnie (np. weekend); w ŚRODY po pracy wrzucaj Przemo wyłącznie 1 lekkie, szybkie zadanie 'z głowy' (np. śmieci, rośliny, miski/zęby Czosnka), a grubsze rzeczy dawaj na inne dni; uszanuj N/A i podsuń Róży okienko na e-booka.`;
 
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
