@@ -77,6 +77,47 @@ function isTaskOverdue(task) {
   return task.date < formatDate(new Date());
 }
 
+// AUTORYZACJA (PODPIĘTA OD RAZU NA START)
+const authScreen = document.getElementById('auth-screen');
+const appContainer = document.getElementById('app-container');
+const authForm = document.getElementById('auth-form');
+
+if (authForm) {
+  authForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = document.getElementById('secret-input').value.trim();
+    if (!val) return;
+    homeSecret = val;
+    localStorage.setItem('home_planner_secret', homeSecret);
+    document.getElementById('auth-error')?.classList.add('hidden');
+    startApp();
+  });
+}
+
+window.logout = () => {
+  localStorage.removeItem('home_planner_secret');
+  location.reload();
+};
+
+function startApp() {
+  authScreen?.classList.add('hidden');
+  appContainer?.classList.remove('hidden');
+  updateUserProfileUI();
+  syncDateInputs(selectedDateStr);
+  renderCalendar();
+  renderPersonalFocusCard();
+  subscribeFirestore();
+}
+
+function syncDateInputs(dateStr) {
+  const tDate = document.getElementById('task-date');
+  const sDate = document.getElementById('na-start-date');
+  const eDate = document.getElementById('na-end-date');
+  if (tDate) tDate.value = dateStr;
+  if (sDate) sDate.value = dateStr;
+  if (eDate) eDate.value = dateStr;
+}
+
 // WYBÓR CZASU "NA TERAZ"
 window.selectNowTime = (timeLabel) => {
   selectedNowTime = timeLabel;
@@ -250,41 +291,6 @@ Dobierz 3 zadania na ${selectedNowTime}. Zwróć TYLKO JSON bez markdowna:
   }
 };
 
-// AUTORYZACJA
-const authScreen = document.getElementById('auth-screen');
-const appContainer = document.getElementById('app-container');
-if (homeSecret) startApp();
-
-document.getElementById('auth-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const val = document.getElementById('secret-input').value.trim();
-  if (!val) return;
-  homeSecret = val;
-  localStorage.setItem('home_planner_secret', homeSecret);
-  startApp();
-});
-
-window.logout = () => {
-  localStorage.removeItem('home_planner_secret');
-  location.reload();
-};
-
-function startApp() {
-  authScreen.classList.add('hidden');
-  appContainer.classList.remove('hidden');
-  updateUserProfileUI();
-  syncDateInputs(selectedDateStr);
-  renderCalendar();
-  renderPersonalFocusCard();
-  subscribeFirestore();
-}
-
-function syncDateInputs(dateStr) {
-  document.getElementById('task-date').value = dateStr;
-  document.getElementById('na-start-date').value = dateStr;
-  document.getElementById('na-end-date').value = dateStr;
-}
-
 function getTargetDatesForFreq(year, month, freq) {
   const monthKey = getMonthKey(year, month);
   if (freq >= 30) return [formatDate(new Date())];
@@ -365,16 +371,18 @@ function subscribeFirestore() {
     renderStats();
     renderCalendar();
     renderPersonalFocusCard();
-  }, () => {
-    document.getElementById('auth-error').classList.remove('hidden');
-    authScreen.classList.remove('hidden');
-    appContainer.classList.add('hidden');
+  }, (err) => {
+    console.error("Firestore auth error:", err);
+    document.getElementById('auth-error')?.classList.remove('hidden');
+    authScreen?.classList.remove('hidden');
+    appContainer?.classList.add('hidden');
   });
 
   const qNa = query(collection(db, "naBlocks"), where("secret", "==", homeSecret));
   unsubNa = onSnapshot(qNa, (snapshot) => {
     naBlocks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    document.getElementById('na-total-count').textContent = naBlocks.length;
+    const naCount = document.getElementById('na-total-count');
+    if (naCount) naCount.textContent = naBlocks.length;
     renderCalendar();
     updateSelectedDayPanel();
     renderNaManagerList();
@@ -424,7 +432,7 @@ window.toggleNaForm = () => {
   handleNaRepeatChange();
 };
 
-document.getElementById('na-form').addEventListener('submit', async (e) => {
+document.getElementById('na-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const who = document.getElementById('na-who').value;
   const mode = document.getElementById('na-mode').value;
@@ -492,7 +500,7 @@ function renderNaManagerList() {
         <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 items-center">
           <input type="date" value="${b.startDate}" onchange="updateNaBlockField('${b.id}', 'startDate', this.value)" class="px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
           <input type="time" value="${b.startTime}" onchange="updateNaBlockField('${b.id}', 'startTime', this.value)" class="px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
-          ${repeat === 'once' ? `<input type="date" value="${b.endDate \vert{}\vert{} b.startDate}" onchange="updateNaBlockField('${b.id}', 'endDate', this.value)" class="px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />` : `<span class="text-[11px] text-emerald-600 font-semibold">Co ${repeat === 'weekly' ? '7' : '14'} dni</span>`}
+          ${repeat === 'once' ? `<input type="date" value="${b.endDate || b.startDate}" onchange="updateNaBlockField('${b.id}', 'endDate', this.value)" class="px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />` : `<span class="text-[11px] text-emerald-600 font-semibold">Co ${repeat === 'weekly' ? '7' : '14'} dni</span>`}
           <input type="time" value="${b.endTime}" onchange="updateNaBlockField('${b.id}', 'endTime', this.value)" class="px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
           <input type="text" value="${(b.note || '').replace(/"/g, '&quot;')}" placeholder="Opis" onchange="updateNaBlockField('${b.id}', 'note', this.value)" class="col-span-2 sm:col-span-1 px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
         </div>
@@ -594,7 +602,7 @@ function renderConfigTemplates() {
   if (!container) return;
 
   const activeTemplates = taskTemplates.filter(t => t.enabled !== false);
-  summaryEl.textContent = `Aktywnych: ${activeTemplates.length} z ${taskTemplates.length}`;
+  if (summaryEl) summaryEl.textContent = `Aktywnych: ${activeTemplates.length} z ${taskTemplates.length}`;
 
   const sectionsToRender = configFilter === 'all'
     ? SECTIONS_META
@@ -631,7 +639,7 @@ function renderConfigTemplates() {
 window.updateTemplateField = async (id, field, value) => updateDoc(doc(db, "taskTemplates", id), { [field]: value });
 window.deleteTemplateItem = async (id) => deleteDoc(doc(db, "taskTemplates", id));
 
-document.getElementById('new-template-form').addEventListener('submit', async (e) => {
+document.getElementById('new-template-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const newTpl = {
     secret: homeSecret,
@@ -707,6 +715,7 @@ function renderCalendar() {
   document.getElementById('current-month-label').textContent = monthName;
 
   const grid = document.getElementById('calendar-grid');
+  if (!grid) return;
   grid.innerHTML = '';
 
   let firstDay = dateObj.getDay();
@@ -767,4 +776,292 @@ function renderCalendar() {
         <div class="mt-1 space-y-0.5 w-full">
           ${naBadgesHtml}
           ${taskPills}
-          ${doneTasks.length > 0 ? `<div class="text-[9px] font-bold bg-emerald-100 dark
+          ${doneTasks.length > 0 ? `<div class="text-[9px] font-bold bg-emerald-100 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-200 px-1 rounded truncate">✓ ${doneTasks.length} zrobione</div>` : ''}
+        </div>
+      </button>
+    `;
+  }
+  updateSelectedDayPanel();
+}
+
+window.selectDay = (dateStr) => {
+  selectedDateStr = dateStr;
+  syncDateInputs(dateStr);
+  renderCalendar();
+};
+
+function updateSelectedDayPanel() {
+  const label = document.getElementById('selected-day-label');
+  const list = document.getElementById('selected-day-na-list');
+  if (!selectedDateStr || !label || !list) return;
+
+  const d = parseLocalDate(selectedDateStr);
+  label.textContent = d.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) + (d.getDay() === 3 ? ' (🌿 wolne po pracy)' : '');
+
+  const blocks = getBlocksForDate(selectedDateStr);
+  const doneThatDay = allTasks.filter(t => t.completed && (t.completedDate || t.date) === selectedDateStr);
+
+  let html = '';
+  if (blocks.length > 0) {
+    html += blocks.map(b => {
+      const isAway = b.mode === 'away';
+      return `
+        <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs border ${isAway ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 text-amber-900 dark:text-amber-200' : 'bg-red-50 dark:bg-red-950/50 border-red-200 text-red-900 dark:text-red-200'}">
+          <div>
+            <span class="font-bold">${PERSON_ICON[b.who] || '👤'} ${b.who} • ${isAway ? '🏠 Poza domem' : '⛔ N/A'} (${b.startTime}–${b.endTime})</span>
+            ${b.note ? `<span class="block text-[11px] opacity-75">${b.note}</span>` : ''}
+          </div>
+          <button onclick="deleteNaBlock('${b.id}')" class="px-1.5 py-0.5 rounded hover:bg-black/10 font-bold">✕</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  if (doneThatDay.length > 0) {
+    html += `
+      <div class="pt-1.5 space-y-1">
+        <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">✅ Wykonane tego dnia (${doneThatDay.length}):</div>
+        ${doneThatDay.map(t => `
+          <div class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 text-emerald-950 dark:text-emerald-200">
+            <span class="font-semibold truncate">${CAT_ICON[t.category] || '📌'} ${t.title}</span>
+            <span class="text-[10px] font-bold shrink-0">${PERSON_ICON[t.assignee] || ''} ${t.assignee || ''}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  list.innerHTML = html || `<div class="text-xs text-stone-400">Brak blokad N/A ani wykonanych zadań w tym dniu.</div>`;
+}
+
+window.changeMonth = (delta) => {
+  currentMonth += delta;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  subscribeFirestore();
+};
+
+// LISTA ZADAŃ W MIESIĄCU (Z RĘCZNĄ ZMIANĄ SEKCJI)
+function renderTasks() {
+  const list = document.getElementById('tasks-list');
+  if (!list) return;
+  let filtered = [...allTasks];
+
+  if (currentFilter !== 'all') {
+    filtered = currentFilter === 'together'
+      ? filtered.filter(t => t.coop === 'together')
+      : filtered.filter(t => (t.assignee || 'Nieprzypisane') === currentFilter || t.category === currentFilter);
+  }
+
+  filtered.sort((a, b) => {
+    if (Number(a.completed) !== Number(b.completed)) return Number(a.completed) - Number(b.completed);
+    if (Boolean(a.isDailyHabit) !== Boolean(b.isDailyHabit)) return a.isDailyHabit ? 1 : -1;
+    const dateCmp = (a.date || '9999-12-31').localeCompare(b.date || '9999-12-31');
+    if (dateCmp !== 0) return dateCmp;
+    return (b.starred ? 1 : 0) - (a.starred ? 1 : 0);
+  });
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="text-center text-stone-400 text-sm py-10 bg-warm-50 dark:bg-warm-800/40 rounded-2xl border border-dashed border-warm-200 dark:border-warm-700">
+      Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań (39)”</strong> na górze.
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(task => {
+    const who = task.assignee || 'Nieprzypisane';
+    const coop = task.coop || 'solo';
+    const cat = task.category || 'Mieszkanie';
+    const overdue = isTaskOverdue(task);
+
+    let cardStyle = 'bg-white dark:bg-warm-800/60 border-warm-200 dark:border-warm-700 hover:border-brand-300';
+    if (task.completed) cardStyle = 'bg-warm-50 dark:bg-warm-800/30 border-warm-100 dark:border-warm-800 opacity-60';
+    else if (overdue) cardStyle = 'bg-red-50/90 dark:bg-red-950/50 border-red-400 dark:border-red-700 ring-1 ring-red-400/40';
+    else if (task.starred) cardStyle = 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-300/80 dark:border-amber-800/70';
+
+    return `
+      <div class="p-3.5 rounded-2xl border transition flex items-start gap-3 ${cardStyle}">
+        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}', ${!task.completed})"
+          class="mt-1 w-5 h-5 accent-brand-500 rounded cursor-pointer" />
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-xs">${CAT_ICON[cat] || '📌'}</span>
+            <span class="font-bold text-sm ${overdue ? 'text-red-900 dark:text-red-200' : 'text-warm-900 dark:text-white'} ${task.completed ? 'line-through text-stone-400' : ''}">${task.title}</span>
+            ${overdue ? `<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-red-600 text-white">⚠️ Zaległe</span>` : ''}
+          </div>
+          ${task.desc ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${task.desc}</p>` : ''}
+          <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+            <select onchange="changeTaskCategory('${task.id}', this.value)" title="Zmień sekcję zadania"
+              class="text-[11px] font-bold px-2 py-0.5 rounded-md border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 cursor-pointer">
+              <option value="Łazienka" ${cat === 'Łazienka' ? 'selected' : ''}>🛁 Łazienka</option>
+              <option value="Czosnek" ${cat === 'Czosnek' ? 'selected' : ''}>🐕 Czosnek</option>
+              <option value="Mieszkanie" ${cat === 'Mieszkanie' ? 'selected' : ''}>🧹 Mieszkanie</option>
+              <option value="Rachunki i auto" ${cat === 'Rachunki i auto' ? 'selected' : ''}>🚗 Auto/Zakupy</option>
+              <option value="Kuchnia" ${cat === 'Kuchnia' ? 'selected' : ''}>🍳 Kuchnia</option>
+            </select>
+            <select onchange="reassignTask('${task.id}', this.value)" title="Zmień osobę"
+              class="text-[11px] font-bold px-2 py-0.5 rounded-md border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 cursor-pointer">
+              <option value="Nieprzypisane" ${who === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
+              <option value="Przemo" ${who === 'Przemo' ? 'selected' : ''}>🧔 Przemo</option>
+              <option value="Róża" ${who === 'Róża' ? 'selected' : ''}>👩 Róża</option>
+              <option value="Wspólne" ${who === 'Wspólne' ? 'selected' : ''}>👫 Wspólne</option>
+            </select>
+            <button onclick="toggleTaskCoop('${task.id}', '${coop === 'together' ? 'solo' : 'together'}')"
+              class="text-[10px] font-bold px-2 py-0.5 rounded-md border transition ${coop === 'together' ? 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-200 border-purple-200' : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200'}">
+              ${coop === 'together' ? '👫 Razem' : '👤 Solo'}
+            </button>
+            ${task.completed && (task.completedDate || task.date)
+              ? `<span class="text-[10px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold">✓ Zrobione: ${task.completedDate || task.date}</span>`
+              : (task.isDailyHabit ? `<span class="text-[10px] bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-semibold">↻ Codziennie</span>`
+              : (task.date ? `<span class="text-[11px] text-stone-500 dark:text-stone-400 font-medium">📅 ${task.date}</span>` : ''))}
+            ${task.remoteOk ? `<span class="text-[10px] bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-semibold">🌍 Poza domem</span>` : ''}
+          </div>
+        </div>
+        <button onclick="deleteTask('${task.id}')" class="text-stone-300 hover:text-red-500 text-sm px-1">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+window.changeTaskCategory = async (id, category) => updateDoc(doc(db, "tasks", id), { category });
+window.reassignTask = async (id, assignee) => updateDoc(doc(db, "tasks", id), { assignee });
+window.toggleTaskCoop = async (id, coop) => updateDoc(doc(db, "tasks", id), { coop });
+window.toggleTask = async (id, completed) => {
+  const todayStr = formatDate(new Date());
+  const task = allTasks.find(t => t.id === id);
+  const updates = {
+    completed,
+    completedDate: completed ? todayStr : null
+  };
+  if (completed && task) {
+    if (!task.isDailyHabit) {
+      updates.date = todayStr;
+    }
+    if (!task.assignee || task.assignee === 'Nieprzypisane') {
+      updates.assignee = activeUser;
+    }
+  }
+  await updateDoc(doc(db, "tasks", id), updates);
+};
+window.deleteTask = async (id) => deleteDoc(doc(db, "tasks", id));
+
+window.setFilter = (f) => {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.className = btn.dataset.filter === f
+      ? 'filter-btn px-2.5 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white'
+      : 'filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300';
+  });
+  renderTasks();
+};
+
+window.toggleAddForm = () => document.getElementById('add-task-form').classList.toggle('hidden');
+
+document.getElementById('add-task-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const title = document.getElementById('task-title').value.trim();
+  const desc = document.getElementById('task-desc').value.trim();
+  const assignee = document.getElementById('task-assignee').value;
+  const coop = document.getElementById('task-coop').value;
+  const category = document.getElementById('task-category').value;
+  const date = document.getElementById('task-date').value;
+  const count = Number(document.getElementById('task-recurrence').value);
+  const remoteOk = document.getElementById('task-remote-ok').checked;
+  const starred = document.getElementById('task-starred').checked;
+  const monthKey = getMonthKey(currentYear, currentMonth);
+
+  let baseDate = date ? parseLocalDate(date) : new Date(currentYear, currentMonth, 1);
+  const stepDays = count === 2 ? 14 : 7;
+
+  for (let i = 0; i < count; i++) {
+    if (baseDate.getMonth() === currentMonth || i === 0) {
+      await addDoc(collection(db, "tasks"), {
+        secret: homeSecret,
+        title: count > 1 ? `${title} (${i + 1}/${count})` : title,
+        desc, assignee, coop, category,
+        date: formatDate(baseDate),
+        recurrence: count > 1 ? 'recurring' : 'once',
+        isDailyHabit: false,
+        remoteOk, starred, monthKey, completed: false
+      });
+    }
+    baseDate.setDate(baseDate.getDate() + stepDays);
+  }
+  e.target.reset();
+  syncDateInputs(selectedDateStr);
+  toggleAddForm();
+});
+
+// ASYSTENT AI MIESIĘCZNY
+window.openAiModal = () => {
+  document.getElementById('ai-modal').classList.remove('hidden');
+  document.getElementById('ai-modal').classList.add('flex');
+};
+
+window.runAiPlanner = async () => {
+  const apiKey = localStorage.getItem('gemini_api_key');
+  const out = document.getElementById('ai-output');
+  if (!apiKey) return (out.textContent = "Najpierw wklej klucz API Google Gemini w ⚙️ Profile.");
+
+  const openTasks = allTasks.filter(t => !t.completed && !t.isDailyHabit);
+  if (openTasks.length === 0) return (out.textContent = "Brak otwartych zadań okresowych w tym miesiącu.");
+
+  out.textContent = "Układam zwięzły plan...";
+
+  const naSummary = naBlocks.map(b => `${b.who}:${b.mode} ${b.startDate} ${b.startTime}-${b.endTime} (${b.repeat || 'once'})`).join('; ') || 'brak';
+  const tasksSummary = openTasks.slice(0, 28).map(t => `${t.title} [${t.coop === 'together' ? 'RAZEM' : 'SOLO'}, ${t.assignee || '?'}]`).join('; ');
+
+  const prompt = `Zaplanuj po polsku w krótkich punktach zadania dla Przema i Róży (${getMonthKey(currentYear, currentMonth)}).
+Przemo: ${userProfiles.przemo}
+Róża: ${userProfiles.roza}
+Dom: ${userProfiles.home}
+N/A: ${naSummary}
+Zadania: ${tasksSummary}
+Zasady: rozdziel zadania SOLO po równo, zadania RAZEM zaplanuj wspólnie (np. weekend); w ŚRODY po pracy wrzucaj Przemo wyłącznie 1 lekkie, szybkie zadanie 'z głowy' (np. śmieci, rośliny, miski/zęby Czosnka), a grubsze rzeczy dawaj na inne dni; uszanuj N/A i podsuń Róży okienko na e-booka.`;
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.5, maxOutputTokens: 700 }
+      })
+    });
+    const data = await res.json();
+    out.textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || "Brak odpowiedzi — sprawdź klucz API.";
+  } catch (e) {
+    out.textContent = "Błąd połączenia z API Gemini.";
+  }
+};
+
+// USTAWIENIA I PROFILE
+window.openSettingsModal = () => {
+  document.getElementById('gemini-key-input').value = localStorage.getItem('gemini_api_key') || '';
+  document.getElementById('profile-przemo-input').value = userProfiles.przemo;
+  document.getElementById('profile-roza-input').value = userProfiles.roza;
+  document.getElementById('profile-home-input').value = userProfiles.home;
+  document.getElementById('settings-modal').classList.remove('hidden');
+  document.getElementById('settings-modal').classList.add('flex');
+};
+
+window.saveSettings = async () => {
+  localStorage.setItem('gemini_api_key', document.getElementById('gemini-key-input').value.trim());
+  const przemo = document.getElementById('profile-przemo-input').value.trim() || DEFAULT_PROFILES.przemo;
+  const roza = document.getElementById('profile-roza-input').value.trim() || DEFAULT_PROFILES.roza;
+  const home = document.getElementById('profile-home-input').value.trim() || DEFAULT_PROFILES.home;
+
+  userProfiles = { przemo, roza, home };
+  personalAiCache = { Przemo: null, Róża: null };
+  await setDoc(doc(db, "homeSettings", `profiles_${homeSecret}`), { secret: homeSecret, przemo, roza, home });
+  renderPersonalFocusCard();
+  closeModal('settings-modal');
+};
+
+window.closeModal = (id) => {
+  document.getElementById(id).classList.add('hidden');
+  document.getElementById(id).classList.remove('flex');
+};
+
+// AUTO-START JEŚLI HASŁO ZAPISANE W LOCALSTORAGE
+if (homeSecret) startApp();
