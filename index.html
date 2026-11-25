@@ -90,8 +90,8 @@
           <button onclick="toggleTheme()" id="theme-toggle-btn" title="Przełącz tryb jasny/ciemny" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 hover:bg-warm-100 dark:hover:bg-warm-700 text-sm font-semibold transition">
             🌙
           </button>
-          <button onclick="openSettingsModal()" title="Ustawienia" class="p-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 hover:bg-warm-100 dark:hover:bg-warm-700 text-stone-600 dark:text-stone-300 transition">
-            ⚙️
+          <button onclick="openSettingsModal()" title="Ustawienia i profile osób dla AI" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 hover:bg-warm-100 dark:hover:bg-warm-700 text-xs sm:text-sm font-semibold text-stone-700 dark:text-stone-200 transition flex items-center gap-1">
+            <span>⚙️</span> <span class="hidden sm:inline">Profile & AI</span>
           </button>
         </div>
       </div>
@@ -110,21 +110,21 @@
         </div>
 
         <div class="bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
-          <div>
+          <div class="min-w-0 pr-2">
             <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Przemo</div>
             <div id="stat-przemo" class="text-xl sm:text-2xl font-extrabold text-warm-900 dark:text-white mt-0.5">0</div>
-            <div class="text-[11px] text-stone-400">Praca 8h • Środy wolne</div>
+            <div id="card-przemo-sub" class="text-[11px] text-stone-400 truncate">Stacjonarnie • Wolne śr.</div>
           </div>
-          <div class="w-10 h-10 rounded-2xl bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 flex items-center justify-center text-xl">🧔</div>
+          <div class="w-10 h-10 shrink-0 rounded-2xl bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 flex items-center justify-center text-xl">🧔</div>
         </div>
 
         <div class="bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
-          <div>
+          <div class="min-w-0 pr-2">
             <div class="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">Róża</div>
             <div id="stat-roza" class="text-xl sm:text-2xl font-extrabold text-warm-900 dark:text-white mt-0.5">0</div>
-            <div class="text-[11px] text-stone-400">Środy wolne</div>
+            <div id="card-roza-sub" class="text-[11px] text-stone-400 truncate">Wt & Pt wolne/zdalne</div>
           </div>
-          <div class="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 flex items-center justify-center text-xl">👩</div>
+          <div class="w-10 h-10 shrink-0 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 flex items-center justify-center text-xl">👩</div>
         </div>
 
         <div class="col-span-2 md:col-span-1 bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
@@ -133,7 +133,7 @@
             <div id="stat-shared" class="text-xl sm:text-2xl font-extrabold text-warm-900 dark:text-white mt-0.5">0</div>
             <div class="text-[11px] text-stone-400">Do podziału</div>
           </div>
-          <div class="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center text-xl">👫</div>
+          <div class="w-10 h-10 shrink-0 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 flex items-center justify-center text-xl">👫</div>
         </div>
       </div>
     </header>
@@ -185,7 +185,7 @@
           <!-- AKTYWNE BLOKADY W WYBRANYM DNIU -->
           <div id="selected-day-na-list" class="space-y-1.5"></div>
 
-          <!-- FORMULARZ DODAWANIA N/A (JEDNORAZOWEGO, WYJAZDOWEGO LUB CYKLICZNEGO) -->
+          <!-- FORMULARZ DODAWANIA N/A -->
           <form id="na-form" class="hidden bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-700 rounded-2xl p-3.5 space-y-3">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div>
@@ -405,7 +405,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ZARZĄDZANIE WSZYSTKIMI BLOKADAMI N/A (EDYCJA / USUWANIE CYKLICZNYCH I JEDNORAZOWYCH) -->
+  <!-- MODAL: ZARZĄDZANIE WSZYSTKIMI BLOKADAMI N/A -->
   <div id="na-manager-modal" class="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl max-h-[88vh] flex flex-col">
       <div class="flex justify-between items-center pb-4 border-b border-warm-100 dark:border-warm-800">
@@ -423,21 +423,21 @@
     </div>
   </div>
 
-  <!-- MODAL: AI PLANER WOLNYCH ŚRÓD -->
+  <!-- MODAL: AI PLANER -->
   <div id="ai-modal" class="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-warm-100 dark:border-warm-800 pb-3">
-        <h3 class="text-xl font-extrabold text-warm-900 dark:text-white">✨ Asystent Planowania (Wolne Środy)</h3>
+        <h3 class="text-xl font-extrabold text-warm-900 dark:text-white">✨ Asystent Planowania</h3>
         <button onclick="closeModal('ai-modal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-white text-xl font-bold">✕</button>
       </div>
       <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
-        AI przeanalizuje otwarte i nieprzypisane zadania, uwzględni <strong>8h pracy stacjonarnej Przema</strong>, Wasze <strong>wolne środy</strong>, stałe cykliczne <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong>.
+        AI uwzględnia aktualne <strong>profile pracy Przema i Róży</strong>, cykliczne <strong>N/A</strong> oraz wyjazdy <strong>Poza domem</strong>.
       </p>
       <div id="ai-output" class="bg-warm-50 dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-2xl p-4 text-sm text-stone-700 dark:text-stone-200 whitespace-pre-line min-h-[120px] max-h-[300px] overflow-y-auto custom-scroll">
         Kliknij przycisk poniżej, aby wygenerować propozycję rozkładu zadań.
       </div>
       <div class="flex justify-between items-center pt-2">
-        <button onclick="openSettingsModal()" class="text-xs text-brand-600 dark:text-brand-400 font-semibold hover:underline">Ustaw klucz API Gemini</button>
+        <button onclick="closeModal('ai-modal'); openSettingsModal();" class="text-xs text-brand-600 dark:text-brand-400 font-semibold hover:underline">Edytuj profile osób / klucz API</button>
         <button id="run-ai-btn" onclick="runAiPlanner()" class="bg-warm-900 dark:bg-brand-500 hover:bg-stone-800 dark:hover:bg-brand-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition">
           Generuj plan na ten miesiąc
         </button>
@@ -445,22 +445,49 @@
     </div>
   </div>
 
-  <!-- MODAL: USTAWIENIA -->
+  <!-- MODAL: USTAWIENIA I PROFILE OSÓB DLA AI -->
   <div id="settings-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs hidden items-center justify-center p-4">
-    <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+    <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scroll">
       <div class="flex justify-between items-center border-b border-warm-100 dark:border-warm-800 pb-3">
-        <h3 class="text-lg font-extrabold text-warm-900 dark:text-white">⚙️ Ustawienia</h3>
+        <h3 class="text-lg font-extrabold text-warm-900 dark:text-white">⚙️ Profile domowników (dla AI) & Ustawienia</h3>
         <button onclick="closeModal('settings-modal')" class="text-stone-400 hover:text-stone-700 dark:hover:text-white text-xl font-bold">✕</button>
       </div>
-      <div>
-        <label class="text-xs font-bold uppercase text-stone-500 dark:text-stone-400">Klucz API Google Gemini (do funkcji AI)</label>
+
+      <div class="space-y-3">
+        <div class="bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-900/60 rounded-2xl p-3.5 space-y-1.5">
+          <label class="text-xs font-extrabold text-sky-900 dark:text-sky-300 flex items-center gap-1.5">
+            <span>🧔</span> Przemo — grafik pracy, dni wolne i preferencje (dla AI)
+          </label>
+          <textarea id="profile-przemo-input" rows="2"
+            class="w-full px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+        </div>
+
+        <div class="bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 rounded-2xl p-3.5 space-y-1.5">
+          <label class="text-xs font-extrabold text-rose-900 dark:text-rose-300 flex items-center gap-1.5">
+            <span>👩</span> Róża — grafik pracy, dni wolne/zdalne i preferencje (dla AI)
+          </label>
+          <textarea id="profile-roza-input" rows="2"
+            class="w-full px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+        </div>
+
+        <div class="bg-warm-50 dark:bg-warm-800/50 border border-warm-200 dark:border-warm-700 rounded-2xl p-3.5 space-y-1.5">
+          <label class="text-xs font-extrabold text-warm-900 dark:text-stone-200 flex items-center gap-1.5">
+            <span>🐾</span> Dodatkowe wskazówki o domu (berneńczyk, auto, zasady podziału)
+          </label>
+          <textarea id="profile-home-input" rows="2"
+            class="w-full px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-warm-100 dark:border-warm-800">
+        <label class="text-xs font-bold uppercase text-stone-500 dark:text-stone-400">Klucz API Google Gemini (lokalnie w przeglądarce)</label>
         <input id="gemini-key-input" type="password" placeholder="AIzaSy..."
           class="w-full mt-1 px-3.5 py-2.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
-        <p class="text-[11px] text-stone-400 mt-1">Zapisuje się wyłącznie lokalnie w Twojej przeglądarce.</p>
       </div>
-      <div class="flex justify-between pt-2">
+
+      <div class="flex justify-between items-center pt-2">
         <button onclick="logout()" class="text-xs text-red-500 font-semibold">Wyloguj (zmień hasło domowe)</button>
-        <button onclick="saveSettings()" class="bg-brand-500 hover:bg-brand-600 text-white font-bold px-4 py-2 rounded-xl text-sm">Zapisz</button>
+        <button onclick="saveSettings()" class="bg-brand-500 hover:bg-brand-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm shadow-sm">Zapisz profile i ustawienia</button>
       </div>
     </div>
   </div>
@@ -470,7 +497,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
       getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
-      onSnapshot, query, where
+      onSnapshot, query, where, setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -491,6 +518,12 @@
       'Oboje': '👫',
       'Wspólne': '👫',
       'Nieprzypisane': '❓'
+    };
+
+    const DEFAULT_PROFILES = {
+      przemo: "Pracuje stacjonarnie 8h dziennie w poniedziałki, wtorki, czwartki i piątki. Ma WOLNE ŚRODY oraz wolne weekendy.",
+      roza: "Pracuje tylko w poniedziałki, środy i czwartki. We WTORKI i PIĄTKI ma dni wolne oraz pracę zdalną (jest w domu i może wtedy ogarnąć drobne domowe zadania). Ma też wolne weekendy.",
+      home: "Mamy psa rasy berneńczyk oraz samochód. Rozkładaj zadania sprawiedliwie, wykorzystując wolne środy Przema oraz wolne/zdalne wtorki i piątki Róży."
     };
 
     const DEFAULT_MONTHLY_TASKS = [
@@ -551,9 +584,11 @@
     let allTasks = [];
     let naBlocks = [];
     let taskTemplates = [];
+    let userProfiles = { ...DEFAULT_PROFILES };
     let unsubTasks = null;
     let unsubNa = null;
     let unsubTemplates = null;
+    let unsubProfiles = null;
     let seededTemplatesOnce = false;
 
     function formatDate(d) {
@@ -611,9 +646,26 @@
       if (unsubTasks) unsubTasks();
       if (unsubNa) unsubNa();
       if (unsubTemplates) unsubTemplates();
+      if (unsubProfiles) unsubProfiles();
 
       const monthKey = getMonthKey(currentYear, currentMonth);
 
+      // 1. Profile osób (synchronizowane w chmurze)
+      const profileDocRef = doc(db, "homeSettings", `profiles_${homeSecret}`);
+      unsubProfiles = onSnapshot(profileDocRef, async (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          userProfiles = {
+            przemo: data.przemo ?? DEFAULT_PROFILES.przemo,
+            roza: data.roza ?? DEFAULT_PROFILES.roza,
+            home: data.home ?? DEFAULT_PROFILES.home
+          };
+        } else {
+          await setDoc(profileDocRef, { secret: homeSecret, ...DEFAULT_PROFILES });
+        }
+      });
+
+      // 2. Zadania w miesiącu
       const qTasks = query(
         collection(db, "tasks"),
         where("secret", "==", homeSecret),
@@ -631,6 +683,7 @@
         appContainer.classList.add('hidden');
       });
 
+      // 3. Blokady N/A i wyjazdy
       const qNa = query(collection(db, "naBlocks"), where("secret", "==", homeSecret));
       unsubNa = onSnapshot(qNa, (snapshot) => {
         naBlocks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -640,6 +693,7 @@
         renderNaManagerList();
       });
 
+      // 4. Konfigurowalna baza wzorców zadań
       const qTpl = query(collection(db, "taskTemplates"), where("secret", "==", homeSecret));
       unsubTemplates = onSnapshot(qTpl, async (snapshot) => {
         if (snapshot.empty && !seededTemplatesOnce) {
@@ -660,7 +714,7 @@
       });
     }
 
-    // LOGIKA SPRAWDZANIA BLOKAD N/A (JEDNORAZOWYCH, ZAKRESOWYCH ORAZ CYKLICZNYCH CO TYDZIEŃ / CO 2 TYGODNIE)
+    // BLOKADY N/A
     function getBlocksForDate(dateStr) {
       const target = parseLocalDate(dateStr);
       const msPerDay = 24 * 60 * 60 * 1000;
@@ -679,7 +733,6 @@
       });
     }
 
-    // OBSŁUGA FORMULARZA N/A
     window.handleNaRepeatChange = () => {
       const repeat = document.getElementById('na-repeat').value;
       const endDateWrap = document.getElementById('na-end-date-wrap');
@@ -735,7 +788,6 @@
       await updateDoc(doc(db, "naBlocks", id), updates);
     };
 
-    // MODAL ZARZĄDZANIA WSZYSTKIMI N/A (EDYCJA CYKLICZNYCH I JEDNORAZOWYCH)
     window.openNaManagerModal = () => {
       renderNaManagerList();
       document.getElementById('na-manager-modal').classList.remove('hidden');
@@ -813,7 +865,7 @@
       }).join('');
     }
 
-    // PRZEŁĄCZANIE EKRANU KONFIGURACJI BAZY ZADAŃ
+    // EKRAN KONFIGURACJI BAZY ZADAŃ
     window.openConfigScreen = () => {
       document.getElementById('dashboard-view').classList.add('hidden');
       document.getElementById('config-view').classList.remove('hidden');
@@ -1285,7 +1337,7 @@
       await deleteDoc(doc(db, "tasks", id));
     };
 
-    // ASYSTENT AI
+    // ASYSTENT AI (KORZYSTA Z EDYTOWALNYCH PROFILI PRZEMA I RÓŻY)
     window.openAiModal = () => {
       document.getElementById('ai-modal').classList.remove('hidden');
       document.getElementById('ai-modal').classList.add('flex');
@@ -1299,15 +1351,19 @@
         return;
       }
 
-      const openTasks = allTasks.filter(t => !t.completed);
-      if (openTasks.length === 0) {
-        out.textContent = "Wszystkie zadania na ten miesiąc są już zrobione!";
+      if (allTasks.length === 0) {
+        out.textContent = "W tym miesiącu nie ma jeszcze żadnych zadań w kalendarzu.\n\nKliknij „🛠️ Konfiguracja bazy zadań” na górnym pasku -> „🚀 Wrzuć aktywne na wybrany miesiąc” (lub dodaj zadanie jednorazowe), a potem wróć tutaj!";
         return;
       }
 
-      out.textContent = "Analizuję grafik, wolne środy, cykliczne blokady N/A oraz wyjazdy poza dom...";
+      const openTasks = allTasks.filter(t => !t.completed);
+      if (openTasks.length === 0) {
+        out.textContent = "Wszystkie wrzucone zadania na ten miesiąc są już odhaczone jako zrobione!";
+        return;
+      }
 
-      // Zbierz wszystkie wystąpienia blokad w bieżącym miesiącu
+      out.textContent = "Analizuję profile Przema i Róży, cykliczne blokady N/A oraz wyjazdy poza dom...";
+
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
       const monthNaOccurrences = [];
       for (let d = 1; d <= daysInMonth; d++) {
@@ -1321,15 +1377,16 @@
 
       const naSummary = monthNaOccurrences.join('\n') || 'brak wpisanych blokad w tym miesiącu';
       const tasksSummary = openTasks.map(t =>
-        `- ${t.title} [${t.category}, obecnie: ${t.assignee || 'Nieprzypisane'}, data: ${t.date || 'brak'}, zdalne/wyjazdowe: ${t.remoteOk ? 'TAK' : 'NIE'}]`
+        `- ${t.title} [${t.category}, obecnie: ${t.assignee || 'Nieprzypisane'}, obecna data: ${t.date || 'brak'}, zdalne/wyjazdowe: ${t.remoteOk ? 'TAK' : 'NIE'}]`
       ).join('\n');
 
       const prompt = `Jesteś domowym asystentem planowania dla małżeństwa: Przemo i Róża.
-Kontekst:
-- Mają psa rasy berneńczyk i samochód.
-- Przemo pracuje stacjonarnie 8h dziennie (pon-pt, oprócz śród).
-- Oboje mają WOLNE ŚRODY w każdym tygodniu.
-- Miesiąc: ${getMonthKey(currentYear, currentMonth)}.
+
+Aktualne profile i grafiki domowników:
+- PRZEMO: ${userProfiles.przemo}
+- RÓŻA: ${userProfiles.roza}
+- KONTEKST DOMU: ${userProfiles.home}
+- Planowany miesiąc: ${getMonthKey(currentYear, currentMonth)}.
 
 Wszystkie niedostępności N/A i wyjazdy w tym miesiącu (włącznie z cyklicznymi):
 ${naSummary}
@@ -1337,11 +1394,11 @@ ${naSummary}
 Lista otwartych zadań (część jest nieprzypisana):
 ${tasksSummary}
 
-Zaproponuj konkretny i sprawiedliwy plan po polsku: kiedy (daty i pory dnia) i kto (Przemo czy Róża) powinien wykonać te zadania.
+Zaproponuj konkretny, realistyczny i sprawiedliwy plan po polsku: kiedy (konkretne daty i pory dnia) oraz kto (Przemo czy Róża) powinien wykonać te zadania.
 Zasady:
-1. W okresach "N/A BRAK CZASU" nie planuj nic dla danej osoby.
-2. W okresach "POZA DOMEM" nie planuj zadań domowych/stacjonarnych, ale śmiało planuj zadania oznaczone jako zdalne/wyjazdowe (np. opłaty online, tabletka psa).
-3. Wykorzystuj wolne środy na większe obowiązki przy berneńczyku, aucie i domu.`;
+1. Ściśle trzymaj się grafików z profili powyżej (np. wykorzystuj wolne/zdalne wtorki i piątki Róży oraz wolne środy Przema, a w dni gdy Przemo pracuje stacjonarnie 8h nie wrzucaj mu ciężkich obowiązków domowych).
+2. W okresach "N/A BRAK CZASU" nie planuj nic dla danej osoby.
+3. W okresach "POZA DOMEM" nie planuj zadań stacjonarnych w domu, ale możesz zaplanować zadania oznaczone jako zdalne/wyjazdowe.`;
 
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -1356,16 +1413,32 @@ Zasady:
       }
     };
 
-    // USTAWIENIA I MODALE
+    // USTAWIENIA I EDYCJA PROFILI
     window.openSettingsModal = () => {
       document.getElementById('gemini-key-input').value = localStorage.getItem('gemini_api_key') || '';
+      document.getElementById('profile-przemo-input').value = userProfiles.przemo;
+      document.getElementById('profile-roza-input').value = userProfiles.roza;
+      document.getElementById('profile-home-input').value = userProfiles.home;
       document.getElementById('settings-modal').classList.remove('hidden');
       document.getElementById('settings-modal').classList.add('flex');
     };
 
-    window.saveSettings = () => {
+    window.saveSettings = async () => {
       const k = document.getElementById('gemini-key-input').value.trim();
       localStorage.setItem('gemini_api_key', k);
+
+      const przemo = document.getElementById('profile-przemo-input').value.trim() || DEFAULT_PROFILES.przemo;
+      const roza = document.getElementById('profile-roza-input').value.trim() || DEFAULT_PROFILES.roza;
+      const home = document.getElementById('profile-home-input').value.trim() || DEFAULT_PROFILES.home;
+
+      userProfiles = { przemo, roza, home };
+      await setDoc(doc(db, "homeSettings", `profiles_${homeSecret}`), {
+        secret: homeSecret,
+        przemo,
+        roza,
+        home
+      });
+
       closeModal('settings-modal');
     };
 
