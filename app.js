@@ -724,8 +724,8 @@ function renderCalendar() {
     const hasBusy = blocks.some(b => b.mode === 'busy');
     const hasAway = blocks.some(b => b.mode === 'away');
 
-    const dayTasks = allTasks.filter(t => t.date === dateStr && !t.isDailyHabit);
-    const openTasks = dayTasks.filter(t => !t.completed);
+    const openTasks = allTasks.filter(t => !t.completed && !t.isDailyHabit && t.date === dateStr);
+    const doneTasks = allTasks.filter(t => t.completed && (t.completedDate || t.date) === dateStr);
     const hasOverdueDay = openTasks.some(t => isTaskOverdue(t));
     const przemoOpen = openTasks.filter(t => t.assignee === 'Przemo').length;
     const rozaOpen = openTasks.filter(t => t.assignee === 'Róża').length;
@@ -767,7 +767,7 @@ function renderCalendar() {
         <div class="mt-1 space-y-0.5 w-full">
           ${naBadgesHtml}
           ${taskPills}
-          ${dayTasks.length > 0 && openTasks.length === 0 ? `<div class="text-[9px] font-semibold text-emerald-600">✓</div>` : ''}
+          ${doneTasks.length > 0 ? `<div class="text-[9px] font-bold bg-emerald-100 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-200 px-1 rounded truncate">✓ ${doneTasks.length} zrobione</div>` : ''}
         </div>
       </button>
     `;
@@ -790,23 +790,39 @@ function updateSelectedDayPanel() {
   label.textContent = d.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) + (d.getDay() === 3 ? ' (🌿 wolne po pracy)' : '');
 
   const blocks = getBlocksForDate(selectedDateStr);
-  if (blocks.length === 0) {
-    list.innerHTML = `<div class="text-xs text-stone-400">Brak wpisanych blokad N/A ani wyjazdów w tym dniu.</div>`;
-    return;
+  const doneThatDay = allTasks.filter(t => t.completed && (t.completedDate || t.date) === selectedDateStr);
+
+  let html = '';
+  if (blocks.length > 0) {
+    html += blocks.map(b => {
+      const isAway = b.mode === 'away';
+      return `
+        <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs border ${isAway ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 text-amber-900 dark:text-amber-200' : 'bg-red-50 dark:bg-red-950/50 border-red-200 text-red-900 dark:text-red-200'}">
+          <div>
+            <span class="font-bold">${PERSON_ICON[b.who] || '👤'} ${b.who} • ${isAway ? '🏠 Poza domem' : '⛔ N/A'} (${b.startTime}–${b.endTime})</span>
+            ${b.note ? `<span class="block text-[11px] opacity-75">${b.note}</span>` : ''}
+          </div>
+          <button onclick="deleteNaBlock('${b.id}')" class="px-1.5 py-0.5 rounded hover:bg-black/10 font-bold">✕</button>
+        </div>
+      `;
+    }).join('');
   }
 
-  list.innerHTML = blocks.map(b => {
-    const isAway = b.mode === 'away';
-    return `
-      <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs border ${isAway ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 text-amber-900 dark:text-amber-200' : 'bg-red-50 dark:bg-red-950/50 border-red-200 text-red-900 dark:text-red-200'}">
-        <div>
-          <span class="font-bold">${PERSON_ICON[b.who] || '👤'} ${b.who} • ${isAway ? '🏠 Poza domem' : '⛔ N/A'} (${b.startTime}–${b.endTime})</span>
-          ${b.note ? `<span class="block text-[11px] opacity-75">${b.note}</span>` : ''}
-        </div>
-        <button onclick="deleteNaBlock('${b.id}')" class="px-1.5 py-0.5 rounded hover:bg-black/10 font-bold">✕</button>
+  if (doneThatDay.length > 0) {
+    html += `
+      <div class="pt-1.5 space-y-1">
+        <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">✅ Wykonane tego dnia (${doneThatDay.length}):</div>
+        ${doneThatDay.map(t => `
+          <div class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 text-emerald-950 dark:text-emerald-200">
+            <span class="font-semibold truncate">${CAT_ICON[t.category] || '📌'} ${t.title}</span>
+            <span class="text-[10px] font-bold shrink-0">${PERSON_ICON[t.assignee] || ''} ${t.assignee || ''}</span>
+          </div>
+        `).join('')}
       </div>
     `;
-  }).join('');
+  }
+
+  list.innerHTML = html || `<div class="text-xs text-stone-400">Brak blokad N/A ani wykonanych zadań w tym dniu.</div>`;
 }
 
 window.changeMonth = (delta) => {
@@ -869,8 +885,10 @@ function renderTasks() {
               class="text-[10px] font-bold px-2 py-0.5 rounded-md border transition ${coop === 'together' ? 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-200 border-purple-200' : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200'}">
               ${coop === 'together' ? '👫 Razem' : '👤 Solo'}
             </button>
-            ${task.isDailyHabit ? `<span class="text-[10px] bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-semibold">↻ Codziennie</span>`
-              : (task.date ? `<span class="text-[11px] text-stone-500 dark:text-stone-400 font-medium">📅 ${task.date}</span>` : '')}
+            ${task.completed && (task.completedDate || task.date)
+              ? `<span class="text-[10px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold">✓ Zrobione: ${task.completedDate || task.date}</span>`
+              : (task.isDailyHabit ? `<span class="text-[10px] bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-semibold">↻ Codziennie</span>`
+              : (task.date ? `<span class="text-[11px] text-stone-500 dark:text-stone-400 font-medium">📅 ${task.date}</span>` : ''))}
             ${task.remoteOk ? `<span class="text-[10px] bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-semibold">🌍 Poza domem</span>` : ''}
           </div>
         </div>
@@ -882,7 +900,23 @@ function renderTasks() {
 
 window.reassignTask = async (id, assignee) => updateDoc(doc(db, "tasks", id), { assignee });
 window.toggleTaskCoop = async (id, coop) => updateDoc(doc(db, "tasks", id), { coop });
-window.toggleTask = async (id, completed) => updateDoc(doc(db, "tasks", id), { completed });
+window.toggleTask = async (id, completed) => {
+  const todayStr = formatDate(new Date());
+  const task = allTasks.find(t => t.id === id);
+  const updates = {
+    completed,
+    completedDate: completed ? todayStr : null
+  };
+  if (completed && task) {
+    if (!task.isDailyHabit) {
+      updates.date = todayStr;
+    }
+    if (!task.assignee || task.assignee === 'Nieprzypisane') {
+      updates.assignee = activeUser;
+    }
+  }
+  await updateDoc(doc(db, "tasks", id), updates);
+};
 window.deleteTask = async (id) => deleteDoc(doc(db, "tasks", id));
 
 window.setFilter = (f) => {
