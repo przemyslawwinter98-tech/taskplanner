@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Domowy Planer — Przemo & Róża</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#FFF7ED',
+              100: '#FFEDD5',
+              200: '#FED7AA',
+              400: '#FB923C',
+              500: '#F97316',
+              600: '#EA580C',
+              700: '#C2410C',
+            },
+            warm: {
+              50: '#FAFAF9',
+              100: '#F5F5F4',
+              200: '#E7E5E4',
+              800: '#292524',
+              900: '#1C1917'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #FAFAF9; color: #1C1917; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #E7E5E4; border-radius: 999px; }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-brand-200 selection:text-brand-900">
+
+  <!-- EKRAN LOGOWANIA HASŁEM DOMOWYM -->
+  <div id="auth-screen" class="fixed inset-0 z-50 bg-warm-50 flex items-center justify-center p-4">
+    <div class="bg-white border border-warm-200 rounded-3xl shadow-xl max-w-md w-full p-8 text-center">
+      <div class="w-16 h-16 bg-brand-100 text-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-5 text-3xl">
+        🐾
+      </div>
+      <h1 class="text-2xl font-extrabold text-warm-900 mb-2">Domowy Planer</h1>
+      <p class="text-stone-500 text-sm mb-6">Przemo, Róża, Berneńczyk & Auto.<br>Wpisz hasło domowe, aby zsynchronizować listę.</p>
+      <form id="auth-form" class="space-y-4">
+        <input id="secret-input" type="password" required placeholder="Twoje hasło z reguł Firestore..."
+          class="w-full px-4 py-3 rounded-xl border border-warm-200 focus:outline-none focus:ring-2 focus:ring-brand-500 text-center font-medium" />
+        <button type="submit"
+          class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition shadow-md shadow-brand-500/20">
+          Wejdź do planera
+        </button>
+      </form>
+      <p id="auth-error" class="text-red-500 text-xs mt-3 hidden">Błąd połączenia z bazą. Sprawdź hasło i reguły Firestore.</p>
+    </div>
+  </div>
+
+  <!-- GŁÓWNA APLIKACJA -->
+  <div id="app-container" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- NAGŁÓWEK I LICZNIK MIESIĄCA -->
+    <header class="bg-white border border-warm-200 rounded-3xl p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-warm-100">
+        <div>
+          <div class="flex items-center gap-2.5">
+            <span class="text-2xl">🏡</span>
+            <h1 class="text-2xl font-extrabold tracking-tight text-warm-900">Domowe Centrum Dowodzenia</h1>
+          </div>
+          <p class="text-stone-500 text-sm mt-1">Przemo • Róża • Berneńczyk • Auto — <span id="current-month-label" class="font-semibold text-brand-600 capitalize"></span></p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="openTemplateModal()" class="px-4 py-2.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold text-sm transition flex items-center gap-2">
+            <span>📋</span> Szablon startowy
+          </button>
+          <button onclick="openAiModal()" class="px-4 py-2.5 rounded-xl bg-warm-900 hover:bg-stone-800 text-white font-semibold text-sm transition flex items-center gap-2 shadow-sm">
+            <span>✨</span> Sugestie AI (wolne środy)
+          </button>
+          <button onclick="openSettingsModal()" title="Ustawienia" class="p-2.5 rounded-xl border border-warm-200 hover:bg-warm-100 text-stone-600 transition">
+            ⚙️
+          </button>
+        </div>
+      </div>
+
+      <!-- STATYSTYKI POSTĘPU -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-6">
+        <div class="bg-brand-50/70 border border-brand-100 rounded-2xl p-4">
+          <div class="text-xs font-bold uppercase tracking-wider text-brand-700">Do końca miesiąca</div>
+          <div class="mt-1 flex items-baseline gap-2">
+            <span id="stat-remaining" class="text-3xl font-extrabold text-brand-600">0</span>
+            <span id="stat-total" class="text-sm text-stone-500 font-medium">z 0 zadań</span>
+          </div>
+          <div class="w-full bg-brand-200/60 h-2 rounded-full mt-3 overflow-hidden">
+            <div id="stat-progress-bar" class="bg-brand-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="bg-warm-50 border border-warm-200/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-bold uppercase tracking-wider text-stone-500">Przemo (pozostało)</div>
+            <div id="stat-przemo" class="text-2xl font-extrabold text-warm-900 mt-1">0</div>
+            <div class="text-xs text-stone-400 mt-0.5">Praca 8h • Wolne środy</div>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-lg">P</div>
+        </div>
+
+        <div class="bg-warm-50 border border-warm-200/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-bold uppercase tracking-wider text-stone-500">Róża (pozostało)</div>
+            <div id="stat-roza" class="text-2xl font-extrabold text-warm-900 mt-1">0</div>
+            <div class="text-xs text-stone-400 mt-0.5">Wolne środy</div>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-lg">R</div>
+        </div>
+
+        <div class="bg-warm-50 border border-warm-200/80 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-bold uppercase tracking-wider text-stone-500">Wspólne / Nieprzypisane</div>
+            <div id="stat-shared" class="text-2xl font-extrabold text-warm-900 mt-1">0</div>
+            <div class="text-xs text-stone-400 mt-0.5">Do podziału</div>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-lg">👥</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- GŁÓWNY UKŁAD: KALENDARZ (LEWA) + LISTA ZADAŃ (PRAWA) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEWA KOLUMNA: KALENDARZ + BRAK CZASU -->
+      <section class="lg:col-span-7 bg-white border border-warm-200 rounded-3xl p-6 shadow-sm flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <button onclick="changeMonth(-1)" class="p-2 rounded-xl hover:bg-warm-100 text-stone-600 font-bold">←</button>
+            <h2 id="calendar-header" class="text-lg font-extrabold text-warm-900 capitalize min-w-[160px] text-center"></h2>
+            <button onclick="changeMonth(1)" class="p-2 rounded-xl hover:bg-warm-100 text-stone-600 font-bold">→</button>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-stone-500">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> Wolna środa</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-400 inline-block"></span> Brak czasu</span>
+          </div>
+        </div>
+
+        <!-- DNI TYGODNIA -->
+        <div class="grid grid-cols-7 gap-1.5 text-center text-xs font-bold text-stone-400 uppercase mb-2">
+          <div>Pon</div><div>Wt</div><div class="text-emerald-600">Śr</div><div>Czw</div><div>Pt</div><div>Sob</div><div>Nd</div>
+        </div>
+
+        <!-- SIATKA KALENDARZA -->
+        <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 flex-1"></div>
+
+        <!-- PANEL WYBRANEGO DNIA (OZNACZANIE BRAKU CZASU) -->
+        <div id="selected-day-panel" class="mt-5 pt-4 border-t border-warm-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-warm-50 p-4 rounded-2xl">
+          <div>
+            <div class="text-xs font-bold uppercase text-stone-400">Wybrany dzień</div>
+            <div id="selected-day-label" class="font-bold text-warm-900 text-sm">Kliknij dzień w kalendarzu</div>
+          </div>
+          <div id="busy-controls" class="flex flex-wrap gap-1.5 hidden">
+            <button onclick="toggleBusyDay('Przemo')" id="btn-busy-przemo" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-warm-200 bg-white hover:bg-red-50 transition">
+              🚫 Przemo brak czasu
+            </button>
+            <button onclick="toggleBusyDay('Róża')" id="btn-busy-roza" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-warm-200 bg-white hover:bg-red-50 transition">
+              🚫 Róża brak czasu
+            </button>
+            <button onclick="toggleBusyDay('Oboje')" id="btn-busy-oboje" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-warm-200 bg-white hover:bg-red-50 transition">
+              ⛔ Oboje zajęci
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRAWA KOLUMNA: DODAWANIE I LISTA OBOWIĄZKÓW -->
+      <section class="lg:col-span-5 bg-white border border-warm-200 rounded-3xl p-6 shadow-sm flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-extrabold text-warm-900">Obowiązki w tym miesiącu</h2>
+          <button onclick="toggleAddForm()" class="bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-sm">
+            + Dodaj zadanie
+          </button>
+        </div>
+
+        <!-- FORMULARZ DODAWANIA ZADANIA -->
+        <form id="add-task-form" class="hidden mb-5 bg-brand-50/60 border border-brand-200 rounded-2xl p-4 space-y-3">
+          <input id="task-title" type="text" required placeholder="Co trzeba zrobić? (np. Tabletka na kleszcze dla psa)"
+            class="w-full px-3.5 py-2 rounded-xl border border-warm-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+          <input id="task-desc" type="text" placeholder="Krótki opis / wskazówka (opcjonalnie)"
+            class="w-full px-3.5 py-2 rounded-xl border border-warm-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[11px] font-bold text-stone-500 uppercase">Kto robi?</label>
+              <select id="task-assignee" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 bg-white text-sm">
+                <option value="Przemo">Przemo</option>
+                <option value="Róża">Róża</option>
+                <option value="Wspólne">Wspólne / Do ustalenia</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[11px] font-bold text-stone-500 uppercase">Kategoria</label>
+              <select id="task-category" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 bg-white text-sm">
+                <option value="Berneńczyk">🐕 Berneńczyk</option>
+                <option value="Dom">🏠 Dom</option>
+                <option value="Auto">🚗 Auto</option>
+                <option value="Inne">📌 Inne</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[11px] font-bold text-stone-500 uppercase">Data w kalendarzu</label>
+              <input id="task-date" type="date" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 bg-white text-sm" />
+            </div>
+            <div>
+              <label class="text-[11px] font-bold text-stone-500 uppercase">Typ zadania</label>
+              <select id="task-recurrence" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 bg-white text-sm">
+                <option value="once">Jednorazowe</option>
+                <option value="weekly">Cykliczne (co tydzień w tym mies.)</option>
+                <option value="monthly">Cykliczne (stałe co miesiąc)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="button" onclick="toggleAddForm()" class="px-3 py-1.5 text-xs font-semibold text-stone-500">Anuluj</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold">Zapisz zadanie</button>
+          </div>
+        </form>
+
+        <!-- FILTRY -->
+        <div class="flex flex-wrap gap-1.5 mb-4">
+          <button onclick="setFilter('all')" data-filter="all" class="filter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 text-white">Wszystkie</button>
+          <button onclick="setFilter('Przemo')" data-filter="Przemo" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 text-stone-600">Przemo</button>
+          <button onclick="setFilter('Róża')" data-filter="Róża" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 text-stone-600">Róża</button>
+          <button onclick="setFilter('Berneńczyk')" data-filter="Berneńczyk" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 text-stone-600">🐕 Pies</button>
+          <button onclick="setFilter('Auto')" data-filter="Auto" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 text-stone-600">🚗 Auto</button>
+          <button onclick="setFilter('Dom')" data-filter="Dom" class="filter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 text-stone-600">🏠 Dom</button>
+        </div>
+
+        <!-- LISTA ZADAŃ -->
+        <div id="tasks-list" class="space-y-2.5 overflow-y-auto max-h-[540px] pr-1 custom-scroll flex-1">
+          <div class="text-center text-stone-400 text-sm py-10">Ładowanie zadań...</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- MODAL: SZABLON STARTOWY -->
+  <div id="template-modal" class="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center pb-4 border-b border-warm-100">
+        <div>
+          <h3 class="text-xl font-extrabold text-warm-900">📋 Baza startowa obowiązków</h3>
+          <p class="text-xs text-stone-500 mt-0.5">Dopasowana pod berneńczyka, auto i dom. Zaznacz, co wrzucić na ten miesiąc.</p>
+        </div>
+        <button onclick="closeModal('template-modal')" class="text-stone-400 hover:text-stone-700 text-xl font-bold">✕</button>
+      </div>
+      <div id="template-items" class="py-4 overflow-y-auto space-y-2 custom-scroll flex-1"></div>
+      <div class="pt-4 border-t border-warm-100 flex justify-between items-center">
+        <span class="text-xs text-stone-500">Zadania zostaną przypisane do bieżącego miesiąca.</span>
+        <button onclick="applyStarterTemplate()" class="bg-brand-500 hover:bg-brand-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition">
+          Wrzuć wybrane do kalendarza
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AI PLANER WOLNYCH ŚRÓD -->
+  <div id="ai-modal" class="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-warm-100 pb-3">
+        <h3 class="text-xl font-extrabold text-warm-900">✨ Asystent Planowania (Wolne Środy)</h3>
+        <button onclick="closeModal('ai-modal')" class="text-stone-400 hover:text-stone-700 text-xl font-bold">✕</button>
+      </div>
+      <p class="text-sm text-stone-600 leading-relaxed">
+        AI przeanalizuje Wasze otwarte zadania w tym miesiącu, uwzględni że <strong>Przemo pracuje 8h dziennie stacjonarnie</strong>, że macie <strong>wolne środy</strong> oraz pominie dni oznaczone w kalendarzu jako <strong>„Brak czasu”</strong>.
+      </p>
+      <div id="ai-output" class="bg-warm-50 border border-warm-200 rounded-2xl p-4 text-sm text-stone-700 whitespace-pre-line min-h-[120px] max-h-[300px] overflow-y-auto custom-scroll">
+        Kliknij przycisk poniżej, aby wygenerować propozycję rozkładu zadań.
+      </div>
+      <div class="flex justify-between items-center pt-2">
+        <button onclick="openSettingsModal()" class="text-xs text-brand-600 font-semibold hover:underline">Ustaw klucz API Gemini</button>
+        <button id="run-ai-btn" onclick="runAiPlanner()" class="bg-warm-900 hover:bg-stone-800 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition">
+          Generuj plan na ten miesiąc
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: USTAWIENIA -->
+  <div id="settings-modal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-warm-100 pb-3">
+        <h3 class="text-lg font-extrabold text-warm-900">⚙️ Ustawienia</h3>
+        <button onclick="closeModal('settings-modal')" class="text-stone-400 hover:text-stone-700 text-xl font-bold">✕</button>
+      </div>
+      <div>
+        <label class="text-xs font-bold uppercase text-stone-500">Klucz API Google Gemini (do funkcji AI)</label>
+        <input id="gemini-key-input" type="password" placeholder="AIzaSy..."
+          class="w-full mt-1 px-3.5 py-2.5 rounded-xl border border-warm-200 text-sm" />
+        <p class="text-[11px] text-stone-400 mt-1">Zapisuje się wyłącznie lokalnie w Twojej przeglądarce.</p>
+      </div>
+      <div class="flex justify-between pt-2">
+        <button onclick="logout()" class="text-xs text-red-600 font-semibold">Wyloguj (zmień hasło domowe)</button>
+        <button onclick="saveSettings()" class="bg-brand-500 text-white font-bold px-4 py-2 rounded-xl text-sm">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE + LOGIKA APLIKACJI -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
+      onSnapshot, query, where, setDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7-ytzkg_vunX5BPuRBG9EMn7wzt6B3SQ",
+      authDomain: "taskplanner-6e393.firebaseapp.com",
+      projectId: "taskplanner-6e393",
+      storageBucket: "taskplanner-6e393.firebasestorage.app",
+      messagingSenderId: "325861761340",
+      appId: "1:325861761340:web:3d90afddef81acb33e3e39"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // STAN APLIKACJI
+    let homeSecret = localStorage.getItem('home_planner_secret') || '';
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth(); // 0-11
+    let selectedDateStr = formatDate(new Date());
+    let currentFilter = 'all';
+    let allTasks = [];
+    let busyDaysMap = {}; // { '2026-11-25': { who: 'Przemo' } }
+    let unsubTasks = null;
+    let unsubBusy = null;
+
+    // BAZA STARTOWA OBOWIĄZKÓW (BERNEŃCZYK + AUTO + DOM)
+    const STARTER_TEMPLATES = [
+      { title: "Tabletka na kleszcze i pasożyty", desc: "Podać z jedzeniem, zanotować w książeczce", category: "Berneńczyk", assignee: "Róża", tip: "1. dzień miesiąca" },
+      { title: "Gruntowne wyczesanie podszerstka", desc: "Furminator + szczotka pudlówka (szczególnie za uszami i portki)", category: "Berneńczyk", assignee: "Przemo", tip: "Wolna środa" },
+      { title: "Pranie posłania i mycie misek", desc: "Wyprać pokrowiec legowiska w 60°C, wyparzyć miski", category: "Berneńczyk", assignee: "Róża", tip: "Środek miesiąca" },
+      { title: "Kontrola zapasu karmy i smaczków", desc: "Zamówić worek 12-15 kg z wyprzedzeniem", category: "Berneńczyk", assignee: "Przemo", tip: "20. dzień miesiąca" },
+      { title: "Sprawdzenie ciśnienia w oponach i oleju", desc: "Na zimnych oponach + dolanie płynu do spryskiwaczy", category: "Auto", assignee: "Przemo", tip: "Wolna środa" },
+      { title: "Myjnia + odkurzanie sierści z bagażnika", desc: "Rolka/szczotka gumowa do sierści po berneńczyku", category: "Auto", assignee: "Przemo", tip: "Weekend / Środa" },
+      { title: "Odkamienianie ekspresu i czyszczenie zmywarki", desc: "Program czyszczący + filtr", category: "Dom", assignee: "Róża", tip: "10. dzień miesiąca" },
+      { title: "Opłaty, rachunki i przegląd budżetu", desc: "Czynsz, prąd, internet, subskrypcje", category: "Dom", assignee: "Wspólne", tip: "Do 10. dnia miesiąca" },
+      { title: "Zmiana pościeli i wietrzenie materaca", desc: "Pranie pościeli i ręczników", category: "Dom", assignee: "Róża", tip: "Co 2 tygodnie" },
+      { title: "Gruntowne odkurzanie i mycie podłóg", desc: "Zebranie sierści z kątów i pod meblami", category: "Dom", assignee: "Wspólne", tip: "Wolna środa" }
+    ];
+
+    // HELPERY DAT
+    function formatDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getMonthKey(year, month) {
+      return `${year}-${String(month + 1).padStart(2, '0')}`;
+    }
+
+    // AUTORYZACJA
+    const authScreen = document.getElementById('auth-screen');
+    const appContainer = document.getElementById('app-container');
+
+    if (homeSecret) {
+      startApp();
+    }
+
+    document.getElementById('auth-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = document.getElementById('secret-input').value.trim();
+      if (!val) return;
+      homeSecret = val;
+      localStorage.setItem('home_planner_secret', homeSecret);
+      startApp();
+    });
+
+    window.logout = () => {
+      localStorage.removeItem('home_planner_secret');
+      location.reload();
+    };
+
+    function startApp() {
+      authScreen.classList.add('hidden');
+      appContainer.classList.remove('hidden');
+      document.getElementById('task-date').value = selectedDateStr;
+      renderAll();
+      subscribeFirestore();
+    }
+
+    // SUBSKRYPCJA FIREBASE NA ŻYWO
+    function subscribeFirestore() {
+      if (unsubTasks) unsubTasks();
+      if (unsubBusy) unsubBusy();
+
+      const monthKey = getMonthKey(currentYear, currentMonth);
+
+      const qTasks = query(
+        collection(db, "tasks"),
+        where("secret", "==", homeSecret),
+        where("monthKey", "==", monthKey)
+      );
+
+      unsubTasks = onSnapshot(qTasks, (snapshot) => {
+        allTasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderTasks();
+        renderStats();
+        renderCalendar();
+      }, (err) => {
+        console.error(err);
+        document.getElementById('auth-error').classList.remove('hidden');
+        authScreen.classList.remove('hidden');
+        appContainer.classList.add('hidden');
+      });
+
+      const qBusy = query(
+        collection(db, "busyDays"),
+        where("secret", "==", homeSecret),
+        where("monthKey", "==", monthKey)
+      );
+
+      unsubBusy = onSnapshot(qBusy, (snapshot) => {
+        busyDaysMap = {};
+        snapshot.docs.forEach(d => {
+          const data = d.data();
+          busyDaysMap[data.date] = { id: d.id, who: data.who };
+        });
+        renderCalendar();
+        updateSelectedDayPanel();
+      });
+    }
+
+    // RENDEROWANIE STATYSTYK
+    function renderStats() {
+      const total = allTasks.length;
+      const done = allTasks.filter(t => t.completed).length;
+      const remaining = total - done;
+      const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+
+      document.getElementById('stat-remaining').textContent = remaining;
+      document.getElementById('stat-total').textContent = `z ${total} zadań`;
+      document.getElementById('stat-progress-bar').style.width = `${pct}%`;
+
+      document.getElementById('stat-przemo').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Przemo').length;
+      document.getElementById('stat-roza').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Róża').length;
+      document.getElementById('stat-shared').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Wspólne').length;
+    }
+
+    // RENDEROWANIE KALENDARZA
+    function renderCalendar() {
+      const dateObj = new Date(currentYear, currentMonth, 1);
+      const monthName = dateObj.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
+      document.getElementById('calendar-header').textContent = monthName;
+      document.getElementById('current-month-label').textContent = monthName;
+
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      let firstDay = dateObj.getDay(); // 0 Nd - 6 Sob
+      firstDay = firstDay === 0 ? 6 : firstDay - 1; // Pon = 0
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += `<div class="p-2 rounded-xl bg-warm-50/40"></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const d = new Date(currentYear, currentMonth, day);
+        const dateStr = formatDate(d);
+        const isWednesday = d.getDay() === 3;
+        const isSelected = dateStr === selectedDateStr;
+        const busy = busyDaysMap[dateStr];
+        const dayTasks = allTasks.filter(t => t.date === dateStr);
+        const openTasks = dayTasks.filter(t => !t.completed).length;
+
+        let bgClass = 'bg-white border-warm-200 hover:border-brand-400';
+        if (busy) bgClass = 'bg-red-50 border-red-200';
+        else if (isWednesday) bgClass = 'bg-emerald-50/60 border-emerald-200';
+        if (isSelected) bgClass += ' ring-2 ring-brand-500';
+
+        grid.innerHTML += `
+          <button onclick="selectDay('${dateStr}')" class="p-2 rounded-2xl border text-left flex flex-col justify-between min-h-[68px] transition ${bgClass}">
+            <div class="flex justify-between items-center w-full">
+              <span class="text-xs font-extrabold ${isWednesday ? 'text-emerald-700' : 'text-warm-800'}">${day}</span>
+              ${busy ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">${busy.who === 'Oboje' ? '⛔' : busy.who[0]}</span>` : ''}
+            </div>
+            <div class="mt-1 space-y-0.5 w-full">
+              ${openTasks > 0 ? `<div class="text-[10px] font-bold bg-brand-100 text-brand-800 px-1.5 py-0.5 rounded-md truncate">${openTasks} zad.</div>` : ''}
+              ${dayTasks.length > 0 && openTasks === 0 ? `<div class="text-[10px] font-semibold text-emerald-600">✓ Gotowe</div>` : ''}
+            </div>
+          </button>
+        `;
+      }
+      updateSelectedDayPanel();
+    }
+
+    window.selectDay = (dateStr) => {
+      selectedDateStr = dateStr;
+      document.getElementById('task-date').value = dateStr;
+      renderCalendar();
+    };
+
+    function updateSelectedDayPanel() {
+      const label = document.getElementById('selected-day-label');
+      const controls = document.getElementById('busy-controls');
+      if (!selectedDateStr) return;
+
+      const d = new Date(selectedDateStr);
+      const nice = d.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
+      const busy = busyDaysMap[selectedDateStr];
+      label.textContent = busy ? `${nice} — Brak czasu (${busy.who})` : nice;
+      controls.classList.remove('hidden');
+
+      ['Przemo', 'Róża', 'Oboje'].forEach(who => {
+        const btn = document.getElementById(`btn-busy-${who.toLowerCase().replace('ó','o')}`);
+        if (busy && busy.who === who) {
+          btn.classList.add('bg-red-500', 'text-white', 'border-red-500');
+          btn.classList.remove('bg-white');
+        } else {
+          btn.classList.remove('bg-red-500', 'text-white', 'border-red-500');
+          btn.classList.add('bg-white');
+        }
+      });
+    }
+
+    window.toggleBusyDay = async (who) => {
+      const existing = busyDaysMap[selectedDateStr];
+      const docId = `${homeSecret}_${selectedDateStr}`;
+      if (existing && existing.who === who) {
+        await deleteDoc(doc(db, "busyDays", docId));
+      } else {
+        await setDoc(doc(db, "busyDays", docId), {
+          secret: homeSecret,
+          date: selectedDateStr,
+          monthKey: getMonthKey(currentYear, currentMonth),
+          who
+        });
+      }
+    };
+
+    window.changeMonth = (delta) => {
+      currentMonth += delta;
+      if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+      subscribeFirestore();
+    };
+
+    // RENDEROWANIE LISTY ZADAŃ
+    function renderTasks() {
+      const list = document.getElementById('tasks-list');
+      let filtered = [...allTasks];
+
+      if (currentFilter !== 'all') {
+        filtered = filtered.filter(t => t.assignee === currentFilter || t.category === currentFilter);
+      }
+
+      filtered.sort((a, b) => Number(a.completed) - Number(b.completed) || (a.date || '').localeCompare(b.date || ''));
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="text-center text-stone-400 text-sm py-10 bg-warm-50 rounded-2xl border border-dashed border-warm-200">
+          Brak zadań w tym widoku.<br>Kliknij <strong>„Szablon startowy”</strong> lub <strong>„+ Dodaj zadanie”</strong>.
+        </div>`;
+        return;
+      }
+
+      const catIcons = { 'Berneńczyk': '🐕', 'Auto': '🚗', 'Dom': '🏠', 'Inne': '📌' };
+      const personBadge = {
+        'Przemo': 'bg-sky-100 text-sky-800',
+        'Róża': 'bg-rose-100 text-rose-800',
+        'Wspólne': 'bg-amber-100 text-amber-800'
+      };
+
+      list.innerHTML = filtered.map(task => `
+        <div class="p-3.5 rounded-2xl border transition flex items-start gap-3 ${task.completed ? 'bg-warm-50 border-warm-100 opacity-60' : 'bg-white border-warm-200 hover:border-brand-300'}">
+          <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}', ${!task.completed})"
+            class="mt-1 w-5 h-5 accent-brand-500 rounded cursor-pointer" />
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-xs">${catIcons[task.category] || '📌'}</span>
+              <span class="font-bold text-sm text-warm-900 ${task.completed ? 'line-through text-stone-400' : ''}">${task.title}</span>
+            </div>
+            ${task.desc ? `<p class="text-xs text-stone-500 mt-0.5">${task.desc}</p>` : ''}
+            <div class="flex items-center gap-2 mt-2 flex-wrap">
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${personBadge[task.assignee] || 'bg-stone-100'}">${task.assignee}</span>
+              ${task.date ? `<span class="text-[11px] text-stone-500 font-medium">📅 ${task.date}</span>` : ''}
+              ${task.recurrence && task.recurrence !== 'once' ? `<span class="text-[10px] bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded font-semibold">↻ ${task.recurrence === 'weekly' ? 'Co tydzień' : 'Co miesiąc'}</span>` : ''}
+            </div>
+          </div>
+          <button onclick="deleteTask('${task.id}')" class="text-stone-300 hover:text-red-500 text-sm px-1">✕</button>
+        </div>
+      `).join('');
+    }
+
+    window.setFilter = (f) => {
+      currentFilter = f;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === f) {
+          btn.classList.add('bg-warm-900', 'text-white');
+          btn.classList.remove('bg-warm-100', 'text-stone-600');
+        } else {
+          btn.classList.remove('bg-warm-900', 'text-white');
+          btn.classList.add('bg-warm-100', 'text-stone-600');
+        }
+      });
+      renderTasks();
+    };
+
+    window.toggleAddForm = () => {
+      document.getElementById('add-task-form').classList.toggle('hidden');
+    };
+
+    document.getElementById('add-task-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('task-title').value.trim();
+      const desc = document.getElementById('task-desc').value.trim();
+      const assignee = document.getElementById('task-assignee').value;
+      const category = document.getElementById('task-category').value;
+      const date = document.getElementById('task-date').value;
+      const recurrence = document.getElementById('task-recurrence').value;
+      const monthKey = getMonthKey(currentYear, currentMonth);
+
+      if (recurrence === 'weekly' && date) {
+        // Dodaj na kolejne 4 tygodnie w tym miesiącu
+        let baseDate = new Date(date);
+        for (let i = 0; i < 4; i++) {
+          if (baseDate.getMonth() === currentMonth) {
+            await addDoc(collection(db, "tasks"), {
+              secret: homeSecret, title, desc, assignee, category,
+              date: formatDate(baseDate), recurrence, monthKey, completed: false
+            });
+          }
+          baseDate.setDate(baseDate.getDate() + 7);
+        }
+      } else {
+        await addDoc(collection(db, "tasks"), {
+          secret: homeSecret, title, desc, assignee, category, date, recurrence, monthKey, completed: false
+        });
+      }
+
+      e.target.reset();
+      document.getElementById('task-date').value = selectedDateStr;
+      toggleAddForm();
+    });
+
+    window.toggleTask = async (id, completed) => {
+      await updateDoc(doc(db, "tasks", id), { completed });
+    };
+
+    window.deleteTask = async (id) => {
+      await deleteDoc(doc(db, "tasks", id));
+    };
+
+    // SZABLON STARTOWY
+    window.openTemplateModal = () => {
+      const container = document.getElementById('template-items');
+      container.innerHTML = STARTER_TEMPLATES.map((item, idx) => `
+        <label class="flex items-start gap-3 p-3 rounded-2xl border border-warm-200 hover:bg-warm-50 cursor-pointer">
+          <input type="checkbox" checked data-tpl-idx="${idx}" class="mt-1 w-4 h-4 accent-brand-500" />
+          <div class="flex-1">
+            <div class="font-bold text-sm text-warm-900">${item.title} <span class="text-xs font-normal text-brand-600">(${item.category})</span></div>
+            <div class="text-xs text-stone-500">${item.desc}</div>
+            <div class="text-[11px] text-stone-400 mt-1">Sugestia: ${item.assignee} • ${item.tip}</div>
+          </div>
+        </label>
+      `).join('');
+      document.getElementById('template-modal').classList.remove('hidden');
+      document.getElementById('template-modal').classList.add('flex');
+    };
+
+    window.applyStarterTemplate = async () => {
+      const checkboxes = document.querySelectorAll('#template-items input[type="checkbox"]:checked');
+      const monthKey = getMonthKey(currentYear, currentMonth);
+      // Znajdź pierwszą wolną środę w miesiącu jako domyślny dzień na większe rzeczy
+      let wednesday = new Date(currentYear, currentMonth, 1);
+      while (wednesday.getDay() !== 3) wednesday.setDate(wednesday.getDate() + 1);
+      const wedStr = formatDate(wednesday);
+
+      for (const cb of checkboxes) {
+        const item = STARTER_TEMPLATES[cb.dataset.tplIdx];
+        await addDoc(collection(db, "tasks"), {
+          secret: homeSecret,
+          title: item.title,
+          desc: item.desc,
+          assignee: item.assignee,
+          category: item.category,
+          date: item.tip.includes('środa') ? wedStr : `${monthKey}-01`,
+          recurrence: 'monthly',
+          monthKey,
+          completed: false
+        });
+      }
+      closeModal('template-modal');
+    };
+
+    // ASYSTENT AI (WOLNE ŚRODY + BRAK CZASU)
+    window.openAiModal = () => {
+      document.getElementById('ai-modal').classList.remove('hidden');
+      document.getElementById('ai-modal').classList.add('flex');
+    };
+
+    window.runAiPlanner = async () => {
+      const apiKey = localStorage.getItem('gemini_api_key');
+      const out = document.getElementById('ai-output');
+      if (!apiKey) {
+        out.textContent = "Najpierw wklej swój darmowy klucz API Google Gemini w Ustawieniach (link poniżej).";
+        return;
+      }
+
+      const openTasks = allTasks.filter(t => !t.completed);
+      if (openTasks.length === 0) {
+        out.textContent = "Wszystkie zadania na ten miesiąc są już zrobione!";
+        return;
+      }
+
+      out.textContent = "Analizuję grafik, wolne środy i dni z brakiem czasu...";
+      const busySummary = Object.entries(busyDaysMap).map(([d, v]) => `${d}: brak czasu (${v.who})`).join(', ') || 'brak oznaczonych dni';
+      const tasksSummary = openTasks.map(t => `- ${t.title} [${t.category}, obecnie: ${t.assignee}, data: ${t.date || 'brak'}]`).join('\n');
+
+      const prompt = `Jesteś domowym asystentem planowania dla małżeństwa: Przemo i Róża.
+Kontekst:
+- Mają psa rasy berneńczyk i samochód.
+- Przemo pracuje stacjonarnie 8h dziennie (pon-pt, oprócz śród).
+- Oboje mają WOLNE ŚRODY w każdym tygodniu.
+- Miesiąc: ${getMonthKey(currentYear, currentMonth)}.
+- Dni oznaczone w kalendarzu jako BRAK CZASU: ${busySummary}.
+
+Lista otwartych zadań do rozplanowania:
+${tasksSummary}
+
+Zaproponuj krótki, konkretny i sprawiedliwy plan po polsku: kiedy (konkretne daty, szczególnie wolne środy i weekendy) i kto (Przemo czy Róża) powinien wykonać te zadania, omijając dni z brakiem czasu i nie obciążając Przema ciężkimi zadaniami w dni, gdy pracuje 8h w biurze.`;
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await res.json();
+        out.textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || "Nie udało się wygenerować odpowiedzi. Sprawdź klucz API.";
+      } catch (e) {
+        out.textContent = "Błąd połączenia z API Gemini.";
+      }
+    };
+
+    // USTAWIENIA I MODALE
+    window.openSettingsModal = () => {
+      document.getElementById('gemini-key-input').value = localStorage.getItem('gemini_api_key') || '';
+      document.getElementById('settings-modal').classList.remove('hidden');
+      document.getElementById('settings-modal').classList.add('flex');
+    };
+
+    window.saveSettings = () => {
+      const k = document.getElementById('gemini-key-input').value.trim();
+      localStorage.setItem('gemini_api_key', k);
+      closeModal('settings-modal');
+    };
+
+    window.closeModal = (id) => {
+      document.getElementById(id).classList.add('hidden');
+      document.getElementById(id).classList.remove('flex');
+    };
+
+    function renderAll() {
+      renderCalendar();
+      renderTasks();
+      renderStats();
+    }
+  </script>
+</body>
+</html>
