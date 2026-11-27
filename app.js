@@ -200,6 +200,18 @@ function renderDynamicSectionControls() {
       </div>
     `).join('');
   }
+
+  // Wstrzyknięcie przycisku resetu bieżącego miesiąca do 0 w nagłówku konfiguratora (jeśli jeszcze go tam nie ma)
+  const assignBtn = document.querySelector('button[onclick="assignAllTasksToPrzemek()"]');
+  if (assignBtn && !document.getElementById('reset-month-zero-btn')) {
+    const resetBtn = document.createElement('button');
+    resetBtn.id = 'reset-month-zero-btn';
+    resetBtn.type = 'button';
+    resetBtn.onclick = window.clearCurrentMonthTasks;
+    resetBtn.className = 'px-3.5 py-2 rounded-xl border border-red-200 dark:border-red-900 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-xs font-bold';
+    resetBtn.textContent = '🧹 Wyczyść ten miesiąc (do 0)';
+    assignBtn.parentNode.insertBefore(resetBtn, assignBtn);
+  }
 }
 
 window.updateSectionField = async (id, field, value) => {
@@ -528,7 +540,7 @@ async function insertTemplateInstancesIntoMonth(tpl, year, month, externalBatch 
   return addedCount;
 }
 
-// SUBSKRYPCJE FIREBASE (Z LOKALNYM CACHE DLA NATYCHMIASTOWEGO ŁADOWANIA)
+// SUBSKRYPCJE FIREBASE (NOWY MIESIĄC ZAWSZE STARTUJE OD 0 ZADAŃ)
 function subscribeFirestore() {
   if (unsubTasks) unsubTasks();
   if (unsubNa) unsubNa();
@@ -540,18 +552,21 @@ function subscribeFirestore() {
   const testBadge = document.getElementById('test-month-badge');
   if (testBadge) testBadge.classList.toggle('hidden', !isTestMonth(currentYear, currentMonth));
 
-  // Natychmiastowe wczytanie z cache
   const cacheKey = `tasks_cache_${homeSecret}_${monthKey}`;
   const cached = localStorage.getItem(cacheKey);
   if (cached) {
     try {
       allTasks = JSON.parse(cached);
-      renderTasks();
-      renderStats();
-      renderCalendar();
-      renderPersonalFocusCard();
-    } catch (_) {}
+    } catch (_) {
+      allTasks = [];
+    }
+  } else {
+    allTasks = [];
   }
+  renderTasks();
+  renderStats();
+  renderCalendar();
+  renderPersonalFocusCard();
 
   const qSec = query(collection(db, "taskSections"), where("secret", "==", homeSecret));
   unsubSections = onSnapshot(qSec, async (snapshot) => {
@@ -621,6 +636,7 @@ function subscribeFirestore() {
     renderPersonalFocusCard();
   });
 
+  // Ładujemy wzorce wyłącznie do konfiguratora (bez automatycznego wrzucania na bieżący miesiąc)
   const qTpl = query(collection(db, "taskTemplates"), where("secret", "==", homeSecret));
   unsubTemplates = onSnapshot(qTpl, async (snapshot) => {
     const existingDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -903,6 +919,7 @@ function renderConfigTemplates() {
 window.updateTemplateField = async (id, field, value) => updateDoc(doc(db, "taskTemplates", id), { [field]: value });
 window.deleteTemplateItem = async (id) => deleteDoc(doc(db, "taskTemplates", id));
 
+// DODAWANIE WZORCA DO BAZY (ZOSTAJE W BAZIE; DO MIESIĄCA WRZUCASZ KIEDY CHCESZ)
 document.getElementById('new-template-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const newTpl = {
@@ -920,39 +937,36 @@ document.getElementById('new-template-form')?.addEventListener('submit', async (
     enabled: true
   };
   await addDoc(collection(db, "taskTemplates"), newTpl);
-  const existingTitles = new Set(allTasks.map(t => t.title.toLowerCase().trim()));
-  await insertTemplateInstancesIntoMonth(newTpl, currentYear, currentMonth, null, existingTitles);
   e.target.reset();
   renderDynamicSectionControls();
 });
 
-// PODMIANA NA CZYSTĄ LISTĘ 26 OBOWIĄZKÓW (W JEDNYM BATCHU, BEZ DUPLIKATÓW)
-window.replaceWithFull39Tasks = async () => {
-  if (!confirm("Wyczyścić stare duplikaty i załadować czystą listę 26 obowiązków przypisanych do Przemka?")) return;
+// WYCZYŚĆ BIEŻĄCY MIESIĄC (RESET LICZNIKA DO 0)
+window.clearCurrentMonthTasks = async () => {
   const monthKey = getMonthKey(currentYear, currentMonth);
+  if (!confirm(`Usunąć wszystkie zadania z miesiąca ${monthKey}, aby wyzerować licznik do 0? (Twoja baza obowiązków zostanie nienaruszona)`)) return;
+  const batch = writeBatch(db);
+  const snap = await getDocs(query(collection(db, "tasks"), where("secret", "==", homeSecret), where("monthKey", "==", monthKey)));
+  for (const d of snap.docs) batch.delete(doc(db, "tasks", d.id));
+  await batch.commit();
+  localStorage.removeItem(`tasks_cache_${homeSecret}_${monthKey}`);
+};
+
+// PODMIANA BAZY WZORCÓW NA LISTĘ 26 OBOWIĄZKÓW (BEZ AUTOMATYCZNEGO ZASYPYWANIA MIESIĄCA)
+window.replaceWithFull39Tasks = async () => {
+  if (!confirm("Podmienić wzorce w bazie na czystą listę 26 obowiązków przypisanych do Przemka?")) return;
   const batch = writeBatch(db);
 
-  // 1. Usuń stare szablony
   const oldTpls = await getDocs(query(collection(db, "taskTemplates"), where("secret", "==", homeSecret)));
   for (const d of oldTpls.docs) batch.delete(doc(db, "taskTemplates", d.id));
 
-  // 2. Usuń niewykonane zadania z bieżącego miesiąca, żeby pozbyć się duplikatów (np. tych 118)
-  const oldTasks = await getDocs(query(collection(db, "tasks"), where("secret", "==", homeSecret), where("monthKey", "==", monthKey)));
-  for (const d of oldTasks.docs) {
-    if (!d.data().completed) batch.delete(doc(db, "tasks", d.id));
-  }
-
-  // 3. Zapisz nową listę 26 obowiązków i wygeneruj je dokładnie 1 raz na ten miesiąc
-  const existingTitles = new Set(oldTasks.docs.filter(d => d.data().completed).map(d => d.data().title.toLowerCase().trim()));
   for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
     const raw = DEFAULT_MONTHLY_TASKS[i];
     const tplData = { secret: homeSecret, order: i, ...raw, assignee: "Przemo", category: resolveSectionId(raw.category), tags: [] };
     batch.set(doc(collection(db, "taskTemplates")), tplData);
-    await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth, batch, existingTitles);
   }
 
   await batch.commit();
-  closeConfigScreen();
 };
 
 window.assignAllTasksToPrzemek = async () => {
@@ -1185,7 +1199,7 @@ function renderTasks() {
 
   if (filtered.length === 0) {
     list.innerHTML = `<div class="text-center text-stone-400 text-sm py-10 bg-warm-50 dark:bg-warm-800/40 rounded-2xl border border-dashed border-warm-200 dark:border-warm-700">
-      Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań”</strong> na górze.
+      Brak zadań w tym miesiącu (licznik wynosi 0).<br>Dodaj zadanie przyciskiem <strong>„+ Jednorazowe”</strong> lub wrzuć wybrane z <strong>„🛠️ Baza zadań”</strong>.
     </div>`;
     return;
   }
