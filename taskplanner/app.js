@@ -4,7 +4,7 @@ import {
   onSnapshot, query, where, setDoc, getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
-  PERSON_ICON, SECTIONS_META, CAT_ICON, DEFAULT_PROFILES, DEFAULT_MONTHLY_TASKS
+  PERSON_ICON, DEFAULT_SECTIONS, DEFAULT_PROFILES, DEFAULT_MONTHLY_TASKS
 } from "./tasks-data.js";
 
 const firebaseConfig = {
@@ -19,7 +19,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// TRYB JASNY / CIEMNY
 function applyTheme(theme) {
   const html = document.documentElement;
   const btn = document.getElementById('theme-toggle-btn');
@@ -50,10 +49,12 @@ let configFilter = 'all';
 let allTasks = [];
 let naBlocks = [];
 let taskTemplates = [];
+let taskSections = [];
 let userProfiles = { ...DEFAULT_PROFILES };
 let personalAiCache = { Przemo: null, Róża: null };
-let unsubTasks = null, unsubNa = null, unsubTemplates = null, unsubProfiles = null;
+let unsubTasks = null, unsubNa = null, unsubTemplates = null, unsubProfiles = null, unsubSections = null;
 let seededTemplatesOnce = false;
+let seededSectionsOnce = false;
 
 function formatDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -77,7 +78,205 @@ function isTaskOverdue(task) {
   return task.date < formatDate(new Date());
 }
 
-// WYBÓR CZASU "NA TERAZ"
+function displayPersonName(who) {
+  if (who === 'Przemo' || who === 'Przemek') return 'Przemek';
+  return who || 'Do ustalenia';
+}
+
+function isPrzemek(who) {
+  return who === 'Przemo' || who === 'Przemek';
+}
+
+function parseTagsInput(raw) {
+  if (!raw) return [];
+  return [...new Set(
+    String(raw)
+      .split(',')
+      .map(t => t.trim().replace(/^#+/, '').toLowerCase())
+      .filter(Boolean)
+  )];
+}
+
+function escapeAttr(str) {
+  return String(str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// DOPASOWANIE STARYCH I NOWYCH NAZW SEKCJI
+function resolveSectionId(rawCat) {
+  if (taskSections.length === 0) return rawCat || 'sec_mieszkanie';
+  if (!rawCat) return taskSections[0].id;
+
+  const byId = taskSections.find(s => s.id === rawCat || s.codeId === rawCat);
+  if (byId) return byId.id;
+
+  const low = String(rawCat).toLowerCase();
+  const keywordMap = [
+    { keys: ['łazienk', 'lazienk', 'pranie'], target: 'sec_lazienka', idx: 0 },
+    { keys: ['czosn', 'grosz', 'gośk', 'gosk', 'berneń', 'pies'], target: 'sec_czosnek', idx: 1 },
+    { keys: ['mieszkan', 'dom', 'sprząt'], target: 'sec_mieszkanie', idx: 2 },
+    { keys: ['rachunk', 'auto', 'zakup'], target: 'sec_auto', idx: 3 },
+    { keys: ['kuchn'], target: 'sec_kuchnia', idx: 4 }
+  ];
+
+  for (const rule of keywordMap) {
+    if (rule.keys.some(k => low.includes(k))) {
+      const found =
+        taskSections.find(s => s.codeId === rule.target || s.id === rule.target) ||
+        taskSections.find(s => rule.keys.some(k => s.name.toLowerCase().includes(k))) ||
+        taskSections[rule.idx];
+      if (found) return found.id;
+    }
+  }
+
+  const byName = taskSections.find(s => s.name.toLowerCase() === low);
+  return byName ? byName.id : taskSections[0].id;
+}
+
+function getSectionMeta(rawCat) {
+  const resolvedId = resolveSectionId(rawCat);
+  const sec = taskSections.find(s => s.id === resolvedId);
+  return sec || { id: resolvedId, icon: '📌', name: 'Ogólne' };
+}
+
+function buildSectionOptionsHtml(selectedRawId) {
+  const resolved = resolveSectionId(selectedRawId);
+  return taskSections.map(s =>
+    `<option value="${s.id}" ${s.id === resolved ? 'selected' : ''}>${s.icon || '📌'} ${s.name}</option>`
+  ).join('');
+}
+
+function renderDynamicSectionControls() {
+  const taskCatSel = document.getElementById('task-category');
+  const tplCatSel = document.getElementById('tpl-category');
+  if (taskCatSel) taskCatSel.innerHTML = buildSectionOptionsHtml(taskCatSel.value);
+  if (tplCatSel) tplCatSel.innerHTML = buildSectionOptionsHtml(tplCatSel.value);
+
+  const mainFilterBar = document.getElementById('main-filters-bar');
+  if (mainFilterBar) {
+    const fixedBtns = [
+      { id: 'all', label: 'Wszystkie' },
+      { id: 'Przemo', label: '🧔 Przemek' },
+      { id: 'Róża', label: '👩 Róża' },
+      { id: 'together', label: '👫 Razem' }
+    ];
+    const sectionBtns = taskSections.map(s => ({ id: s.id, label: `${s.icon || '📌'} ${s.name}` }));
+
+    const allUniqueTags = [...new Set([
+      ...allTasks.flatMap(t => Array.isArray(t.tags) ? t.tags : []),
+      ...taskTemplates.flatMap(t => Array.isArray(t.tags) ? t.tags : [])
+    ])].sort();
+
+    const tagBtns = allUniqueTags.map(tag => ({ id: `tag:${tag}`, label: `#${tag}`, isTag: true }));
+
+    mainFilterBar.innerHTML = [...fixedBtns, ...sectionBtns, ...tagBtns].map(b => {
+      const active = currentFilter === b.id;
+      const baseInactive = b.isTag
+        ? 'font-semibold bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200/70 dark:border-brand-800/70'
+        : 'font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300';
+      return `<button onclick="setFilter('${escapeAttr(b.id)}')" data-filter="${escapeAttr(b.id)}" class="filter-btn px-2.5 py-1 rounded-full text-xs ${active ? 'font-bold bg-warm-900 dark:bg-brand-500 text-white' : baseInactive}">${b.label}</button>`;
+    }).join('');
+  }
+
+  const cfgFilterBar = document.getElementById('config-filters-bar');
+  if (cfgFilterBar) {
+    const allBtn = { id: 'all', label: 'Wszystkie' };
+    const secBtns = taskSections.map(s => ({ id: s.id, label: `${s.icon || '📌'} ${s.name}` }));
+    cfgFilterBar.innerHTML = [allBtn, ...secBtns].map(b => {
+      const active = configFilter === b.id;
+      return `<button onclick="setConfigFilter('${escapeAttr(b.id)}')" data-cfilter="${escapeAttr(b.id)}" class="cfilter-btn px-3 py-1 rounded-full text-xs ${active ? 'font-bold bg-warm-900 dark:bg-brand-500 text-white' : 'font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300'}">${b.label}</button>`;
+    }).join('');
+  }
+
+  const secManager = document.getElementById('sections-manager-list');
+  if (secManager) {
+    secManager.innerHTML = taskSections.map(s => `
+      <div class="inline-flex items-center gap-1.5 bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-xl px-2.5 py-1.5 shadow-2xs">
+        <input type="text" value="${escapeAttr(s.icon || '📌')}" maxlength="4" onchange="updateSectionField('${s.id}', 'icon', this.value)"
+          title="Zmień ikonkę" class="w-7 text-center bg-transparent text-sm focus:outline-none" />
+        <input type="text" value="${escapeAttr(s.name)}" onchange="updateSectionField('${s.id}', 'name', this.value)"
+          title="Edytuj nazwę" class="w-36 sm:w-44 text-xs font-bold text-warm-900 dark:text-white bg-transparent border-b border-transparent focus:border-brand-400 focus:outline-none" />
+        ${taskSections.length > 1 ? `<button onclick="deleteSection('${s.id}')" title="Usuń" class="text-stone-400 hover:text-red-500 text-xs font-bold px-1">✕</button>` : ''}
+      </div>
+    `).join('');
+  }
+}
+
+window.updateSectionField = async (id, field, value) => {
+  const clean = value.trim();
+  if (!clean) return;
+  await updateDoc(doc(db, "taskSections", id), { [field]: clean });
+};
+
+window.deleteSection = async (id) => {
+  if (taskSections.length <= 1) return alert("Musi zostać przynajmniej jedna grupa.");
+  if (!confirm("Usunąć tę grupę? Zadania z niej zostaną przeniesione do pierwszej dostępnej.")) return;
+  const fallbackId = taskSections.find(s => s.id !== id).id;
+  for (const tpl of taskTemplates.filter(t => resolveSectionId(t.category) === id)) {
+    await updateDoc(doc(db, "taskTemplates", tpl.id), { category: fallbackId });
+  }
+  for (const task of allTasks.filter(t => resolveSectionId(t.category) === id)) {
+    await updateDoc(doc(db, "tasks", task.id), { category: fallbackId });
+  }
+  if (currentFilter === id) currentFilter = 'all';
+  if (configFilter === id) configFilter = 'all';
+  await deleteDoc(doc(db, "taskSections", id));
+};
+
+document.getElementById('new-section-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const icon = document.getElementById('new-sec-icon').value.trim() || '📌';
+  const name = document.getElementById('new-sec-name').value.trim();
+  if (!name) return;
+  await addDoc(collection(db, "taskSections"), {
+    secret: homeSecret,
+    icon,
+    name,
+    order: taskSections.length
+  });
+  document.getElementById('new-sec-name').value = '';
+});
+
+// AUTORYZACJA
+const authScreen = document.getElementById('auth-screen');
+const appContainer = document.getElementById('app-container');
+const authForm = document.getElementById('auth-form');
+
+if (authForm) {
+  authForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = document.getElementById('secret-input').value.trim();
+    if (!val) return;
+    homeSecret = val;
+    localStorage.setItem('home_planner_secret', homeSecret);
+    document.getElementById('auth-error')?.classList.add('hidden');
+    startApp();
+  });
+}
+
+window.logout = () => {
+  localStorage.removeItem('home_planner_secret');
+  location.reload();
+};
+
+function startApp() {
+  authScreen?.classList.add('hidden');
+  appContainer?.classList.remove('hidden');
+  updateUserProfileUI();
+  syncDateInputs(selectedDateStr);
+  renderCalendar();
+  renderPersonalFocusCard();
+  subscribeFirestore();
+}
+
+function syncDateInputs(dateStr) {
+  const tDate = document.getElementById('task-date');
+  const sDate = document.getElementById('na-start-date');
+  const eDate = document.getElementById('na-end-date');
+  if (tDate) tDate.value = dateStr;
+  if (sDate) sDate.value = dateStr;
+  if (eDate) eDate.value = dateStr;
+}
+
 window.selectNowTime = (timeLabel) => {
   selectedNowTime = timeLabel;
   document.querySelectorAll('.now-time-btn').forEach(btn => {
@@ -87,7 +286,6 @@ window.selectNowTime = (timeLabel) => {
   });
 };
 
-// PRZEŁĄCZANIE AKTYWNEGO PROFILU
 window.switchActiveUser = (user) => {
   activeUser = user;
   localStorage.setItem('home_planner_active_user', user);
@@ -100,7 +298,7 @@ function updateUserProfileUI() {
   const rBtn = document.getElementById('user-pill-Róża');
   if (!pBtn || !rBtn) return;
 
-  if (activeUser === 'Przemo') {
+  if (isPrzemek(activeUser)) {
     pBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1 bg-sky-600 text-white shadow-xs';
     rBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1 text-stone-600 dark:text-stone-300 hover:bg-white/60 dark:hover:bg-warm-700';
   } else {
@@ -109,7 +307,6 @@ function updateUserProfileUI() {
   }
 }
 
-// SPERSONALIZOWANA KARTA SUGESTII "NA TERAZ"
 function renderPersonalFocusCard() {
   const card = document.getElementById('personal-focus-card');
   const iconEl = document.getElementById('personal-focus-icon');
@@ -118,24 +315,28 @@ function renderPersonalFocusCard() {
   const listEl = document.getElementById('personal-focus-list');
   if (!card || !listEl) return;
 
-  const isPrzemo = activeUser === 'Przemo';
+  const isPrzemo = isPrzemek(activeUser);
+  const displayName = displayPersonName(activeUser);
   const today = new Date();
   const todayStr = formatDate(today);
   const dayOfWeek = today.getDay();
-  const todayBlocks = getBlocksForDate(todayStr).filter(b => b.who === activeUser || b.who === 'Oboje');
+  const todayBlocks = getBlocksForDate(todayStr).filter(b => (isPrzemo ? isPrzemek(b.who) : b.who === 'Róża') || b.who === 'Oboje');
 
   card.className = isPrzemo
     ? 'rounded-2xl border p-4 transition-all bg-sky-50/70 dark:bg-sky-950/30 border-sky-200/80 dark:border-sky-900/60'
     : 'rounded-2xl border p-4 transition-all bg-rose-50/70 dark:bg-rose-950/30 border-rose-200/80 dark:border-rose-900/60';
   iconEl.textContent = isPrzemo ? '🧔' : '👩';
-  titleEl.textContent = `Mam chwilę teraz — co wybrać? (${activeUser})`;
+  titleEl.textContent = `Mam chwilę teraz — co wybrać? (${displayName})`;
 
-  if (dayOfWeek === 3) subEl.textContent = 'Dziś środa — po pracy macie wolne od domowych obowiązków!';
+  if (dayOfWeek === 3) subEl.textContent = isPrzemo
+    ? 'Dziś środa — po pracy tylko coś lekkiego i szybkiego z głowy (bez ciężkich robót)!'
+    : 'Dziś środa — po pracy luźniejszy wieczór (tylko drobiazgi albo odpoczynek).';
   else if (!isPrzemo && (dayOfWeek === 2 || dayOfWeek === 5)) subEl.textContent = 'Dziś masz wolny/zdalny dzień — dobry moment na lekkie rzeczy lub e-booka.';
   else subEl.textContent = 'Wybierz ile masz teraz minut i kliknij „✨ Dobierz na teraz”';
 
-  if (personalAiCache[activeUser]) {
-    listEl.innerHTML = personalAiCache[activeUser].map(tip => `
+  const cacheKey = isPrzemo ? 'Przemo' : 'Róża';
+  if (personalAiCache[cacheKey]) {
+    listEl.innerHTML = personalAiCache[cacheKey].map(tip => `
       <div class="bg-white/90 dark:bg-warm-900/80 border border-warm-200/80 dark:border-warm-700 rounded-xl p-3 space-y-1">
         <div class="text-[10px] font-extrabold uppercase tracking-wider text-brand-600 dark:text-brand-400">${tip.badge || `⏱️ ${selectedNowTime}`}</div>
         <div class="font-bold text-warm-900 dark:text-white">${tip.title}</div>
@@ -147,8 +348,8 @@ function renderPersonalFocusCard() {
 
   const openTasks = allTasks.filter(t => !t.completed);
   const myTasks = openTasks
-    .filter(t => t.assignee === activeUser || t.assignee === 'Wspólne' || !t.assignee || t.assignee === 'Nieprzypisane')
-    .sort((a, b) => (b.starred ? 1 : 0) - (a.starred ? 1 : 0) || (a.assignee === activeUser ? -1 : 1));
+    .filter(t => (isPrzemo ? isPrzemek(t.assignee) : t.assignee === 'Róża') || t.assignee === 'Wspólne' || !t.assignee || t.assignee === 'Nieprzypisane')
+    .sort((a, b) => (b.starred ? 1 : 0) - (a.starred ? 1 : 0) || ((isPrzemo ? isPrzemek(a.assignee) : a.assignee === 'Róża') ? -1 : 1));
 
   const suggestions = [];
   if (todayBlocks.length > 0) {
@@ -160,9 +361,11 @@ function renderPersonalFocusCard() {
     });
   } else if (dayOfWeek === 3) {
     suggestions.push({
-      badge: '🌿 Środa po pracy',
-      title: 'Wieczór wolny od obowiązków',
-      desc: 'Po pracy odpoczywacie — sprzątanie zostaw na inne dni.'
+      badge: '🌿 Środa po pracy • Lekki tryb',
+      title: isPrzemo ? 'Tylko szybki drobiazg z głowy (10–15 min)' : 'Luźny wieczór po pracy',
+      desc: isPrzemo
+        ? 'Bez wielkiego sprzątania i auta — wybierz 1 szybką rzecz (np. śmieci, rośliny, zęby Czosnka) i masz wolne.'
+        : 'Odpocznij po pracy — grubsze rzeczy zostaw na wolniejszy dzień.'
     });
   }
 
@@ -176,10 +379,11 @@ function renderPersonalFocusCard() {
 
   for (const task of myTasks) {
     if (suggestions.length >= 3) break;
+    const sec = getSectionMeta(task.category);
     suggestions.push({
       badge: `${task.starred ? '⭐ ' : ''}${task.coop === 'together' ? '👫 Razem' : '👤 Solo'}`,
       title: task.title,
-      desc: `${task.category}${task.desc ? ` — ${task.desc}` : ''}`
+      desc: `${sec.name}${task.desc ? ` — ${task.desc}` : ''}`
     });
   }
 
@@ -192,7 +396,6 @@ function renderPersonalFocusCard() {
   `).join('');
 }
 
-// SZYBKIE AI "NA TERAZ" (ZWIĘZŁY PROMPT = SZYBKA ODPOWIEDŹ)
 window.generatePersonalAiTips = async () => {
   const apiKey = localStorage.getItem('gemini_api_key');
   if (!apiKey) return openSettingsModal();
@@ -202,16 +405,25 @@ window.generatePersonalAiTips = async () => {
   btn.innerHTML = '⏳...';
   btn.disabled = true;
 
+  const isPrzemo = isPrzemek(activeUser);
+  const displayName = displayPersonName(activeUser);
   const todayStr = formatDate(new Date());
-  const openTasks = allTasks.filter(t => !t.completed).slice(0, 22).map(t =>
-    `${t.title} (${t.category}, ${t.coop === 'together' ? 'RAZEM' : 'SOLO'}, ${t.assignee || '?'}${t.remoteOk ? ', poza domem' : ''})`
-  ).join('; ') || 'brak';
+  const openTasks = allTasks.filter(t => !t.completed).slice(0, 22).map(t => {
+    const tagsStr = Array.isArray(t.tags) && t.tags.length > 0 ? `, tagi: #${t.tags.join(' #')}` : '';
+    return `${t.title} (${getSectionMeta(t.category).name}, ${t.coop === 'together' ? 'RAZEM' : 'SOLO'}, ${displayPersonName(t.assignee)}${t.remoteOk ? ', poza domem' : ''}${tagsStr})`;
+  }).join('; ') || 'brak';
 
-  const myProfile = activeUser === 'Przemo' ? userProfiles.przemo : userProfiles.roza;
-  const myBlocks = getBlocksForDate(todayStr).map(b => `${b.who}:${b.mode} ${b.startTime}-${b.endTime}`).join(', ') || 'brak';
+  const myProfile = isPrzemo ? userProfiles.przemo : userProfiles.roza;
+  const myBlocks = getBlocksForDate(todayStr).map(b => `${displayPersonName(b.who)}:${b.mode} ${b.startTime}-${b.endTime}`).join(', ') || 'brak';
 
-  const prompt = `Osoba: ${activeUser}. Czas teraz: ${selectedNowTime}. Dziś: ${todayStr} (${new Date().toLocaleDateString('pl-PL', { weekday: 'long' })}).
+  const isWedNow = new Date().getDay() === 3;
+  const wedRule = isWedNow
+    ? `WAŻNE: Dziś jest ŚRODA po pracy — ${displayName} chce mieć luźny wieczór! Proponuj WYŁĄCZNIE lekkie, szybkie zadania "z głowy" (max 10-20 min, ZERO ciężkiego sprzątania, podłóg, auta czy piekarnika).`
+    : `W dni inne niż środa po pracy możesz normalnie dobierać zadania pasujące do ${selectedNowTime}.`;
+
+  const prompt = `Osoba: ${displayName}. Czas teraz: ${selectedNowTime}. Dziś: ${todayStr} (${new Date().toLocaleDateString('pl-PL', { weekday: 'long' })}).
 Grafik: ${myProfile}. Blokady dziś: ${myBlocks}.
+${wedRule}
 Zadania: ${openTasks}.
 Dobierz 3 zadania na ${selectedNowTime}. Zwróć TYLKO JSON bez markdowna:
 [{"badge":"⏱️ ${selectedNowTime} • 👤 Solo/👫 Razem","title":"krótka nazwa","desc":"1 zdanie dlaczego teraz"}]`;
@@ -229,7 +441,7 @@ Dobierz 3 zadania na ${selectedNowTime}. Zwróć TYLKO JSON bez markdowna:
     const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
     const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
     if (Array.isArray(parsed) && parsed.length > 0) {
-      personalAiCache[activeUser] = parsed.slice(0, 3);
+      personalAiCache[isPrzemo ? 'Przemo' : 'Róża'] = parsed.slice(0, 3);
       renderPersonalFocusCard();
     }
   } catch (e) {
@@ -239,41 +451,6 @@ Dobierz 3 zadania na ${selectedNowTime}. Zwróć TYLKO JSON bez markdowna:
     btn.disabled = false;
   }
 };
-
-// AUTORYZACJA
-const authScreen = document.getElementById('auth-screen');
-const appContainer = document.getElementById('app-container');
-if (homeSecret) startApp();
-
-document.getElementById('auth-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const val = document.getElementById('secret-input').value.trim();
-  if (!val) return;
-  homeSecret = val;
-  localStorage.setItem('home_planner_secret', homeSecret);
-  startApp();
-});
-
-window.logout = () => {
-  localStorage.removeItem('home_planner_secret');
-  location.reload();
-};
-
-function startApp() {
-  authScreen.classList.add('hidden');
-  appContainer.classList.remove('hidden');
-  updateUserProfileUI();
-  syncDateInputs(selectedDateStr);
-  renderCalendar();
-  renderPersonalFocusCard();
-  subscribeFirestore();
-}
-
-function syncDateInputs(dateStr) {
-  document.getElementById('task-date').value = dateStr;
-  document.getElementById('na-start-date').value = dateStr;
-  document.getElementById('na-end-date').value = dateStr;
-}
 
 function getTargetDatesForFreq(year, month, freq) {
   const monthKey = getMonthKey(year, month);
@@ -299,9 +476,11 @@ function getTargetDatesForFreq(year, month, freq) {
 async function insertTemplateInstancesIntoMonth(tpl, year, month) {
   const monthKey = getMonthKey(year, month);
   const freq = Number(tpl.freq || 1);
-  const assignee = tpl.assignee || 'Nieprzypisane';
+  const assignee = tpl.assignee || 'Przemo';
   const isDailyHabit = freq >= 30;
   const dates = getTargetDatesForFreq(year, month, freq);
+  const resolvedCat = resolveSectionId(tpl.category);
+  const tags = Array.isArray(tpl.tags) ? tpl.tags : [];
 
   for (let idx = 0; idx < dates.length; idx++) {
     await addDoc(collection(db, "tasks"), {
@@ -310,7 +489,8 @@ async function insertTemplateInstancesIntoMonth(tpl, year, month) {
       desc: tpl.desc || '',
       assignee,
       coop: tpl.coop || 'solo',
-      category: tpl.category,
+      category: resolvedCat,
+      tags,
       date: dates[idx],
       recurrence: isDailyHabit ? 'daily' : (freq > 1 ? 'recurring' : 'monthly'),
       isDailyHabit,
@@ -328,10 +508,35 @@ function subscribeFirestore() {
   if (unsubNa) unsubNa();
   if (unsubTemplates) unsubTemplates();
   if (unsubProfiles) unsubProfiles();
+  if (unsubSections) unsubSections();
 
   const monthKey = getMonthKey(currentYear, currentMonth);
   const testBadge = document.getElementById('test-month-badge');
   if (testBadge) testBadge.classList.toggle('hidden', !isTestMonth(currentYear, currentMonth));
+
+  const qSec = query(collection(db, "taskSections"), where("secret", "==", homeSecret));
+  unsubSections = onSnapshot(qSec, async (snapshot) => {
+    if (snapshot.empty && !seededSectionsOnce) {
+      seededSectionsOnce = true;
+      for (const sec of DEFAULT_SECTIONS) {
+        await addDoc(collection(db, "taskSections"), {
+          secret: homeSecret,
+          codeId: sec.id,
+          icon: sec.icon,
+          name: sec.name,
+          order: sec.order
+        });
+      }
+      return;
+    }
+    taskSections = snapshot.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+
+    renderDynamicSectionControls();
+    renderConfigTemplates();
+    renderTasks();
+  });
 
   const profileDocRef = doc(db, "homeSettings", `profiles_${homeSecret}`);
   unsubProfiles = onSnapshot(profileDocRef, async (snap) => {
@@ -351,20 +556,23 @@ function subscribeFirestore() {
   const qTasks = query(collection(db, "tasks"), where("secret", "==", homeSecret), where("monthKey", "==", monthKey));
   unsubTasks = onSnapshot(qTasks, (snapshot) => {
     allTasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderDynamicSectionControls();
     renderTasks();
     renderStats();
     renderCalendar();
     renderPersonalFocusCard();
-  }, () => {
-    document.getElementById('auth-error').classList.remove('hidden');
-    authScreen.classList.remove('hidden');
-    appContainer.classList.add('hidden');
+  }, (err) => {
+    console.error("Firestore auth error:", err);
+    document.getElementById('auth-error')?.classList.remove('hidden');
+    authScreen?.classList.remove('hidden');
+    appContainer?.classList.add('hidden');
   });
 
   const qNa = query(collection(db, "naBlocks"), where("secret", "==", homeSecret));
   unsubNa = onSnapshot(qNa, (snapshot) => {
     naBlocks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    document.getElementById('na-total-count').textContent = naBlocks.length;
+    const naCount = document.getElementById('na-total-count');
+    if (naCount) naCount.textContent = naBlocks.length;
     renderCalendar();
     updateSelectedDayPanel();
     renderNaManagerList();
@@ -376,7 +584,7 @@ function subscribeFirestore() {
     if (snapshot.empty && !seededTemplatesOnce) {
       seededTemplatesOnce = true;
       for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
-        const tplData = { secret: homeSecret, order: i, ...DEFAULT_MONTHLY_TASKS[i] };
+        const tplData = { secret: homeSecret, order: i, ...DEFAULT_MONTHLY_TASKS[i], tags: [] };
         await addDoc(collection(db, "taskTemplates"), tplData);
         await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
       }
@@ -385,6 +593,7 @@ function subscribeFirestore() {
     taskTemplates = snapshot.docs
       .map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+    renderDynamicSectionControls();
     renderConfigTemplates();
   });
 }
@@ -414,7 +623,7 @@ window.toggleNaForm = () => {
   handleNaRepeatChange();
 };
 
-document.getElementById('na-form').addEventListener('submit', async (e) => {
+document.getElementById('na-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const who = document.getElementById('na-who').value;
   const mode = document.getElementById('na-mode').value;
@@ -463,7 +672,7 @@ function renderNaManagerList() {
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex flex-wrap items-center gap-2">
             <select onchange="updateNaBlockField('${b.id}', 'who', this.value)" class="px-2.5 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-bold">
-              <option value="Przemo" ${b.who === 'Przemo' ? 'selected' : ''}>🧔 Przemo</option>
+              <option value="Przemo" ${isPrzemek(b.who) ? 'selected' : ''}>🧔 Przemek</option>
               <option value="Róża" ${b.who === 'Róża' ? 'selected' : ''}>👩 Róża</option>
               <option value="Oboje" ${b.who === 'Oboje' ? 'selected' : ''}>👫 Oboje</option>
             </select>
@@ -484,17 +693,18 @@ function renderNaManagerList() {
           <input type="time" value="${b.startTime}" onchange="updateNaBlockField('${b.id}', 'startTime', this.value)" class="px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
           ${repeat === 'once' ? `<input type="date" value="${b.endDate || b.startDate}" onchange="updateNaBlockField('${b.id}', 'endDate', this.value)" class="px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />` : `<span class="text-[11px] text-emerald-600 font-semibold">Co ${repeat === 'weekly' ? '7' : '14'} dni</span>`}
           <input type="time" value="${b.endTime}" onchange="updateNaBlockField('${b.id}', 'endTime', this.value)" class="px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
-          <input type="text" value="${(b.note || '').replace(/"/g, '&quot;')}" placeholder="Opis" onchange="updateNaBlockField('${b.id}', 'note', this.value)" class="col-span-2 sm:col-span-1 px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
+          <input type="text" value="${escapeAttr(b.note)}" placeholder="Opis" onchange="updateNaBlockField('${b.id}', 'note', this.value)" class="col-span-2 sm:col-span-1 px-2 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
         </div>
       </div>
     `;
   }).join('');
 }
 
-// KONFIGURACJA BAZY ZADAŃ (POGRUPOWANA NA 5 WYRAŹNYCH SEKCJI)
+// KONFIGURACJA BAZY ZADAŃ (BEZ TYTUŁÓW "SEKCJA X:", BEZPOŚREDNIA EDYCJA NAGŁÓWKÓW + WŁASNE TAGI)
 window.openConfigScreen = () => {
   document.getElementById('dashboard-view').classList.add('hidden');
   document.getElementById('config-view').classList.remove('hidden');
+  renderDynamicSectionControls();
   renderConfigTemplates();
 };
 
@@ -505,12 +715,46 @@ window.closeConfigScreen = () => {
 
 window.setConfigFilter = (f) => {
   configFilter = f;
-  document.querySelectorAll('.cfilter-btn').forEach(btn => {
-    btn.className = btn.dataset.cfilter === f
-      ? 'cfilter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white'
-      : 'cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300';
-  });
+  renderDynamicSectionControls();
   renderConfigTemplates();
+};
+
+function renderTagsPillsHtml(collectionName, itemId, tags) {
+  const safeTags = Array.isArray(tags) ? tags : [];
+  const pills = safeTags.map(tag => `
+    <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-100/80 dark:bg-brand-950 text-brand-800 dark:text-brand-300 border border-brand-200/70 dark:border-brand-800/70">
+      #${tag}
+      <button type="button" onclick="removeItemTag('${collectionName}', '${itemId}', '${escapeAttr(tag)}')" class="hover:text-red-500 font-extrabold">×</button>
+    </span>
+  `).join('');
+
+  return `
+    <div class="flex flex-wrap items-center gap-1 mt-1.5">
+      ${pills}
+      <input type="text" placeholder="+ tag (Enter)"
+        onkeydown="if(event.key==='Enter'){event.preventDefault(); addItemTag('${collectionName}', '${itemId}', this.value); this.value='';}"
+        onblur="if(this.value.trim()){addItemTag('${collectionName}', '${itemId}', this.value); this.value='';}"
+        class="w-24 text-[10px] px-2 py-0.5 rounded-full border border-dashed border-warm-300 dark:border-warm-700 bg-transparent text-stone-600 dark:text-stone-300 focus:outline-none focus:border-brand-400" />
+    </div>
+  `;
+}
+
+window.addItemTag = async (collectionName, id, rawInput) => {
+  const newTags = parseTagsInput(rawInput);
+  if (newTags.length === 0) return;
+  const list = collectionName === 'taskTemplates' ? taskTemplates : allTasks;
+  const item = list.find(x => x.id === id);
+  const existing = Array.isArray(item?.tags) ? item.tags : [];
+  const merged = [...new Set([...existing, ...newTags])];
+  await updateDoc(doc(db, collectionName, id), { tags: merged });
+};
+
+window.removeItemTag = async (collectionName, id, tagToRemove) => {
+  const list = collectionName === 'taskTemplates' ? taskTemplates : allTasks;
+  const item = list.find(x => x.id === id);
+  const existing = Array.isArray(item?.tags) ? item.tags : [];
+  const filtered = existing.filter(t => t !== tagToRemove);
+  await updateDoc(doc(db, collectionName, id), { tags: filtered });
 };
 
 function renderTemplateRow(t) {
@@ -523,21 +767,18 @@ function renderTemplateRow(t) {
         <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="updateTemplateField('${t.id}', 'enabled', this.checked)"
           class="mt-1 w-4 h-4 accent-brand-500 rounded cursor-pointer" />
         <div class="flex-1 min-w-0">
-          <input type="text" value="${t.title.replace(/"/g, '&quot;')}" onchange="updateTemplateField('${t.id}', 'title', this.value)"
+          <input type="text" value="${escapeAttr(t.title)}" onchange="updateTemplateField('${t.id}', 'title', this.value)"
             class="w-full font-bold text-sm text-warm-900 dark:text-white bg-transparent border-b border-transparent focus:border-brand-400 focus:outline-none" />
-          <input type="text" value="${(t.desc || '').replace(/"/g, '&quot;')}" placeholder="Opis..." onchange="updateTemplateField('${t.id}', 'desc', this.value)"
+          <input type="text" value="${escapeAttr(t.desc)}" placeholder="Opis..." onchange="updateTemplateField('${t.id}', 'desc', this.value)"
             class="w-full text-xs text-stone-500 dark:text-stone-400 bg-transparent border-b border-transparent focus:border-brand-400 focus:outline-none" />
+          ${renderTagsPillsHtml('taskTemplates', t.id, t.tags)}
         </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-1.5 shrink-0">
         <select onchange="updateTemplateField('${t.id}', 'category', this.value)"
           class="px-2 py-1 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-xs font-semibold">
-          <option value="Łazienka" ${t.category === 'Łazienka' ? 'selected' : ''}>🛁 Łazienka</option>
-          <option value="Czosnek" ${t.category === 'Czosnek' ? 'selected' : ''}>🐕 Czosnek</option>
-          <option value="Mieszkanie" ${t.category === 'Mieszkanie' ? 'selected' : ''}>🧹 Mieszkanie</option>
-          <option value="Rachunki i auto" ${t.category === 'Rachunki i auto' ? 'selected' : ''}>🚗 Auto/Zakupy</option>
-          <option value="Kuchnia" ${t.category === 'Kuchnia' ? 'selected' : ''}>🍳 Kuchnia</option>
+          ${buildSectionOptionsHtml(t.category)}
         </select>
 
         <select onchange="updateTemplateField('${t.id}', 'freq', Number(this.value))"
@@ -556,10 +797,10 @@ function renderTemplateRow(t) {
 
         <select onchange="updateTemplateField('${t.id}', 'assignee', this.value)"
           class="px-2 py-1 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-xs font-semibold">
-          <option value="Nieprzypisane" ${!t.assignee || t.assignee === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
-          <option value="Przemo" ${t.assignee === 'Przemo' ? 'selected' : ''}>🧔 Przemo</option>
+          <option value="Przemo" ${isPrzemek(t.assignee) ? 'selected' : ''}>🧔 Przemek</option>
           <option value="Róża" ${t.assignee === 'Róża' ? 'selected' : ''}>👩 Róża</option>
           <option value="Wspólne" ${t.assignee === 'Wspólne' ? 'selected' : ''}>👫 Wspólne</option>
+          <option value="Nieprzypisane" ${!t.assignee || t.assignee === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
         </select>
 
         <label class="flex items-center gap-1 text-[11px] px-1.5 py-1 rounded-xl border border-warm-200 dark:border-warm-700 cursor-pointer" title="Gwiazdka">
@@ -584,44 +825,42 @@ function renderConfigTemplates() {
   if (!container) return;
 
   const activeTemplates = taskTemplates.filter(t => t.enabled !== false);
-  summaryEl.textContent = `Aktywnych: ${activeTemplates.length} z ${taskTemplates.length}`;
+  if (summaryEl) summaryEl.textContent = `Aktywnych: ${activeTemplates.length} z ${taskTemplates.length}`;
 
   const sectionsToRender = configFilter === 'all'
-    ? SECTIONS_META
-    : SECTIONS_META.filter(s => s.id === configFilter);
+    ? taskSections
+    : taskSections.filter(s => s.id === configFilter);
 
-  const htmlBlocks = sectionsToRender.map(sec => {
-    const items = taskTemplates.filter(t => (t.category || 'Inne') === sec.id);
-    if (items.length === 0 && configFilter === 'all') return '';
+  const htmlBlocks = sectionsToRender.map((sec) => {
+    const items = taskTemplates.filter(t => resolveSectionId(t.category) === sec.id);
     return `
-      <div class="space-y-2 pt-3">
-        <div class="flex items-center justify-between px-1">
-          <h3 class="text-sm font-extrabold text-brand-700 dark:text-brand-400">${sec.label}</h3>
-          <span class="text-xs font-semibold text-stone-400">${items.length} zadań</span>
+      <div class="space-y-2 pt-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5 rounded-2xl bg-brand-50/70 dark:bg-brand-950/30 border border-brand-200/70 dark:border-brand-900/60">
+          <div class="flex items-center gap-2 flex-1 min-w-[220px]">
+            <input type="text" value="${escapeAttr(sec.icon || '📌')}" maxlength="4" onchange="updateSectionField('${sec.id}', 'icon', this.value)"
+              title="Kliknij, aby zmienić ikonę" class="w-8 text-center bg-white dark:bg-warm-800 rounded-lg py-0.5 text-sm border border-warm-200 dark:border-warm-700" />
+            <input type="text" value="${escapeAttr(sec.name)}" onchange="updateSectionField('${sec.id}', 'name', this.value)"
+              title="Kliknij, aby edytować nazwę" class="flex-1 text-sm font-extrabold text-brand-800 dark:text-brand-300 bg-transparent border-b border-transparent focus:border-brand-500 focus:outline-none px-1" />
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-stone-500 dark:text-stone-400">${items.length} zadań</span>
+            ${taskSections.length > 1 ? `<button onclick="deleteSection('${sec.id}')" title="Usuń" class="text-xs text-stone-400 hover:text-red-500 font-bold px-1.5 py-0.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40">🗑️ Usuń</button>` : ''}
+          </div>
         </div>
         <div class="space-y-2">
-          ${items.length > 0 ? items.map(renderTemplateRow).join('') : '<div class="text-xs text-stone-400 px-2">Brak zadań w tej sekcji.</div>'}
+          ${items.length > 0 ? items.map(renderTemplateRow).join('') : '<div class="text-xs text-stone-400 px-3 py-2.5 rounded-xl border border-dashed border-warm-200 dark:border-warm-800">Brak zadań — dodaj powyżej lub przenieś tutaj istniejące zadanie.</div>'}
         </div>
       </div>
     `;
   }).join('');
 
-  const knownIds = new Set(SECTIONS_META.map(s => s.id));
-  const otherItems = configFilter === 'all' ? taskTemplates.filter(t => !knownIds.has(t.category)) : [];
-  const otherBlock = otherItems.length > 0 ? `
-    <div class="space-y-2 pt-3">
-      <h3 class="text-sm font-extrabold text-stone-500">📌 Pozostałe</h3>
-      <div class="space-y-2">${otherItems.map(renderTemplateRow).join('')}</div>
-    </div>
-  ` : '';
-
-  container.innerHTML = (htmlBlocks + otherBlock) || `<div class="text-center text-stone-400 text-sm py-8">Brak zadań w bazie. Kliknij „Załaduj pełną listę 39 obowiązków”.</div>`;
+  container.innerHTML = htmlBlocks || `<div class="text-center text-stone-400 text-sm py-8">Brak grup. Dodaj pierwszą powyżej.</div>`;
 }
 
 window.updateTemplateField = async (id, field, value) => updateDoc(doc(db, "taskTemplates", id), { [field]: value });
 window.deleteTemplateItem = async (id) => deleteDoc(doc(db, "taskTemplates", id));
 
-document.getElementById('new-template-form').addEventListener('submit', async (e) => {
+document.getElementById('new-template-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const newTpl = {
     secret: homeSecret,
@@ -632,6 +871,7 @@ document.getElementById('new-template-form').addEventListener('submit', async (e
     freq: Number(document.getElementById('tpl-freq').value),
     coop: document.getElementById('tpl-coop').value,
     assignee: document.getElementById('tpl-assignee').value,
+    tags: parseTagsInput(document.getElementById('tpl-tags')?.value || ''),
     remoteOk: document.getElementById('tpl-remote').checked,
     starred: document.getElementById('tpl-starred').checked,
     enabled: true
@@ -639,18 +879,35 @@ document.getElementById('new-template-form').addEventListener('submit', async (e
   await addDoc(collection(db, "taskTemplates"), newTpl);
   await insertTemplateInstancesIntoMonth(newTpl, currentYear, currentMonth);
   e.target.reset();
+  renderDynamicSectionControls();
 });
 
 window.replaceWithFull39Tasks = async () => {
-  if (!confirm("Podmienić bazę na pełną listę 39 obowiązków w 5 sekcjach i wrzucić na ten miesiąc?")) return;
+  if (!confirm("Podmienić bazę na pełną listę 39 obowiązków (przypisanych do Przemka) i wrzucić na ten miesiąc?")) return;
   const oldTpls = await getDocs(query(collection(db, "taskTemplates"), where("secret", "==", homeSecret)));
   for (const d of oldTpls.docs) await deleteDoc(doc(db, "taskTemplates", d.id));
   for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
-    const tplData = { secret: homeSecret, order: i, ...DEFAULT_MONTHLY_TASKS[i] };
+    const raw = DEFAULT_MONTHLY_TASKS[i];
+    const tplData = { secret: homeSecret, order: i, ...raw, assignee: "Przemo", category: resolveSectionId(raw.category), tags: [] };
     await addDoc(collection(db, "taskTemplates"), tplData);
     await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
   }
   closeConfigScreen();
+};
+
+// MASOWE PRZYPISANIE WSZYSTKICH ZADAŃ W BAZIE I MIESIĄCU DO PRZEMKA
+window.assignAllTasksToPrzemek = async () => {
+  if (!confirm("Przypisać wszystkie obowiązki w bazie oraz otwarte zadania w tym miesiącu do konta Przemek?")) return;
+  for (const tpl of taskTemplates) {
+    if (!isPrzemek(tpl.assignee)) {
+      await updateDoc(doc(db, "taskTemplates", tpl.id), { assignee: "Przemo" });
+    }
+  }
+  for (const task of allTasks) {
+    if (!task.completed && !isPrzemek(task.assignee)) {
+      await updateDoc(doc(db, "tasks", task.id), { assignee: "Przemo" });
+    }
+  }
 };
 
 window.generateMonthFromConfig = async () => {
@@ -669,7 +926,7 @@ function renderStats() {
   document.getElementById('stat-total').textContent = `z ${total} zadań`;
   document.getElementById('stat-progress-bar').style.width = `${total === 0 ? 0 : Math.round((done / total) * 100)}%`;
 
-  document.getElementById('stat-przemo').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Przemo').length;
+  document.getElementById('stat-przemo').textContent = allTasks.filter(t => !t.completed && isPrzemek(t.assignee)).length;
   document.getElementById('stat-roza').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Róża').length;
   document.getElementById('stat-shared').textContent = allTasks.filter(t => !t.completed && (t.assignee === 'Wspólne' || t.assignee === 'Nieprzypisane' || !t.assignee)).length;
 
@@ -697,6 +954,7 @@ function renderCalendar() {
   document.getElementById('current-month-label').textContent = monthName;
 
   const grid = document.getElementById('calendar-grid');
+  if (!grid) return;
   grid.innerHTML = '';
 
   let firstDay = dateObj.getDay();
@@ -714,10 +972,10 @@ function renderCalendar() {
     const hasBusy = blocks.some(b => b.mode === 'busy');
     const hasAway = blocks.some(b => b.mode === 'away');
 
-    const dayTasks = allTasks.filter(t => t.date === dateStr && !t.isDailyHabit);
-    const openTasks = dayTasks.filter(t => !t.completed);
+    const openTasks = allTasks.filter(t => !t.completed && !t.isDailyHabit && t.date === dateStr);
+    const doneTasks = allTasks.filter(t => t.completed && (t.completedDate || t.date) === dateStr);
     const hasOverdueDay = openTasks.some(t => isTaskOverdue(t));
-    const przemoOpen = openTasks.filter(t => t.assignee === 'Przemo').length;
+    const przemoOpen = openTasks.filter(t => isPrzemek(t.assignee)).length;
     const rozaOpen = openTasks.filter(t => t.assignee === 'Róża').length;
     const sharedOpen = openTasks.filter(t => t.assignee === 'Wspólne').length;
     const unassignedOpen = openTasks.filter(t => !t.assignee || t.assignee === 'Nieprzypisane').length;
@@ -734,7 +992,7 @@ function renderCalendar() {
       const isRecurring = b.repeat && b.repeat !== 'once';
       const whoIcon = PERSON_ICON[b.who] || '👤';
       const color = isAway ? 'bg-amber-100 dark:bg-amber-900/70 text-amber-800 dark:text-amber-200'
-        : (b.who === 'Przemo' ? 'bg-sky-100 dark:bg-sky-900/70 text-sky-800 dark:text-sky-200'
+        : (isPrzemek(b.who) ? 'bg-sky-100 dark:bg-sky-900/70 text-sky-800 dark:text-sky-200'
         : (b.who === 'Róża' ? 'bg-rose-100 dark:bg-rose-900/70 text-rose-800 dark:text-rose-200' : 'bg-red-100 dark:bg-red-900/70 text-red-800 dark:text-red-200'));
       return `<div class="text-[9px] font-bold px-1 py-0.5 rounded ${color} truncate">${whoIcon}${isRecurring ? '↻' : (isAway ? '🏠' : '⛔')} ${b.startTime}</div>`;
     }).join('');
@@ -757,7 +1015,7 @@ function renderCalendar() {
         <div class="mt-1 space-y-0.5 w-full">
           ${naBadgesHtml}
           ${taskPills}
-          ${dayTasks.length > 0 && openTasks.length === 0 ? `<div class="text-[9px] font-semibold text-emerald-600">✓</div>` : ''}
+          ${doneTasks.length > 0 ? `<div class="text-[9px] font-bold bg-emerald-100 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-200 px-1 rounded truncate">✓ ${doneTasks.length} zrobione</div>` : ''}
         </div>
       </button>
     `;
@@ -774,29 +1032,48 @@ window.selectDay = (dateStr) => {
 function updateSelectedDayPanel() {
   const label = document.getElementById('selected-day-label');
   const list = document.getElementById('selected-day-na-list');
-  if (!selectedDateStr) return;
+  if (!selectedDateStr || !label || !list) return;
 
   const d = parseLocalDate(selectedDateStr);
   label.textContent = d.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) + (d.getDay() === 3 ? ' (🌿 wolne po pracy)' : '');
 
   const blocks = getBlocksForDate(selectedDateStr);
-  if (blocks.length === 0) {
-    list.innerHTML = `<div class="text-xs text-stone-400">Brak wpisanych blokad N/A ani wyjazdów w tym dniu.</div>`;
-    return;
+  const doneThatDay = allTasks.filter(t => t.completed && (t.completedDate || t.date) === selectedDateStr);
+
+  let html = '';
+  if (blocks.length > 0) {
+    html += blocks.map(b => {
+      const isAway = b.mode === 'away';
+      return `
+        <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs border ${isAway ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 text-amber-900 dark:text-amber-200' : 'bg-red-50 dark:bg-red-950/50 border-red-200 text-red-900 dark:text-red-200'}">
+          <div>
+            <span class="font-bold">${PERSON_ICON[b.who] || '👤'} ${displayPersonName(b.who)} • ${isAway ? '🏠 Poza domem' : '⛔ N/A'} (${b.startTime}–${b.endTime})</span>
+            ${b.note ? `<span class="block text-[11px] opacity-75">${b.note}</span>` : ''}
+          </div>
+          <button onclick="deleteNaBlock('${b.id}')" class="px-1.5 py-0.5 rounded hover:bg-black/10 font-bold">✕</button>
+        </div>
+      `;
+    }).join('');
   }
 
-  list.innerHTML = blocks.map(b => {
-    const isAway = b.mode === 'away';
-    return `
-      <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs border ${isAway ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 text-amber-900 dark:text-amber-200' : 'bg-red-50 dark:bg-red-950/50 border-red-200 text-red-900 dark:text-red-200'}">
-        <div>
-          <span class="font-bold">${PERSON_ICON[b.who] || '👤'} ${b.who} • ${isAway ? '🏠 Poza domem' : '⛔ N/A'} (${b.startTime}–${b.endTime})</span>
-          ${b.note ? `<span class="block text-[11px] opacity-75">${b.note}</span>` : ''}
-        </div>
-        <button onclick="deleteNaBlock('${b.id}')" class="px-1.5 py-0.5 rounded hover:bg-black/10 font-bold">✕</button>
+  if (doneThatDay.length > 0) {
+    html += `
+      <div class="pt-1.5 space-y-1">
+        <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">✅ Wykonane tego dnia (${doneThatDay.length}):</div>
+        ${doneThatDay.map(t => {
+          const sec = getSectionMeta(t.category);
+          return `
+            <div class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 text-emerald-950 dark:text-emerald-200">
+              <span class="font-semibold truncate">${sec.icon} ${t.title}</span>
+              <span class="text-[10px] font-bold shrink-0">${PERSON_ICON[t.assignee] || ''} ${displayPersonName(t.assignee)}</span>
+            </div>
+          `;
+        }).join('')}
       </div>
     `;
-  }).join('');
+  }
+
+  list.innerHTML = html || `<div class="text-xs text-stone-400">Brak blokad N/A ani wykonanych zadań w tym dniu.</div>`;
 }
 
 window.changeMonth = (delta) => {
@@ -809,26 +1086,41 @@ window.changeMonth = (delta) => {
 // LISTA ZADAŃ W MIESIĄCU
 function renderTasks() {
   const list = document.getElementById('tasks-list');
+  if (!list) return;
   let filtered = [...allTasks];
 
   if (currentFilter !== 'all') {
-    filtered = currentFilter === 'together'
-      ? filtered.filter(t => t.coop === 'together')
-      : filtered.filter(t => (t.assignee || 'Nieprzypisane') === currentFilter || t.category === currentFilter);
+    if (currentFilter === 'together') {
+      filtered = filtered.filter(t => t.coop === 'together');
+    } else if (isPrzemek(currentFilter)) {
+      filtered = filtered.filter(t => isPrzemek(t.assignee));
+    } else if (currentFilter.startsWith('tag:')) {
+      const targetTag = currentFilter.slice(4);
+      filtered = filtered.filter(t => Array.isArray(t.tags) && t.tags.includes(targetTag));
+    } else {
+      filtered = filtered.filter(t => (t.assignee || 'Nieprzypisane') === currentFilter || resolveSectionId(t.category) === currentFilter);
+    }
   }
 
-  filtered.sort((a, b) => Number(a.completed) - Number(b.completed) || (b.starred ? 1 : 0) - (a.starred ? 1 : 0) || (a.date || '').localeCompare(b.date || ''));
+  filtered.sort((a, b) => {
+    if (Number(a.completed) !== Number(b.completed)) return Number(a.completed) - Number(b.completed);
+    if (Boolean(a.isDailyHabit) !== Boolean(b.isDailyHabit)) return a.isDailyHabit ? 1 : -1;
+    const dateCmp = (a.date || '9999-12-31').localeCompare(b.date || '9999-12-31');
+    if (dateCmp !== 0) return dateCmp;
+    return (b.starred ? 1 : 0) - (a.starred ? 1 : 0);
+  });
 
   if (filtered.length === 0) {
     list.innerHTML = `<div class="text-center text-stone-400 text-sm py-10 bg-warm-50 dark:bg-warm-800/40 rounded-2xl border border-dashed border-warm-200 dark:border-warm-700">
-      Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań (39)”</strong> na górze.
+      Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań”</strong> na górze.
     </div>`;
     return;
   }
 
   list.innerHTML = filtered.map(task => {
-    const who = task.assignee || 'Nieprzypisane';
+    const who = task.assignee || 'Przemo';
     const coop = task.coop || 'solo';
+    const sec = getSectionMeta(task.category);
     const overdue = isTaskOverdue(task);
 
     let cardStyle = 'bg-white dark:bg-warm-800/60 border-warm-200 dark:border-warm-700 hover:border-brand-300';
@@ -842,25 +1134,32 @@ function renderTasks() {
           class="mt-1 w-5 h-5 accent-brand-500 rounded cursor-pointer" />
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-xs">${CAT_ICON[task.category] || '📌'}</span>
+            <span class="text-xs">${sec.icon}</span>
             <span class="font-bold text-sm ${overdue ? 'text-red-900 dark:text-red-200' : 'text-warm-900 dark:text-white'} ${task.completed ? 'line-through text-stone-400' : ''}">${task.title}</span>
             ${overdue ? `<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-red-600 text-white">⚠️ Zaległe</span>` : ''}
           </div>
           ${task.desc ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${task.desc}</p>` : ''}
+          ${renderTagsPillsHtml('tasks', task.id, task.tags)}
           <div class="flex items-center gap-1.5 mt-2 flex-wrap">
-            <select onchange="reassignTask('${task.id}', this.value)"
+            <select onchange="changeTaskCategory('${task.id}', this.value)" title="Zmień grupę zadania"
               class="text-[11px] font-bold px-2 py-0.5 rounded-md border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 cursor-pointer">
-              <option value="Nieprzypisane" ${who === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
-              <option value="Przemo" ${who === 'Przemo' ? 'selected' : ''}>🧔 Przemo</option>
+              ${buildSectionOptionsHtml(task.category)}
+            </select>
+            <select onchange="reassignTask('${task.id}', this.value)" title="Zmień osobę"
+              class="text-[11px] font-bold px-2 py-0.5 rounded-md border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 cursor-pointer">
+              <option value="Przemo" ${isPrzemek(who) ? 'selected' : ''}>🧔 Przemek</option>
               <option value="Róża" ${who === 'Róża' ? 'selected' : ''}>👩 Róża</option>
               <option value="Wspólne" ${who === 'Wspólne' ? 'selected' : ''}>👫 Wspólne</option>
+              <option value="Nieprzypisane" ${who === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
             </select>
             <button onclick="toggleTaskCoop('${task.id}', '${coop === 'together' ? 'solo' : 'together'}')"
               class="text-[10px] font-bold px-2 py-0.5 rounded-md border transition ${coop === 'together' ? 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-200 border-purple-200' : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200'}">
               ${coop === 'together' ? '👫 Razem' : '👤 Solo'}
             </button>
-            ${task.isDailyHabit ? `<span class="text-[10px] bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-semibold">↻ Codziennie</span>`
-              : (task.date ? `<span class="text-[11px] text-stone-500 dark:text-stone-400 font-medium">📅 ${task.date}</span>` : '')}
+            ${task.completed && (task.completedDate || task.date)
+              ? `<span class="text-[10px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold">✓ Zrobione: ${task.completedDate || task.date}</span>`
+              : (task.isDailyHabit ? `<span class="text-[10px] bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-semibold">↻ Codziennie</span>`
+              : (task.date ? `<span class="text-[11px] text-stone-500 dark:text-stone-400 font-medium">📅 ${task.date}</span>` : ''))}
             ${task.remoteOk ? `<span class="text-[10px] bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-semibold">🌍 Poza domem</span>` : ''}
           </div>
         </div>
@@ -870,24 +1169,36 @@ function renderTasks() {
   }).join('');
 }
 
+window.changeTaskCategory = async (id, category) => updateDoc(doc(db, "tasks", id), { category });
 window.reassignTask = async (id, assignee) => updateDoc(doc(db, "tasks", id), { assignee });
 window.toggleTaskCoop = async (id, coop) => updateDoc(doc(db, "tasks", id), { coop });
-window.toggleTask = async (id, completed) => updateDoc(doc(db, "tasks", id), { completed });
+window.toggleTask = async (id, completed) => {
+  const todayStr = formatDate(new Date());
+  const task = allTasks.find(t => t.id === id);
+  const updates = {
+    completed,
+    completedDate: completed ? todayStr : null
+  };
+  if (completed && task) {
+    if (!task.isDailyHabit) updates.date = todayStr;
+    if (!task.assignee || task.assignee === 'Nieprzypisane') updates.assignee = activeUser;
+  }
+  await updateDoc(doc(db, "tasks", id), updates);
+};
 window.deleteTask = async (id) => deleteDoc(doc(db, "tasks", id));
 
 window.setFilter = (f) => {
   currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.className = btn.dataset.filter === f
-      ? 'filter-btn px-2.5 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white'
-      : 'filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300';
-  });
+  renderDynamicSectionControls();
   renderTasks();
 };
 
-window.toggleAddForm = () => document.getElementById('add-task-form').classList.toggle('hidden');
+window.toggleAddForm = () => {
+  document.getElementById('add-task-form').classList.toggle('hidden');
+  renderDynamicSectionControls();
+};
 
-document.getElementById('add-task-form').addEventListener('submit', async (e) => {
+document.getElementById('add-task-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const title = document.getElementById('task-title').value.trim();
   const desc = document.getElementById('task-desc').value.trim();
@@ -896,6 +1207,7 @@ document.getElementById('add-task-form').addEventListener('submit', async (e) =>
   const category = document.getElementById('task-category').value;
   const date = document.getElementById('task-date').value;
   const count = Number(document.getElementById('task-recurrence').value);
+  const tags = parseTagsInput(document.getElementById('task-tags')?.value || '');
   const remoteOk = document.getElementById('task-remote-ok').checked;
   const starred = document.getElementById('task-starred').checked;
   const monthKey = getMonthKey(currentYear, currentMonth);
@@ -908,7 +1220,7 @@ document.getElementById('add-task-form').addEventListener('submit', async (e) =>
       await addDoc(collection(db, "tasks"), {
         secret: homeSecret,
         title: count > 1 ? `${title} (${i + 1}/${count})` : title,
-        desc, assignee, coop, category,
+        desc, assignee, coop, category, tags,
         date: formatDate(baseDate),
         recurrence: count > 1 ? 'recurring' : 'once',
         isDailyHabit: false,
@@ -919,10 +1231,11 @@ document.getElementById('add-task-form').addEventListener('submit', async (e) =>
   }
   e.target.reset();
   syncDateInputs(selectedDateStr);
+  renderDynamicSectionControls();
   toggleAddForm();
 });
 
-// ASYSTENT AI MIESIĘCZNY (KRÓTKI, SZYBKI PROMPT)
+// ASYSTENT AI MIESIĘCZNY
 window.openAiModal = () => {
   document.getElementById('ai-modal').classList.remove('hidden');
   document.getElementById('ai-modal').classList.add('flex');
@@ -938,16 +1251,16 @@ window.runAiPlanner = async () => {
 
   out.textContent = "Układam zwięzły plan...";
 
-  const naSummary = naBlocks.map(b => `${b.who}:${b.mode} ${b.startDate} ${b.startTime}-${b.endTime} (${b.repeat || 'once'})`).join('; ') || 'brak';
-  const tasksSummary = openTasks.slice(0, 28).map(t => `${t.title} [${t.coop === 'together' ? 'RAZEM' : 'SOLO'}, ${t.assignee || '?'}]`).join('; ');
+  const naSummary = naBlocks.map(b => `${displayPersonName(b.who)}:${b.mode} ${b.startDate} ${b.startTime}-${b.endTime} (${b.repeat || 'once'})`).join('; ') || 'brak';
+  const tasksSummary = openTasks.slice(0, 28).map(t => `${t.title} [${getSectionMeta(t.category).name}, ${t.coop === 'together' ? 'RAZEM' : 'SOLO'}, ${displayPersonName(t.assignee)}]`).join('; ');
 
-  const prompt = `Zaplanuj po polsku w krótkich punktach zadania dla Przema i Róży (${getMonthKey(currentYear, currentMonth)}).
-Przemo: ${userProfiles.przemo}
+  const prompt = `Zaplanuj po polsku w krótkich punktach zadania dla Przemka i Róży (${getMonthKey(currentYear, currentMonth)}).
+Przemek: ${userProfiles.przemo}
 Róża: ${userProfiles.roza}
 Dom: ${userProfiles.home}
 N/A: ${naSummary}
 Zadania: ${tasksSummary}
-Zasady: rozdziel zadania SOLO po równo, zadania RAZEM zaplanuj wspólnie (np. weekend), uszanuj wolne środy po pracy i N/A, podsuń Róży okienko na e-booka.`;
+Zasady: rozdziel zadania SOLO po równo, zadania RAZEM zaplanuj wspólnie (np. weekend); w ŚRODY po pracy wrzucaj Przemkowi wyłącznie 1 lekkie, szybkie zadanie 'z głowy' (np. śmieci, rośliny, miski/zęby Czosnka), a grubsze rzeczy dawaj na inne dni; uszanuj N/A i podsuń Róży okienko na e-booka.`;
 
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -992,3 +1305,5 @@ window.closeModal = (id) => {
   document.getElementById(id).classList.add('hidden');
   document.getElementById(id).classList.remove('flex');
 };
+
+if (homeSecret) startApp();

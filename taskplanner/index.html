@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Domowy Planer — Przemo, Róża & Czosnek</title>
+  <title>Domowy Planer — Przemek, Róża & Czosnek</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -33,7 +33,7 @@
     <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl shadow-xl max-w-md w-full p-8 text-center">
       <div class="w-16 h-16 bg-brand-100 dark:bg-brand-950 text-brand-600 dark:text-brand-400 rounded-2xl flex items-center justify-center mx-auto mb-5 text-3xl">🐾</div>
       <h1 class="text-2xl font-extrabold text-warm-900 dark:text-white mb-2">Domowy Planer</h1>
-      <p class="text-stone-500 dark:text-stone-400 text-sm mb-6">Przemo, Róża, Czosnek & Auto.<br>Wpisz hasło domowe, aby zsynchronizować listę.</p>
+      <p class="text-stone-500 dark:text-stone-400 text-sm mb-6">Przemek, Róża, Czosnek & Auto.<br>Wpisz hasło domowe, aby zsynchronizować listę.</p>
       <form id="auth-form" class="space-y-4">
         <input id="secret-input" type="password" required placeholder="Twoje hasło z reguł Firestore..."
           class="w-full px-4 py-3 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-warm-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-center font-medium" />
@@ -55,15 +55,15 @@
             <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-warm-900 dark:text-white">Domowe Centrum Dowodzenia</h1>
             <span id="test-month-badge" class="hidden text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300/70">🧪 Miesiąc testowy</span>
           </div>
-          <p class="text-stone-500 dark:text-stone-400 text-xs sm:text-sm mt-1">🐕 Czosnek • 🛁 Łazienka • 🧹 Mieszkanie • 🍳 Kuchnia • 🚗 Auto — <span id="current-month-label" class="font-semibold text-brand-600 dark:text-brand-400 capitalize"></span></p>
+          <p class="text-stone-500 dark:text-stone-400 text-xs sm:text-sm mt-1">🐕 Czosnek • 🏡 Dom • 🚗 Auto — <span id="current-month-label" class="font-semibold text-brand-600 dark:text-brand-400 capitalize"></span></p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
           <div class="inline-flex p-1 rounded-2xl bg-warm-100 dark:bg-warm-800 border border-warm-200 dark:border-warm-700">
-            <button onclick="switchActiveUser('Przemo')" id="user-pill-Przemo" class="px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1"><span>🧔</span> Przemo</button>
+            <button onclick="switchActiveUser('Przemo')" id="user-pill-Przemo" class="px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1"><span>🧔</span> Przemek</button>
             <button onclick="switchActiveUser('Róża')" id="user-pill-Róża" class="px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1"><span>👩</span> Róża</button>
           </div>
-          <button onclick="openConfigScreen()" class="px-3.5 py-2 rounded-xl bg-brand-50 dark:bg-brand-950/80 hover:bg-brand-100 text-brand-700 dark:text-brand-300 font-bold text-xs sm:text-sm transition flex items-center gap-1.5 border border-brand-200/70 dark:border-brand-800"><span>🛠️</span> Baza zadań (39)</button>
+          <button onclick="openConfigScreen()" class="px-3.5 py-2 rounded-xl bg-brand-50 dark:bg-brand-950/80 hover:bg-brand-100 text-brand-700 dark:text-brand-300 font-bold text-xs sm:text-sm transition flex items-center gap-1.5 border border-brand-200/70 dark:border-brand-800"><span>🛠️</span> Baza zadań</button>
           <button onclick="openAiModal()" class="px-3.5 py-2 rounded-xl bg-warm-900 dark:bg-brand-500 hover:bg-stone-800 text-white font-semibold text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm"><span>✨</span> Plan AI</button>
           <button onclick="toggleTheme()" id="theme-toggle-btn" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-sm font-semibold transition">🌙</button>
           <button onclick="openSettingsModal()" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-xs sm:text-sm font-semibold text-stone-700 dark:text-stone-200 transition flex items-center gap-1"><span>⚙️</span> <span class="hidden sm:inline">Profile</span></button>
@@ -76,7 +76,7 @@
           <div class="flex items-center gap-2.5">
             <span id="personal-focus-icon" class="text-2xl">🧔</span>
             <div>
-              <h2 id="personal-focus-title" class="text-sm font-extrabold text-warm-900 dark:text-white">Mam chwilę teraz — co wybrać? (Przemo)</h2>
+              <h2 id="personal-focus-title" class="text-sm font-extrabold text-warm-900 dark:text-white">Mam chwilę teraz — co wybrać? (Przemek)</h2>
               <p id="personal-focus-subtitle" class="text-[11px] text-stone-500 dark:text-stone-400">Wybierz ile masz teraz minut</p>
             </div>
           </div>
@@ -105,7 +105,7 @@
           </div>
         </div>
         <div onclick="switchActiveUser('Przemo')" class="cursor-pointer bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
-          <div><div class="text-[11px] font-bold uppercase text-stone-500">Przemo</div><div id="stat-przemo" class="text-xl sm:text-2xl font-extrabold mt-0.5">0</div><div class="text-[11px] text-stone-400">Śr po pracy wolna</div></div>
+          <div><div class="text-[11px] font-bold uppercase text-stone-500">Przemek</div><div id="stat-przemo" class="text-xl sm:text-2xl font-extrabold mt-0.5">0</div><div class="text-[11px] text-stone-400">Śr: tylko lekko z głowy</div></div>
           <div class="w-10 h-10 rounded-2xl bg-sky-100 dark:bg-sky-950 flex items-center justify-center text-xl">🧔</div>
         </div>
         <div onclick="switchActiveUser('Róża')" class="cursor-pointer bg-warm-50 dark:bg-warm-800/60 border border-warm-200/80 dark:border-warm-800 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between">
@@ -156,7 +156,7 @@
           <form id="na-form" class="hidden bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-700 rounded-2xl p-3.5 space-y-3">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <select id="na-who" class="px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
-                <option value="Przemo">🧔 Przemo</option><option value="Róża">👩 Róża</option><option value="Oboje">👫 Oboje</option>
+                <option value="Przemo">🧔 Przemek</option><option value="Róża">👩 Róża</option><option value="Oboje">👫 Oboje</option>
               </select>
               <select id="na-mode" class="px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
                 <option value="busy">⛔ Brak czasu (N/A)</option><option value="away">🏠 Poza domem (wyjazd)</option>
@@ -192,18 +192,17 @@
           <input id="task-desc" type="text" placeholder="Krótki opis (opcjonalnie)" class="w-full px-3.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
           <div class="grid grid-cols-2 gap-2">
             <select id="task-assignee" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm">
-              <option value="Nieprzypisane">❓ Do ustalenia</option><option value="Przemo">🧔 Przemo</option><option value="Róża">👩 Róża</option><option value="Wspólne">👫 Wspólne</option>
+              <option value="Przemo">🧔 Przemek</option><option value="Róża">👩 Róża</option><option value="Wspólne">👫 Wspólne</option><option value="Nieprzypisane">❓ Do ustalenia</option>
             </select>
             <select id="task-coop" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm">
               <option value="solo">👤 W pojedynkę</option><option value="together">👫 Razem</option>
             </select>
           </div>
           <div class="grid grid-cols-2 gap-2">
-            <select id="task-category" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm">
-              <option value="Łazienka">🛁 Łazienka</option><option value="Czosnek">🐕 Czosnek</option><option value="Mieszkanie">🧹 Mieszkanie</option><option value="Rachunki i auto">🚗 Auto/Zakupy</option><option value="Kuchnia">🍳 Kuchnia</option>
-            </select>
+            <select id="task-category" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm"></select>
             <input id="task-date" type="date" class="px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
           </div>
+          <input id="task-tags" type="text" placeholder="Własne tagi po przecinku (np. szybkie, zakupy)" class="w-full px-3.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
           <div class="flex flex-wrap items-center justify-between gap-2">
             <select id="task-recurrence" class="px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs">
               <option value="1">1x</option><option value="2">2x w mies.</option><option value="4">4x w mies.</option>
@@ -217,46 +216,50 @@
           </div>
         </form>
 
-        <div class="flex flex-wrap gap-1.5 mb-4">
-          <button onclick="setFilter('all')" data-filter="all" class="filter-btn px-2.5 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white">Wszystkie</button>
-          <button onclick="setFilter('Przemo')" data-filter="Przemo" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🧔 Przemo</button>
-          <button onclick="setFilter('Róża')" data-filter="Róża" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">👩 Róża</button>
-          <button onclick="setFilter('together')" data-filter="together" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">👫 Razem</button>
-          <button onclick="setFilter('Łazienka')" data-filter="Łazienka" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🛁 Łazienka</button>
-          <button onclick="setFilter('Czosnek')" data-filter="Czosnek" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🐕 Czosnek</button>
-          <button onclick="setFilter('Mieszkanie')" data-filter="Mieszkanie" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🧹 Mieszkanie</button>
-          <button onclick="setFilter('Rachunki i auto')" data-filter="Rachunki i auto" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🚗 Auto/Zakupy</button>
-          <button onclick="setFilter('Kuchnia')" data-filter="Kuchnia" class="filter-btn px-2.5 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800 text-stone-600 dark:text-stone-300">🍳 Kuchnia</button>
-        </div>
+        <div id="main-filters-bar" class="flex flex-wrap gap-1.5 mb-4"></div>
 
         <div id="tasks-list" class="space-y-2.5 overflow-y-auto max-h-[560px] pr-1 custom-scroll flex-1"></div>
       </section>
     </div>
 
-    <!-- EKRAN KONFIGURACJI BAZY ZADAŃ (POGRUPOWANY NA 5 SEKCJI) -->
+    <!-- EKRAN KONFIGURACJI BAZY ZADAŃ -->
     <div id="config-view" class="hidden space-y-5">
-      <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-4 sm:p-6 shadow-sm">
+      <div class="bg-white dark:bg-warm-900 border border-warm-200 dark:border-warm-800 rounded-3xl p-4 sm:p-6 shadow-sm space-y-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-warm-100 dark:border-warm-800">
           <div>
             <div class="flex items-center gap-2">
               <button onclick="closeConfigScreen()" class="px-3 py-1.5 rounded-xl bg-warm-100 dark:bg-warm-800 text-xs font-bold">← Wróć</button>
-              <h2 class="text-xl font-extrabold">🛠️ Konfiguracja bazy zadań (5 sekcji)</h2>
+              <h2 class="text-xl font-extrabold">🛠️ Konfiguracja stałej bazy zadań</h2>
             </div>
-            <p class="text-xs text-stone-500 mt-1">Zadania pogrupowane na 5 sekcji. Każde nowe dodane tutaj od razu wpada do bieżącego miesiąca.</p>
+            <p class="text-xs text-stone-500 mt-1">Kliknij ikonę lub nazwę grupy, aby ją edytować. Wszystkie zadania domyślnie przypisują się do Przemka.</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="replaceWithFull39Tasks()" class="px-3.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 text-xs font-semibold">Załaduj pełną listę 39 obowiązków</button>
+            <button onclick="assignAllTasksToPrzemek()" class="px-3.5 py-2 rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/70 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 text-xs font-bold">🧔 Przypisz wszystko do Przemka</button>
+            <button onclick="replaceWithFull39Tasks()" class="px-3.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 text-xs font-semibold">Załaduj listę 39 obowiązków</button>
             <button onclick="generateMonthFromConfig()" class="px-4 py-2 rounded-xl bg-brand-500 text-white text-xs font-bold">🚀 Wrzuć aktywne na ten miesiąc</button>
           </div>
         </div>
 
-        <form id="new-template-form" class="mt-4 bg-warm-50 dark:bg-warm-800/50 border border-warm-200 dark:border-warm-700 rounded-2xl p-4 space-y-3">
+        <!-- PANEL ZARZĄDZANIA GRUPAMI -->
+        <div class="bg-brand-50/50 dark:bg-brand-950/20 border border-brand-200/80 dark:border-brand-900/60 rounded-2xl p-4 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="text-xs font-extrabold uppercase tracking-wider text-brand-700 dark:text-brand-400">📁 Grupy obowiązków (kliknij ikonę lub nazwę, aby edytować)</div>
+            <form id="new-section-form" class="flex items-center gap-1.5">
+              <input id="new-sec-icon" type="text" value="📌" maxlength="4" class="w-10 px-2 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-center text-xs" />
+              <input id="new-sec-name" type="text" required placeholder="Nazwa nowej grupy..." class="px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
+              <button type="submit" class="px-3 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold">+ Dodaj</button>
+            </form>
+          </div>
+          <div id="sections-manager-list" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <!-- DODAWANIE NOWEGO ZADANIA DO BAZY -->
+        <form id="new-template-form" class="bg-warm-50 dark:bg-warm-800/50 border border-warm-200 dark:border-warm-700 rounded-2xl p-4 space-y-3">
+          <div class="text-xs font-extrabold uppercase tracking-wider text-stone-500">+ Dodaj nowy stały obowiązek</div>
           <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
             <input id="tpl-title" type="text" required placeholder="Nazwa zadania" class="md:col-span-3 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
             <input id="tpl-desc" type="text" placeholder="Opis" class="md:col-span-3 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" />
-            <select id="tpl-category" class="md:col-span-2 px-2.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
-              <option value="Łazienka">🛁 Łazienka</option><option value="Czosnek">🐕 Czosnek</option><option value="Mieszkanie">🧹 Mieszkanie</option><option value="Rachunki i auto">🚗 Auto/Zakupy</option><option value="Kuchnia">🍳 Kuchnia</option>
-            </select>
+            <select id="tpl-category" class="md:col-span-2 px-2.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold"></select>
             <select id="tpl-freq" class="md:col-span-2 px-2.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
               <option value="30">Codziennie</option><option value="1">1x / mies.</option><option value="2">2x / mies.</option><option value="4">4x / mies.</option>
             </select>
@@ -267,8 +270,9 @@
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex flex-wrap items-center gap-3">
               <select id="tpl-assignee" class="px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-semibold">
-                <option value="Nieprzypisane">❓ Do ustalenia</option><option value="Przemo">🧔 Przemo</option><option value="Róża">👩 Róża</option><option value="Wspólne">👫 Wspólne</option>
+                <option value="Przemo">🧔 Przemek</option><option value="Róża">👩 Róża</option><option value="Wspólne">👫 Wspólne</option><option value="Nieprzypisane">❓ Do ustalenia</option>
               </select>
+              <input id="tpl-tags" type="text" placeholder="Tagi po przecinku (np. szybkie, weekend)" class="px-3 py-1.5 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs" />
               <label class="flex items-center gap-1.5 text-xs"><input id="tpl-remote" type="checkbox" class="accent-brand-500" /> 🌍 Poza domem</label>
               <label class="flex items-center gap-1.5 text-xs"><input id="tpl-starred" type="checkbox" class="accent-brand-500" /> ⭐ Gwiazdka</label>
             </div>
@@ -276,15 +280,8 @@
           </div>
         </form>
 
-        <div class="flex flex-wrap items-center justify-between gap-2 mt-4 mb-2">
-          <div class="flex flex-wrap gap-1.5">
-            <button onclick="setConfigFilter('all')" data-cfilter="all" class="cfilter-btn px-3 py-1 rounded-full text-xs font-bold bg-warm-900 dark:bg-brand-500 text-white">Wszystkie sekcje</button>
-            <button onclick="setConfigFilter('Łazienka')" data-cfilter="Łazienka" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800">🛁 Łazienka</button>
-            <button onclick="setConfigFilter('Czosnek')" data-cfilter="Czosnek" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800">🐕 Czosnek</button>
-            <button onclick="setConfigFilter('Mieszkanie')" data-cfilter="Mieszkanie" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800">🧹 Mieszkanie</button>
-            <button onclick="setConfigFilter('Rachunki i auto')" data-cfilter="Rachunki i auto" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800">🚗 Auto/Zakupy</button>
-            <button onclick="setConfigFilter('Kuchnia')" data-cfilter="Kuchnia" class="cfilter-btn px-3 py-1 rounded-full text-xs font-semibold bg-warm-100 dark:bg-warm-800">🍳 Kuchnia</button>
-          </div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div id="config-filters-bar" class="flex flex-wrap gap-1.5"></div>
           <div id="config-summary-count" class="text-xs font-semibold text-stone-500"></div>
         </div>
 
@@ -328,7 +325,7 @@
         <button onclick="closeModal('settings-modal')" class="text-stone-400 text-xl font-bold">✕</button>
       </div>
       <div class="space-y-3">
-        <div><label class="text-xs font-extrabold text-sky-700 dark:text-sky-300">🧔 Przemo (grafik dla AI)</label><textarea id="profile-przemo-input" rows="2" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs"></textarea></div>
+        <div><label class="text-xs font-extrabold text-sky-700 dark:text-sky-300">🧔 Przemek (grafik dla AI)</label><textarea id="profile-przemo-input" rows="2" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs"></textarea></div>
         <div><label class="text-xs font-extrabold text-rose-700 dark:text-rose-300">👩 Róża (grafik i e-book dla AI)</label><textarea id="profile-roza-input" rows="2" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs"></textarea></div>
         <div><label class="text-xs font-extrabold">🐾 Dom (Czosnek, auto, zasady)</label><textarea id="profile-home-input" rows="2" class="w-full mt-1 px-3 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs"></textarea></div>
         <div><label class="text-xs font-bold uppercase text-stone-400">Klucz API Google Gemini</label><input id="gemini-key-input" type="password" placeholder="AIzaSy..." class="w-full mt-1 px-3.5 py-2 rounded-xl border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-sm" /></div>
