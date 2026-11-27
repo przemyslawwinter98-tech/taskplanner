@@ -19,7 +19,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// TRYB JASNY / CIEMNY
 function applyTheme(theme) {
   const html = document.documentElement;
   const btn = document.getElementById('theme-toggle-btn');
@@ -45,7 +44,7 @@ let selectedNowTime = '30 min';
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
 let selectedDateStr = formatDate(new Date());
-let currentFilter = 'all';
+let currentFilter = 'my';
 let configFilter = 'all';
 let allTasks = [];
 let naBlocks = [];
@@ -79,6 +78,15 @@ function isTaskOverdue(task) {
   return task.date < formatDate(new Date());
 }
 
+function displayPersonName(who) {
+  if (who === 'Przemo' || who === 'Przemek') return 'Przemek';
+  return who || 'Do ustalenia';
+}
+
+function isPrzemek(who) {
+  return who === 'Przemo' || who === 'Przemek';
+}
+
 function parseTagsInput(raw) {
   if (!raw) return [];
   return [...new Set(
@@ -104,7 +112,7 @@ function resolveSectionId(rawCat) {
   const low = String(rawCat).toLowerCase();
   const keywordMap = [
     { keys: ['łazienk', 'lazienk', 'pranie'], target: 'sec_lazienka', idx: 0 },
-    { keys: ['czosn', 'gośk', 'gosk', 'berneń', 'pies'], target: 'sec_czosnek', idx: 1 },
+    { keys: ['czosn', 'grosz', 'gośk', 'gosk', 'berneń', 'pies'], target: 'sec_czosnek', idx: 1 },
     { keys: ['mieszkan', 'dom', 'sprząt'], target: 'sec_mieszkanie', idx: 2 },
     { keys: ['rachunk', 'auto', 'zakup'], target: 'sec_auto', idx: 3 },
     { keys: ['kuchn'], target: 'sec_kuchnia', idx: 4 }
@@ -146,8 +154,9 @@ function renderDynamicSectionControls() {
   const mainFilterBar = document.getElementById('main-filters-bar');
   if (mainFilterBar) {
     const fixedBtns = [
+      { id: 'my', label: `👤 Moje (${displayPersonName(activeUser)})` },
       { id: 'all', label: 'Wszystkie' },
-      { id: 'Przemo', label: '🧔 Przemo' },
+      { id: 'Przemo', label: '🧔 Przemek' },
       { id: 'Róża', label: '👩 Róża' },
       { id: 'together', label: '👫 Razem' }
     ];
@@ -171,7 +180,7 @@ function renderDynamicSectionControls() {
 
   const cfgFilterBar = document.getElementById('config-filters-bar');
   if (cfgFilterBar) {
-    const allBtn = { id: 'all', label: 'Wszystkie sekcje' };
+    const allBtn = { id: 'all', label: 'Wszystkie' };
     const secBtns = taskSections.map(s => ({ id: s.id, label: `${s.icon || '📌'} ${s.name}` }));
     cfgFilterBar.innerHTML = [allBtn, ...secBtns].map(b => {
       const active = configFilter === b.id;
@@ -184,10 +193,10 @@ function renderDynamicSectionControls() {
     secManager.innerHTML = taskSections.map(s => `
       <div class="inline-flex items-center gap-1.5 bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-xl px-2.5 py-1.5 shadow-2xs">
         <input type="text" value="${escapeAttr(s.icon || '📌')}" maxlength="4" onchange="updateSectionField('${s.id}', 'icon', this.value)"
-          title="Zmień ikonkę sekcji" class="w-7 text-center bg-transparent text-sm focus:outline-none" />
+          title="Zmień ikonkę" class="w-7 text-center bg-transparent text-sm focus:outline-none" />
         <input type="text" value="${escapeAttr(s.name)}" onchange="updateSectionField('${s.id}', 'name', this.value)"
-          title="Edytuj nazwę sekcji" class="w-36 sm:w-44 text-xs font-bold text-warm-900 dark:text-white bg-transparent border-b border-transparent focus:border-brand-400 focus:outline-none" />
-        ${taskSections.length > 1 ? `<button onclick="deleteSection('${s.id}')" title="Usuń sekcję" class="text-stone-400 hover:text-red-500 text-xs font-bold px-1">✕</button>` : ''}
+          title="Edytuj nazwę" class="w-36 sm:w-44 text-xs font-bold text-warm-900 dark:text-white bg-transparent border-b border-transparent focus:border-brand-400 focus:outline-none" />
+        ${taskSections.length > 1 ? `<button onclick="deleteSection('${s.id}')" title="Usuń" class="text-stone-400 hover:text-red-500 text-xs font-bold px-1">✕</button>` : ''}
       </div>
     `).join('');
   }
@@ -200,8 +209,8 @@ window.updateSectionField = async (id, field, value) => {
 };
 
 window.deleteSection = async (id) => {
-  if (taskSections.length <= 1) return alert("Musi zostać przynajmniej jedna sekcja.");
-  if (!confirm("Usunąć tę sekcję? Zadania z niej zostaną przeniesione do pierwszej sekcji.")) return;
+  if (taskSections.length <= 1) return alert("Musi zostać przynajmniej jedna grupa.");
+  if (!confirm("Usunąć tę grupę? Zadania z niej zostaną przeniesione do pierwszej dostępnej.")) return;
   const fallbackId = taskSections.find(s => s.id !== id).id;
   for (const tpl of taskTemplates.filter(t => resolveSectionId(t.category) === id)) {
     await updateDoc(doc(db, "taskTemplates", tpl.id), { category: fallbackId });
@@ -282,6 +291,8 @@ window.switchActiveUser = (user) => {
   activeUser = user;
   localStorage.setItem('home_planner_active_user', user);
   updateUserProfileUI();
+  renderDynamicSectionControls();
+  renderTasks();
   renderPersonalFocusCard();
 };
 
@@ -290,7 +301,7 @@ function updateUserProfileUI() {
   const rBtn = document.getElementById('user-pill-Róża');
   if (!pBtn || !rBtn) return;
 
-  if (activeUser === 'Przemo') {
+  if (isPrzemek(activeUser)) {
     pBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1 bg-sky-600 text-white shadow-xs';
     rBtn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1 text-stone-600 dark:text-stone-300 hover:bg-white/60 dark:hover:bg-warm-700';
   } else {
@@ -307,17 +318,18 @@ function renderPersonalFocusCard() {
   const listEl = document.getElementById('personal-focus-list');
   if (!card || !listEl) return;
 
-  const isPrzemo = activeUser === 'Przemo';
+  const isPrzemo = isPrzemek(activeUser);
+  const displayName = displayPersonName(activeUser);
   const today = new Date();
   const todayStr = formatDate(today);
   const dayOfWeek = today.getDay();
-  const todayBlocks = getBlocksForDate(todayStr).filter(b => b.who === activeUser || b.who === 'Oboje');
+  const todayBlocks = getBlocksForDate(todayStr).filter(b => (isPrzemo ? isPrzemek(b.who) : b.who === 'Róża') || b.who === 'Oboje');
 
   card.className = isPrzemo
     ? 'rounded-2xl border p-4 transition-all bg-sky-50/70 dark:bg-sky-950/30 border-sky-200/80 dark:border-sky-900/60'
     : 'rounded-2xl border p-4 transition-all bg-rose-50/70 dark:bg-rose-950/30 border-rose-200/80 dark:border-rose-900/60';
   iconEl.textContent = isPrzemo ? '🧔' : '👩';
-  titleEl.textContent = `Mam chwilę teraz — co wybrać? (${activeUser})`;
+  titleEl.textContent = `Mam chwilę teraz — co wybrać? (${displayName})`;
 
   if (dayOfWeek === 3) subEl.textContent = isPrzemo
     ? 'Dziś środa — po pracy tylko coś lekkiego i szybkiego z głowy (bez ciężkich robót)!'
@@ -325,8 +337,9 @@ function renderPersonalFocusCard() {
   else if (!isPrzemo && (dayOfWeek === 2 || dayOfWeek === 5)) subEl.textContent = 'Dziś masz wolny/zdalny dzień — dobry moment na lekkie rzeczy lub e-booka.';
   else subEl.textContent = 'Wybierz ile masz teraz minut i kliknij „✨ Dobierz na teraz”';
 
-  if (personalAiCache[activeUser]) {
-    listEl.innerHTML = personalAiCache[activeUser].map(tip => `
+  const cacheKey = isPrzemo ? 'Przemo' : 'Róża';
+  if (personalAiCache[cacheKey]) {
+    listEl.innerHTML = personalAiCache[cacheKey].map(tip => `
       <div class="bg-white/90 dark:bg-warm-900/80 border border-warm-200/80 dark:border-warm-700 rounded-xl p-3 space-y-1">
         <div class="text-[10px] font-extrabold uppercase tracking-wider text-brand-600 dark:text-brand-400">${tip.badge || `⏱️ ${selectedNowTime}`}</div>
         <div class="font-bold text-warm-900 dark:text-white">${tip.title}</div>
@@ -338,8 +351,8 @@ function renderPersonalFocusCard() {
 
   const openTasks = allTasks.filter(t => !t.completed);
   const myTasks = openTasks
-    .filter(t => t.assignee === activeUser || t.assignee === 'Wspólne' || !t.assignee || t.assignee === 'Nieprzypisane')
-    .sort((a, b) => (b.starred ? 1 : 0) - (a.starred ? 1 : 0) || (a.assignee === activeUser ? -1 : 1));
+    .filter(t => (isPrzemo ? isPrzemek(t.assignee) : t.assignee === 'Róża') || t.assignee === 'Wspólne' || !t.assignee || t.assignee === 'Nieprzypisane')
+    .sort((a, b) => (b.starred ? 1 : 0) - (a.starred ? 1 : 0) || ((isPrzemo ? isPrzemek(a.assignee) : a.assignee === 'Róża') ? -1 : 1));
 
   const suggestions = [];
   if (todayBlocks.length > 0) {
@@ -395,21 +408,23 @@ window.generatePersonalAiTips = async () => {
   btn.innerHTML = '⏳...';
   btn.disabled = true;
 
+  const isPrzemo = isPrzemek(activeUser);
+  const displayName = displayPersonName(activeUser);
   const todayStr = formatDate(new Date());
   const openTasks = allTasks.filter(t => !t.completed).slice(0, 22).map(t => {
     const tagsStr = Array.isArray(t.tags) && t.tags.length > 0 ? `, tagi: #${t.tags.join(' #')}` : '';
-    return `${t.title} (${getSectionMeta(t.category).name}, ${t.coop === 'together' ? 'RAZEM' : 'SOLO'}, ${t.assignee || '?'}${t.remoteOk ? ', poza domem' : ''}${tagsStr})`;
+    return `${t.title} (${getSectionMeta(t.category).name}, ${t.coop === 'together' ? 'RAZEM' : 'SOLO'}, ${displayPersonName(t.assignee)}${t.remoteOk ? ', poza domem' : ''}${tagsStr})`;
   }).join('; ') || 'brak';
 
-  const myProfile = activeUser === 'Przemo' ? userProfiles.przemo : userProfiles.roza;
-  const myBlocks = getBlocksForDate(todayStr).map(b => `${b.who}:${b.mode} ${b.startTime}-${b.endTime}`).join(', ') || 'brak';
+  const myProfile = isPrzemo ? userProfiles.przemo : userProfiles.roza;
+  const myBlocks = getBlocksForDate(todayStr).map(b => `${displayPersonName(b.who)}:${b.mode} ${b.startTime}-${b.endTime}`).join(', ') || 'brak';
 
   const isWedNow = new Date().getDay() === 3;
   const wedRule = isWedNow
-    ? `WAŻNE: Dziś jest ŚRODA po pracy — ${activeUser} chce mieć luźny wieczór! Proponuj WYŁĄCZNIE lekkie, szybkie zadania "z głowy" (max 10-20 min, ZERO ciężkiego sprzątania, podłóg, auta czy piekarnika).`
+    ? `WAŻNE: Dziś jest ŚRODA po pracy — ${displayName} chce mieć luźny wieczór! Proponuj WYŁĄCZNIE lekkie, szybkie zadania "z głowy" (max 10-20 min, ZERO ciężkiego sprzątania, podłóg, auta czy piekarnika).`
     : `W dni inne niż środa po pracy możesz normalnie dobierać zadania pasujące do ${selectedNowTime}.`;
 
-  const prompt = `Osoba: ${activeUser}. Czas teraz: ${selectedNowTime}. Dziś: ${todayStr} (${new Date().toLocaleDateString('pl-PL', { weekday: 'long' })}).
+  const prompt = `Osoba: ${displayName}. Czas teraz: ${selectedNowTime}. Dziś: ${todayStr} (${new Date().toLocaleDateString('pl-PL', { weekday: 'long' })}).
 Grafik: ${myProfile}. Blokady dziś: ${myBlocks}.
 ${wedRule}
 Zadania: ${openTasks}.
@@ -429,7 +444,7 @@ Dobierz 3 zadania na ${selectedNowTime}. Zwróć TYLKO JSON bez markdowna:
     const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
     const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
     if (Array.isArray(parsed) && parsed.length > 0) {
-      personalAiCache[activeUser] = parsed.slice(0, 3);
+      personalAiCache[isPrzemo ? 'Przemo' : 'Róża'] = parsed.slice(0, 3);
       renderPersonalFocusCard();
     }
   } catch (e) {
@@ -464,7 +479,7 @@ function getTargetDatesForFreq(year, month, freq) {
 async function insertTemplateInstancesIntoMonth(tpl, year, month) {
   const monthKey = getMonthKey(year, month);
   const freq = Number(tpl.freq || 1);
-  const assignee = tpl.assignee || 'Nieprzypisane';
+  const assignee = tpl.assignee || 'Przemo';
   const isDailyHabit = freq >= 30;
   const dates = getTargetDatesForFreq(year, month, freq);
   const resolvedCat = resolveSectionId(tpl.category);
@@ -569,18 +584,25 @@ function subscribeFirestore() {
 
   const qTpl = query(collection(db, "taskTemplates"), where("secret", "==", homeSecret));
   unsubTemplates = onSnapshot(qTpl, async (snapshot) => {
-    if (snapshot.empty && !seededTemplatesOnce) {
+    const existingDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!seededTemplatesOnce) {
       seededTemplatesOnce = true;
+      const existingTitles = new Set(existingDocs.map(x => x.title.toLowerCase().trim()));
       for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
-        const tplData = { secret: homeSecret, order: i, ...DEFAULT_MONTHLY_TASKS[i], tags: [] };
-        await addDoc(collection(db, "taskTemplates"), tplData);
-        await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
+        const raw = DEFAULT_MONTHLY_TASKS[i];
+        if (!existingTitles.has(raw.title.toLowerCase().trim())) {
+          const tplData = { secret: homeSecret, order: existingDocs.length + i, ...raw, assignee: "Przemo", category: resolveSectionId(raw.category), tags: [] };
+          await addDoc(collection(db, "taskTemplates"), tplData);
+          await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
+        }
       }
-      return;
+      for (const item of existingDocs) {
+        if (!isPrzemek(item.assignee) && (!item.assignee || item.assignee === 'Nieprzypisane')) {
+          await updateDoc(doc(db, "taskTemplates", item.id), { assignee: "Przemo" });
+        }
+      }
     }
-    taskTemplates = snapshot.docs
-      .map(d => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+    taskTemplates = existingDocs.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
     renderDynamicSectionControls();
     renderConfigTemplates();
   });
@@ -660,7 +682,7 @@ function renderNaManagerList() {
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex flex-wrap items-center gap-2">
             <select onchange="updateNaBlockField('${b.id}', 'who', this.value)" class="px-2.5 py-1 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-xs font-bold">
-              <option value="Przemo" ${b.who === 'Przemo' ? 'selected' : ''}>🧔 Przemo</option>
+              <option value="Przemo" ${isPrzemek(b.who) ? 'selected' : ''}>🧔 Przemek</option>
               <option value="Róża" ${b.who === 'Róża' ? 'selected' : ''}>👩 Róża</option>
               <option value="Oboje" ${b.who === 'Oboje' ? 'selected' : ''}>👫 Oboje</option>
             </select>
@@ -688,7 +710,7 @@ function renderNaManagerList() {
   }).join('');
 }
 
-// KONFIGURACJA BAZY ZADAŃ (BEZPOŚREDNIA EDYCJA SEKCJI + WŁASNE TAGI)
+// KONFIGURACJA BAZY ZADAŃ (BEZ TYTUŁÓW "SEKCJA X:", BEZPOŚREDNIA EDYCJA NAGŁÓWKÓW + WŁASNE TAGI)
 window.openConfigScreen = () => {
   document.getElementById('dashboard-view').classList.add('hidden');
   document.getElementById('config-view').classList.remove('hidden');
@@ -785,10 +807,10 @@ function renderTemplateRow(t) {
 
         <select onchange="updateTemplateField('${t.id}', 'assignee', this.value)"
           class="px-2 py-1 rounded-xl border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 text-xs font-semibold">
-          <option value="Nieprzypisane" ${!t.assignee || t.assignee === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
-          <option value="Przemo" ${t.assignee === 'Przemo' ? 'selected' : ''}>🧔 Przemo</option>
+          <option value="Przemo" ${isPrzemek(t.assignee) ? 'selected' : ''}>🧔 Przemek</option>
           <option value="Róża" ${t.assignee === 'Róża' ? 'selected' : ''}>👩 Róża</option>
           <option value="Wspólne" ${t.assignee === 'Wspólne' ? 'selected' : ''}>👫 Wspólne</option>
+          <option value="Nieprzypisane" ${!t.assignee || t.assignee === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
         </select>
 
         <label class="flex items-center gap-1 text-[11px] px-1.5 py-1 rounded-xl border border-warm-200 dark:border-warm-700 cursor-pointer" title="Gwiazdka">
@@ -819,32 +841,30 @@ function renderConfigTemplates() {
     ? taskSections
     : taskSections.filter(s => s.id === configFilter);
 
-  const htmlBlocks = sectionsToRender.map((sec, idx) => {
+  const htmlBlocks = sectionsToRender.map((sec) => {
     const items = taskTemplates.filter(t => resolveSectionId(t.category) === sec.id);
     return `
       <div class="space-y-2 pt-4">
-        <!-- BEZPOŚREDNIO EDYTOWALNY NAGŁÓWEK SEKCJI -->
         <div class="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5 rounded-2xl bg-brand-50/70 dark:bg-brand-950/30 border border-brand-200/70 dark:border-brand-900/60">
-          <div class="flex items-center gap-1.5 flex-1 min-w-[220px]">
+          <div class="flex items-center gap-2 flex-1 min-w-[220px]">
             <input type="text" value="${escapeAttr(sec.icon || '📌')}" maxlength="4" onchange="updateSectionField('${sec.id}', 'icon', this.value)"
-              title="Kliknij, aby zmienić ikonę sekcji" class="w-8 text-center bg-white dark:bg-warm-800 rounded-lg py-0.5 text-sm border border-warm-200 dark:border-warm-700" />
-            <span class="text-xs font-extrabold text-brand-700 dark:text-brand-400">Sekcja ${idx + 1}:</span>
+              title="Kliknij, aby zmienić ikonę" class="w-8 text-center bg-white dark:bg-warm-800 rounded-lg py-0.5 text-sm border border-warm-200 dark:border-warm-700" />
             <input type="text" value="${escapeAttr(sec.name)}" onchange="updateSectionField('${sec.id}', 'name', this.value)"
-              title="Kliknij, aby zmienić nazwę sekcji" class="flex-1 text-sm font-extrabold text-brand-800 dark:text-brand-300 bg-transparent border-b border-transparent focus:border-brand-500 focus:outline-none px-1" />
+              title="Kliknij, aby edytować nazwę" class="flex-1 text-sm font-extrabold text-brand-800 dark:text-brand-300 bg-transparent border-b border-transparent focus:border-brand-500 focus:outline-none px-1" />
           </div>
           <div class="flex items-center gap-2">
             <span class="text-xs font-semibold text-stone-500 dark:text-stone-400">${items.length} zadań</span>
-            ${taskSections.length > 1 ? `<button onclick="deleteSection('${sec.id}')" title="Usuń tę sekcję" class="text-xs text-stone-400 hover:text-red-500 font-bold px-1.5 py-0.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40">🗑️ Usuń sekcję</button>` : ''}
+            ${taskSections.length > 1 ? `<button onclick="deleteSection('${sec.id}')" title="Usuń" class="text-xs text-stone-400 hover:text-red-500 font-bold px-1.5 py-0.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40">🗑️ Usuń</button>` : ''}
           </div>
         </div>
         <div class="space-y-2">
-          ${items.length > 0 ? items.map(renderTemplateRow).join('') : '<div class="text-xs text-stone-400 px-3 py-2.5 rounded-xl border border-dashed border-warm-200 dark:border-warm-800">Brak zadań w tej sekcji — dodaj powyżej lub zmień sekcję istniejącego zadania.</div>'}
+          ${items.length > 0 ? items.map(renderTemplateRow).join('') : '<div class="text-xs text-stone-400 px-3 py-2.5 rounded-xl border border-dashed border-warm-200 dark:border-warm-800">Brak zadań — dodaj powyżej lub przenieś tutaj istniejące zadanie.</div>'}
         </div>
       </div>
     `;
   }).join('');
 
-  container.innerHTML = htmlBlocks || `<div class="text-center text-stone-400 text-sm py-8">Brak sekcji. Dodaj pierwszą powyżej.</div>`;
+  container.innerHTML = htmlBlocks || `<div class="text-center text-stone-400 text-sm py-8">Brak grup. Dodaj pierwszą powyżej.</div>`;
 }
 
 window.updateTemplateField = async (id, field, value) => updateDoc(doc(db, "taskTemplates", id), { [field]: value });
@@ -873,16 +893,31 @@ document.getElementById('new-template-form')?.addEventListener('submit', async (
 });
 
 window.replaceWithFull39Tasks = async () => {
-  if (!confirm("Podmienić bazę na pełną listę 39 obowiązków i wrzucić na ten miesiąc?")) return;
+  if (!confirm("Podmienić bazę na listę 26 obowiązków (przypisanych do Przemka) i wrzucić na ten miesiąc?")) return;
   const oldTpls = await getDocs(query(collection(db, "taskTemplates"), where("secret", "==", homeSecret)));
   for (const d of oldTpls.docs) await deleteDoc(doc(db, "taskTemplates", d.id));
   for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
     const raw = DEFAULT_MONTHLY_TASKS[i];
-    const tplData = { secret: homeSecret, order: i, ...raw, category: resolveSectionId(raw.category), tags: [] };
+    const tplData = { secret: homeSecret, order: i, ...raw, assignee: "Przemo", category: resolveSectionId(raw.category), tags: [] };
     await addDoc(collection(db, "taskTemplates"), tplData);
     await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
   }
   closeConfigScreen();
+};
+
+// MASOWE PRZYPISANIE WSZYSTKICH ZADAŃ W BAZIE I MIESIĄCU DO PRZEMKA
+window.assignAllTasksToPrzemek = async () => {
+  if (!confirm("Przypisać wszystkie obowiązki w bazie oraz otwarte zadania w tym miesiącu do konta Przemek?")) return;
+  for (const tpl of taskTemplates) {
+    if (!isPrzemek(tpl.assignee)) {
+      await updateDoc(doc(db, "taskTemplates", tpl.id), { assignee: "Przemo" });
+    }
+  }
+  for (const task of allTasks) {
+    if (!task.completed && !isPrzemek(task.assignee)) {
+      await updateDoc(doc(db, "tasks", task.id), { assignee: "Przemo" });
+    }
+  }
 };
 
 window.generateMonthFromConfig = async () => {
@@ -901,7 +936,7 @@ function renderStats() {
   document.getElementById('stat-total').textContent = `z ${total} zadań`;
   document.getElementById('stat-progress-bar').style.width = `${total === 0 ? 0 : Math.round((done / total) * 100)}%`;
 
-  document.getElementById('stat-przemo').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Przemo').length;
+  document.getElementById('stat-przemo').textContent = allTasks.filter(t => !t.completed && isPrzemek(t.assignee)).length;
   document.getElementById('stat-roza').textContent = allTasks.filter(t => !t.completed && t.assignee === 'Róża').length;
   document.getElementById('stat-shared').textContent = allTasks.filter(t => !t.completed && (t.assignee === 'Wspólne' || t.assignee === 'Nieprzypisane' || !t.assignee)).length;
 
@@ -950,7 +985,7 @@ function renderCalendar() {
     const openTasks = allTasks.filter(t => !t.completed && !t.isDailyHabit && t.date === dateStr);
     const doneTasks = allTasks.filter(t => t.completed && (t.completedDate || t.date) === dateStr);
     const hasOverdueDay = openTasks.some(t => isTaskOverdue(t));
-    const przemoOpen = openTasks.filter(t => t.assignee === 'Przemo').length;
+    const przemoOpen = openTasks.filter(t => isPrzemek(t.assignee)).length;
     const rozaOpen = openTasks.filter(t => t.assignee === 'Róża').length;
     const sharedOpen = openTasks.filter(t => t.assignee === 'Wspólne').length;
     const unassignedOpen = openTasks.filter(t => !t.assignee || t.assignee === 'Nieprzypisane').length;
@@ -967,7 +1002,7 @@ function renderCalendar() {
       const isRecurring = b.repeat && b.repeat !== 'once';
       const whoIcon = PERSON_ICON[b.who] || '👤';
       const color = isAway ? 'bg-amber-100 dark:bg-amber-900/70 text-amber-800 dark:text-amber-200'
-        : (b.who === 'Przemo' ? 'bg-sky-100 dark:bg-sky-900/70 text-sky-800 dark:text-sky-200'
+        : (isPrzemek(b.who) ? 'bg-sky-100 dark:bg-sky-900/70 text-sky-800 dark:text-sky-200'
         : (b.who === 'Róża' ? 'bg-rose-100 dark:bg-rose-900/70 text-rose-800 dark:text-rose-200' : 'bg-red-100 dark:bg-red-900/70 text-red-800 dark:text-red-200'));
       return `<div class="text-[9px] font-bold px-1 py-0.5 rounded ${color} truncate">${whoIcon}${isRecurring ? '↻' : (isAway ? '🏠' : '⛔')} ${b.startTime}</div>`;
     }).join('');
@@ -1022,7 +1057,7 @@ function updateSelectedDayPanel() {
       return `
         <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs border ${isAway ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 text-amber-900 dark:text-amber-200' : 'bg-red-50 dark:bg-red-950/50 border-red-200 text-red-900 dark:text-red-200'}">
           <div>
-            <span class="font-bold">${PERSON_ICON[b.who] || '👤'} ${b.who} • ${isAway ? '🏠 Poza domem' : '⛔ N/A'} (${b.startTime}–${b.endTime})</span>
+            <span class="font-bold">${PERSON_ICON[b.who] || '👤'} ${displayPersonName(b.who)} • ${isAway ? '🏠 Poza domem' : '⛔ N/A'} (${b.startTime}–${b.endTime})</span>
             ${b.note ? `<span class="block text-[11px] opacity-75">${b.note}</span>` : ''}
           </div>
           <button onclick="deleteNaBlock('${b.id}')" class="px-1.5 py-0.5 rounded hover:bg-black/10 font-bold">✕</button>
@@ -1040,7 +1075,7 @@ function updateSelectedDayPanel() {
           return `
             <div class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 text-emerald-950 dark:text-emerald-200">
               <span class="font-semibold truncate">${sec.icon} ${t.title}</span>
-              <span class="text-[10px] font-bold shrink-0">${PERSON_ICON[t.assignee] || ''} ${t.assignee || ''}</span>
+              <span class="text-[10px] font-bold shrink-0">${PERSON_ICON[t.assignee] || ''} ${displayPersonName(t.assignee)}</span>
             </div>
           `;
         }).join('')}
@@ -1065,8 +1100,12 @@ function renderTasks() {
   let filtered = [...allTasks];
 
   if (currentFilter !== 'all') {
-    if (currentFilter === 'together') {
+    if (currentFilter === 'my') {
+      filtered = filtered.filter(t => isPrzemek(activeUser) ? isPrzemek(t.assignee) : t.assignee === activeUser);
+    } else if (currentFilter === 'together') {
       filtered = filtered.filter(t => t.coop === 'together');
+    } else if (isPrzemek(currentFilter)) {
+      filtered = filtered.filter(t => isPrzemek(t.assignee));
     } else if (currentFilter.startsWith('tag:')) {
       const targetTag = currentFilter.slice(4);
       filtered = filtered.filter(t => Array.isArray(t.tags) && t.tags.includes(targetTag));
@@ -1085,13 +1124,13 @@ function renderTasks() {
 
   if (filtered.length === 0) {
     list.innerHTML = `<div class="text-center text-stone-400 text-sm py-10 bg-warm-50 dark:bg-warm-800/40 rounded-2xl border border-dashed border-warm-200 dark:border-warm-700">
-      Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań i sekcji”</strong> na górze.
+      Brak zadań w tym widoku.<br>Wejdź w <strong>„🛠️ Baza zadań”</strong> na górze.
     </div>`;
     return;
   }
 
   list.innerHTML = filtered.map(task => {
-    const who = task.assignee || 'Nieprzypisane';
+    const who = task.assignee || 'Przemo';
     const coop = task.coop || 'solo';
     const sec = getSectionMeta(task.category);
     const overdue = isTaskOverdue(task);
@@ -1114,16 +1153,16 @@ function renderTasks() {
           ${task.desc ? `<p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${task.desc}</p>` : ''}
           ${renderTagsPillsHtml('tasks', task.id, task.tags)}
           <div class="flex items-center gap-1.5 mt-2 flex-wrap">
-            <select onchange="changeTaskCategory('${task.id}', this.value)" title="Zmień sekcję zadania"
+            <select onchange="changeTaskCategory('${task.id}', this.value)" title="Zmień grupę zadania"
               class="text-[11px] font-bold px-2 py-0.5 rounded-md border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 cursor-pointer">
               ${buildSectionOptionsHtml(task.category)}
             </select>
             <select onchange="reassignTask('${task.id}', this.value)" title="Zmień osobę"
               class="text-[11px] font-bold px-2 py-0.5 rounded-md border border-warm-200 dark:border-warm-700 bg-warm-50 dark:bg-warm-800 cursor-pointer">
-              <option value="Nieprzypisane" ${who === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
-              <option value="Przemo" ${who === 'Przemo' ? 'selected' : ''}>🧔 Przemo</option>
+              <option value="Przemo" ${isPrzemek(who) ? 'selected' : ''}>🧔 Przemek</option>
               <option value="Róża" ${who === 'Róża' ? 'selected' : ''}>👩 Róża</option>
               <option value="Wspólne" ${who === 'Wspólne' ? 'selected' : ''}>👫 Wspólne</option>
+              <option value="Nieprzypisane" ${who === 'Nieprzypisane' ? 'selected' : ''}>❓ Do ustalenia</option>
             </select>
             <button onclick="toggleTaskCoop('${task.id}', '${coop === 'together' ? 'solo' : 'together'}')"
               class="text-[10px] font-bold px-2 py-0.5 rounded-md border transition ${coop === 'together' ? 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-200 border-purple-200' : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200'}">
@@ -1224,16 +1263,16 @@ window.runAiPlanner = async () => {
 
   out.textContent = "Układam zwięzły plan...";
 
-  const naSummary = naBlocks.map(b => `${b.who}:${b.mode} ${b.startDate} ${b.startTime}-${b.endTime} (${b.repeat || 'once'})`).join('; ') || 'brak';
-  const tasksSummary = openTasks.slice(0, 28).map(t => `${t.title} [${getSectionMeta(t.category).name}, ${t.coop === 'together' ? 'RAZEM' : 'SOLO'}, ${t.assignee || '?'}]`).join('; ');
+  const naSummary = naBlocks.map(b => `${displayPersonName(b.who)}:${b.mode} ${b.startDate} ${b.startTime}-${b.endTime} (${b.repeat || 'once'})`).join('; ') || 'brak';
+  const tasksSummary = openTasks.slice(0, 28).map(t => `${t.title} [${getSectionMeta(t.category).name}, ${t.coop === 'together' ? 'RAZEM' : 'SOLO'}, ${displayPersonName(t.assignee)}]`).join('; ');
 
-  const prompt = `Zaplanuj po polsku w krótkich punktach zadania dla Przema i Róży (${getMonthKey(currentYear, currentMonth)}).
-Przemo: ${userProfiles.przemo}
+  const prompt = `Zaplanuj po polsku w krótkich punktach zadania dla Przemka i Róży (${getMonthKey(currentYear, currentMonth)}).
+Przemek: ${userProfiles.przemo}
 Róża: ${userProfiles.roza}
 Dom: ${userProfiles.home}
 N/A: ${naSummary}
 Zadania: ${tasksSummary}
-Zasady: rozdziel zadania SOLO po równo, zadania RAZEM zaplanuj wspólnie (np. weekend); w ŚRODY po pracy wrzucaj Przemo wyłącznie 1 lekkie, szybkie zadanie 'z głowy' (np. śmieci, rośliny, miski/zęby Czosnka), a grubsze rzeczy dawaj na inne dni; uszanuj N/A i podsuń Róży okienko na e-booka.`;
+Zasady: rozdziel zadania SOLO po równo, zadania RAZEM zaplanuj wspólnie (np. weekend); w ŚRODY po pracy wrzucaj Przemkowi wyłącznie 1 lekkie, szybkie zadanie 'z głowy' (np. śmieci, rośliny, miski/zęby Czosnka), a grubsze rzeczy dawaj na inne dni; uszanuj N/A i podsuń Róży okienko na e-booka.`;
 
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
