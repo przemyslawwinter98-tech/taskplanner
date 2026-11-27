@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
-  onSnapshot, query, where, setDoc, getDocs
+  onSnapshot, query, where, setDoc, getDocs, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   PERSON_ICON, DEFAULT_SECTIONS, DEFAULT_PROFILES, DEFAULT_MONTHLY_TASKS
@@ -212,15 +212,17 @@ window.deleteSection = async (id) => {
   if (taskSections.length <= 1) return alert("Musi zostać przynajmniej jedna grupa.");
   if (!confirm("Usunąć tę grupę? Zadania z niej zostaną przeniesione do pierwszej dostępnej.")) return;
   const fallbackId = taskSections.find(s => s.id !== id).id;
+  const batch = writeBatch(db);
   for (const tpl of taskTemplates.filter(t => resolveSectionId(t.category) === id)) {
-    await updateDoc(doc(db, "taskTemplates", tpl.id), { category: fallbackId });
+    batch.update(doc(db, "taskTemplates", tpl.id), { category: fallbackId });
   }
   for (const task of allTasks.filter(t => resolveSectionId(t.category) === id)) {
-    await updateDoc(doc(db, "tasks", task.id), { category: fallbackId });
+    batch.update(doc(db, "tasks", task.id), { category: fallbackId });
   }
+  batch.delete(doc(db, "taskSections", id));
+  await batch.commit();
   if (currentFilter === id) currentFilter = 'all';
   if (configFilter === id) configFilter = 'all';
-  await deleteDoc(doc(db, "taskSections", id));
 };
 
 document.getElementById('new-section-form')?.addEventListener('submit', async (e) => {
@@ -476,7 +478,8 @@ function getTargetDatesForFreq(year, month, freq) {
   return [goodDays[2] || `${monthKey}-12`];
 }
 
-async function insertTemplateInstancesIntoMonth(tpl, year, month) {
+// GENEROWANIE INSTANCJI WZORCA ZA POMOCĄ BATCHA (SZYBKIE + BEZ DUPLIKATÓW)
+async function insertTemplateInstancesIntoMonth(tpl, year, month, externalBatch = null, existingTitlesSet = null) {
   const monthKey = getMonthKey(year, month);
   const freq = Number(tpl.freq || 1);
   const assignee = tpl.assignee || 'Przemo';
@@ -485,10 +488,24 @@ async function insertTemplateInstancesIntoMonth(tpl, year, month) {
   const resolvedCat = resolveSectionId(tpl.category);
   const tags = Array.isArray(tpl.tags) ? tpl.tags : [];
 
+  const batch = externalBatch || writeBatch(db);
+  let addedCount = 0;
+
   for (let idx = 0; idx < dates.length; idx++) {
-    await addDoc(collection(db, "tasks"), {
+    const finalTitle = (!isDailyHabit && dates.length > 1) ? `${tpl.title} (${idx + 1}/${dates.length})` : tpl.title;
+    const normTitle = finalTitle.toLowerCase().trim();
+
+    if (existingTitlesSet && existingTitlesSet.has(normTitle)) {
+      continue;
+    }
+    if (existingTitlesSet) {
+      existingTitlesSet.add(normTitle);
+    }
+
+    const newRef = doc(collection(db, "tasks"));
+    batch.set(newRef, {
       secret: homeSecret,
-      title: (!isDailyHabit && dates.length > 1) ? `${tpl.title} (${idx + 1}/${dates.length})` : tpl.title,
+      title: finalTitle,
       desc: tpl.desc || '',
       assignee,
       coop: tpl.coop || 'solo',
@@ -502,10 +519,16 @@ async function insertTemplateInstancesIntoMonth(tpl, year, month) {
       monthKey,
       completed: false
     });
+    addedCount++;
   }
+
+  if (!externalBatch && addedCount > 0) {
+    await batch.commit();
+  }
+  return addedCount;
 }
 
-// SUBSKRYPCJE FIREBASE
+// SUBSKRYPCJE FIREBASE (Z LOKALNYM CACHE DLA NATYCHMIASTOWEGO ŁADOWANIA)
 function subscribeFirestore() {
   if (unsubTasks) unsubTasks();
   if (unsubNa) unsubNa();
@@ -517,12 +540,26 @@ function subscribeFirestore() {
   const testBadge = document.getElementById('test-month-badge');
   if (testBadge) testBadge.classList.toggle('hidden', !isTestMonth(currentYear, currentMonth));
 
+  // Natychmiastowe wczytanie z cache
+  const cacheKey = `tasks_cache_${homeSecret}_${monthKey}`;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      allTasks = JSON.parse(cached);
+      renderTasks();
+      renderStats();
+      renderCalendar();
+      renderPersonalFocusCard();
+    } catch (_) {}
+  }
+
   const qSec = query(collection(db, "taskSections"), where("secret", "==", homeSecret));
   unsubSections = onSnapshot(qSec, async (snapshot) => {
     if (snapshot.empty && !seededSectionsOnce) {
       seededSectionsOnce = true;
+      const batch = writeBatch(db);
       for (const sec of DEFAULT_SECTIONS) {
-        await addDoc(collection(db, "taskSections"), {
+        batch.set(doc(collection(db, "taskSections")), {
           secret: homeSecret,
           codeId: sec.id,
           icon: sec.icon,
@@ -530,6 +567,7 @@ function subscribeFirestore() {
           order: sec.order
         });
       }
+      await batch.commit();
       return;
     }
     taskSections = snapshot.docs
@@ -559,6 +597,7 @@ function subscribeFirestore() {
   const qTasks = query(collection(db, "tasks"), where("secret", "==", homeSecret), where("monthKey", "==", monthKey));
   unsubTasks = onSnapshot(qTasks, (snapshot) => {
     allTasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    localStorage.setItem(cacheKey, JSON.stringify(allTasks));
     renderDynamicSectionControls();
     renderTasks();
     renderStats();
@@ -585,22 +624,16 @@ function subscribeFirestore() {
   const qTpl = query(collection(db, "taskTemplates"), where("secret", "==", homeSecret));
   unsubTemplates = onSnapshot(qTpl, async (snapshot) => {
     const existingDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    if (!seededTemplatesOnce) {
+    if (existingDocs.length === 0 && !seededTemplatesOnce) {
       seededTemplatesOnce = true;
-      const existingTitles = new Set(existingDocs.map(x => x.title.toLowerCase().trim()));
+      const batch = writeBatch(db);
       for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
         const raw = DEFAULT_MONTHLY_TASKS[i];
-        if (!existingTitles.has(raw.title.toLowerCase().trim())) {
-          const tplData = { secret: homeSecret, order: existingDocs.length + i, ...raw, assignee: "Przemo", category: resolveSectionId(raw.category), tags: [] };
-          await addDoc(collection(db, "taskTemplates"), tplData);
-          await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
-        }
+        const tplData = { secret: homeSecret, order: i, ...raw, assignee: "Przemo", category: resolveSectionId(raw.category), tags: [] };
+        batch.set(doc(collection(db, "taskTemplates")), tplData);
       }
-      for (const item of existingDocs) {
-        if (!isPrzemek(item.assignee) && (!item.assignee || item.assignee === 'Nieprzypisane')) {
-          await updateDoc(doc(db, "taskTemplates", item.id), { assignee: "Przemo" });
-        }
-      }
+      await batch.commit();
+      return;
     }
     taskTemplates = existingDocs.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
     renderDynamicSectionControls();
@@ -710,7 +743,7 @@ function renderNaManagerList() {
   }).join('');
 }
 
-// KONFIGURACJA BAZY ZADAŃ (BEZ TYTUŁÓW "SEKCJA X:", BEZPOŚREDNIA EDYCJA NAGŁÓWKÓW + WŁASNE TAGI)
+// KONFIGURACJA BAZY ZADAŃ
 window.openConfigScreen = () => {
   document.getElementById('dashboard-view').classList.add('hidden');
   document.getElementById('config-view').classList.remove('hidden');
@@ -887,43 +920,71 @@ document.getElementById('new-template-form')?.addEventListener('submit', async (
     enabled: true
   };
   await addDoc(collection(db, "taskTemplates"), newTpl);
-  await insertTemplateInstancesIntoMonth(newTpl, currentYear, currentMonth);
+  const existingTitles = new Set(allTasks.map(t => t.title.toLowerCase().trim()));
+  await insertTemplateInstancesIntoMonth(newTpl, currentYear, currentMonth, null, existingTitles);
   e.target.reset();
   renderDynamicSectionControls();
 });
 
+// PODMIANA NA CZYSTĄ LISTĘ 26 OBOWIĄZKÓW (W JEDNYM BATCHU, BEZ DUPLIKATÓW)
 window.replaceWithFull39Tasks = async () => {
-  if (!confirm("Podmienić bazę na listę 26 obowiązków (przypisanych do Przemka) i wrzucić na ten miesiąc?")) return;
+  if (!confirm("Wyczyścić stare duplikaty i załadować czystą listę 26 obowiązków przypisanych do Przemka?")) return;
+  const monthKey = getMonthKey(currentYear, currentMonth);
+  const batch = writeBatch(db);
+
+  // 1. Usuń stare szablony
   const oldTpls = await getDocs(query(collection(db, "taskTemplates"), where("secret", "==", homeSecret)));
-  for (const d of oldTpls.docs) await deleteDoc(doc(db, "taskTemplates", d.id));
+  for (const d of oldTpls.docs) batch.delete(doc(db, "taskTemplates", d.id));
+
+  // 2. Usuń niewykonane zadania z bieżącego miesiąca, żeby pozbyć się duplikatów (np. tych 118)
+  const oldTasks = await getDocs(query(collection(db, "tasks"), where("secret", "==", homeSecret), where("monthKey", "==", monthKey)));
+  for (const d of oldTasks.docs) {
+    if (!d.data().completed) batch.delete(doc(db, "tasks", d.id));
+  }
+
+  // 3. Zapisz nową listę 26 obowiązków i wygeneruj je dokładnie 1 raz na ten miesiąc
+  const existingTitles = new Set(oldTasks.docs.filter(d => d.data().completed).map(d => d.data().title.toLowerCase().trim()));
   for (let i = 0; i < DEFAULT_MONTHLY_TASKS.length; i++) {
     const raw = DEFAULT_MONTHLY_TASKS[i];
     const tplData = { secret: homeSecret, order: i, ...raw, assignee: "Przemo", category: resolveSectionId(raw.category), tags: [] };
-    await addDoc(collection(db, "taskTemplates"), tplData);
-    await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth);
+    batch.set(doc(collection(db, "taskTemplates")), tplData);
+    await insertTemplateInstancesIntoMonth(tplData, currentYear, currentMonth, batch, existingTitles);
   }
+
+  await batch.commit();
   closeConfigScreen();
 };
 
-// MASOWE PRZYPISANIE WSZYSTKICH ZADAŃ W BAZIE I MIESIĄCU DO PRZEMKA
 window.assignAllTasksToPrzemek = async () => {
   if (!confirm("Przypisać wszystkie obowiązki w bazie oraz otwarte zadania w tym miesiącu do konta Przemek?")) return;
+  const batch = writeBatch(db);
   for (const tpl of taskTemplates) {
-    if (!isPrzemek(tpl.assignee)) {
-      await updateDoc(doc(db, "taskTemplates", tpl.id), { assignee: "Przemo" });
-    }
+    if (!isPrzemek(tpl.assignee)) batch.update(doc(db, "taskTemplates", tpl.id), { assignee: "Przemo" });
   }
   for (const task of allTasks) {
-    if (!task.completed && !isPrzemek(task.assignee)) {
-      await updateDoc(doc(db, "tasks", task.id), { assignee: "Przemo" });
-    }
+    if (!task.completed && !isPrzemek(task.assignee)) batch.update(doc(db, "tasks", task.id), { assignee: "Przemo" });
   }
+  await batch.commit();
 };
 
+// WRZUCENIE AKTYWNYCH NA TEN MIESIĄC (BEZ DUBLOWANIA ISTNIEJĄCYCH ZADAŃ)
 window.generateMonthFromConfig = async () => {
   const active = taskTemplates.filter(t => t.enabled !== false);
   if (active.length === 0) return alert("Zaznacz przynajmniej jedno zadanie.");
-  for (const tpl of active) await insertTemplateInstancesIntoMonth(tpl, currentYear, currentMonth);
+
+  const batch = writeBatch(db);
+  const existingTitles = new Set(allTasks.map(t => t.title.toLowerCase().trim()));
+  let totalAdded = 0;
+
+  for (const tpl of active) {
+    totalAdded += await insertTemplateInstancesIntoMonth(tpl, currentYear, currentMonth, batch, existingTitles);
+  }
+
+  if (totalAdded > 0) {
+    await batch.commit();
+  } else {
+    alert("Wszystkie aktywne obowiązki z bazy są już wrzucone na ten miesiąc (pominięto duplikaty).");
+  }
   closeConfigScreen();
 };
 
@@ -1224,12 +1285,13 @@ document.getElementById('add-task-form')?.addEventListener('submit', async (e) =
   const starred = document.getElementById('task-starred').checked;
   const monthKey = getMonthKey(currentYear, currentMonth);
 
+  const batch = writeBatch(db);
   let baseDate = date ? parseLocalDate(date) : new Date(currentYear, currentMonth, 1);
   const stepDays = count === 2 ? 14 : 7;
 
   for (let i = 0; i < count; i++) {
     if (baseDate.getMonth() === currentMonth || i === 0) {
-      await addDoc(collection(db, "tasks"), {
+      batch.set(doc(collection(db, "tasks")), {
         secret: homeSecret,
         title: count > 1 ? `${title} (${i + 1}/${count})` : title,
         desc, assignee, coop, category, tags,
@@ -1241,6 +1303,7 @@ document.getElementById('add-task-form')?.addEventListener('submit', async (e) =
     }
     baseDate.setDate(baseDate.getDate() + stepDays);
   }
+  await batch.commit();
   e.target.reset();
   syncDateInputs(selectedDateStr);
   renderDynamicSectionControls();
